@@ -1,0 +1,807 @@
+{
+  "measured_at_utc": "2026-10-03T13:02:08.309982+00:00",
+  "local_date": "2026-10-03",
+  "source_baseline": {
+    "tests": 169,
+    "passed": true,
+    "seconds": 2.168,
+    "reported": 129
+  },
+  "source_files_missing": [],
+  "source_regenerated_artifacts": [
+    "artifacts/phase1/S01_invalid_result.json",
+    "artifacts/phase1/S01_invalid_run.json",
+    "artifacts/phase1/S01_invalid.jsonl",
+    "artifacts/phase1/S01_valid_result.json",
+    "artifacts/phase1/S01_valid_run.json",
+    "artifacts/phase1/S01_valid.jsonl",
+    "artifacts/phase1/summary.json",
+    "artifacts/phase2/S01_integrated_valid_result.json",
+    "artifacts/phase2/S01_integrated_valid_run.json",
+    "artifacts/phase2/S01_integrated_valid_trace.jsonl",
+    "artifacts/phase2/S01_malformed_sensor_error.json",
+    "artifacts/phase2/S01_malformed_sensor_trace.jsonl",
+    "artifacts/phase2/S01_missing_lidar_result.json",
+    "artifacts/phase2/S01_missing_lidar_run.json",
+    "artifacts/phase2/S01_missing_lidar_trace.jsonl",
+    "artifacts/phase2/summary.json",
+    "artifacts/phase3/S02_injected_fault_result.json",
+    "artifacts/phase3/S02_injected_fault_run.json",
+    "artifacts/phase3/S02_injected_fault_trace.jsonl",
+    "artifacts/phase3/S02_valid_result.json",
+    "artifacts/phase3/S02_valid_run.json",
+    "artifacts/phase3/S02_valid_trace.jsonl",
+    "artifacts/phase3/S03_injected_fault_result.json",
+    "artifacts/phase3/S03_injected_fault_run.json",
+    "artifacts/phase3/S03_injected_fault_trace.jsonl",
+    "artifacts/phase3/S03_valid_result.json",
+    "artifacts/phase3/S03_valid_run.json",
+    "artifacts/phase3/S03_valid_trace.jsonl",
+    "artifacts/phase3/S04_injected_fault_result.json",
+    "artifacts/phase3/S04_injected_fault_run.json",
+    "artifacts/phase3/S04_injected_fault_trace.jsonl",
+    "artifacts/phase3/S04_valid_result.json",
+    "artifacts/phase3/S04_valid_run.json",
+    "artifacts/phase3/S04_valid_trace.jsonl",
+    "artifacts/phase3/S05_injected_fault_result.json",
+    "artifacts/phase3/S05_injected_fault_run.json",
+    "artifacts/phase3/S05_injected_fault_trace.jsonl",
+    "artifacts/phase3/S05_valid_result.json",
+    "artifacts/phase3/S05_valid_run.json",
+    "artifacts/phase3/S05_valid_trace.jsonl",
+    "artifacts/phase3/S08_injected_fault_result.json",
+    "artifacts/phase3/S08_injected_fault_run.json",
+    "artifacts/phase3/S08_injected_fault_trace.jsonl",
+    "artifacts/phase3/S08_valid_result.json",
+    "artifacts/phase3/S08_valid_run.json",
+    "artifacts/phase3/S08_valid_trace.jsonl",
+    "artifacts/phase3/summary.json"
+  ],
+  "source_implementation_unchanged": true,
+  "team_original_hashes": [
+    {
+      "Path": ".env.example",
+      "SHA256": "DF7A1606E755B5A8CDADFCFE88C44B406DBD0216BCFC2D79F92DE02B56F86407"
+    },
+    {
+      "Path": "README.md",
+      "SHA256": "ADB8DA67EA41DED805BCFFF4C4B8E7667CCDB4B3FC188810EB08F2F5AAA9B104"
+    },
+    {
+      "Path": "docs/procedural_setup.md",
+      "SHA256": "B66D38EC0EE8448281079EA5E6B52D40E7F43D89CB0D57E3A3A085017FFAC85D"
+    },
+    {
+      "Path": "docs/repository_structure.md",
+      "SHA256": "6A168CDE60FF795D1AB8C061D88765D5B7ADD14C3F5EF4996AF8A97EA6CC215E"
+    },
+    {
+      "Path": "procedural/__init__.py",
+      "SHA256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "Path": "procedural/llm_client.py",
+      "SHA256": "6C9F9AB9ABE69A297A9D3A641A1E9E68E4B81EAFE9C0DF6494A86D00BC220D10"
+    },
+    {
+      "Path": "procedural/prompts.py",
+      "SHA256": "A5856672EDA462CFB4011C9DB825482AF8CC96CADE978EC5917D32AC22C83AB0"
+    },
+    {
+      "Path": "procedural/single_tool_call.py",
+      "SHA256": "F24A80A52F4C324AC2F88F96803604A3C2E0C0A986CA6114D89F66236F3D4879"
+    },
+    {
+      "Path": "procedural/tools.py",
+      "SHA256": "8E110809E2F1E55DF6E13B72255F7F04AFD9762B8A8AFFAAAC4B4A8C0F83C65A"
+    },
+    {
+      "Path": "requirements.txt",
+      "SHA256": "132135B7DC551FDD280A49D869EE9365572963B367F0EBFEA727EFA7D636B43B"
+    },
+    {
+      "Path": "scripts/__init__.py",
+      "SHA256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "Path": "scripts/check_llm_connection.py",
+      "SHA256": "4E6BE0B03803DA1E19746F27F7E934B93946DC705F52E318C3433A9C76BF44F5"
+    },
+    {
+      "Path": "scripts/list_available_models.py",
+      "SHA256": "C26C1EE7EBFC0874DDA24568A43E4D0CA00F0C9A344C40C8D8D19008CDF39CC2"
+    },
+    {
+      "Path": "scripts/run_lidar_tool_call.py",
+      "SHA256": "F1C9E9AA489162BCDB6D2B1A998223D20A292EC781790F0783A5D2E62FD3FA05"
+    },
+    {
+      "Path": "tests/procedural/__init__.py",
+      "SHA256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "Path": "tests/procedural/scripted_llm.py",
+      "SHA256": "944F9E859A61324ACF306A289C461478B77A2F482A0A3F8925659C5D27C74E16"
+    },
+    {
+      "Path": "tests/procedural/test_llm_client.py",
+      "SHA256": "D29442403223B5E82BCCAC06E00B5018870EF5C442F6645D0E2C2871013F04B2"
+    },
+    {
+      "Path": "tests/procedural/test_single_tool_call.py",
+      "SHA256": "EE9A7216200072ACB1C4DCFC3C525B448BF46A3ABB17B6879F5B4A93F7A2408F"
+    },
+    {
+      "Path": "tests/procedural/test_tools.py",
+      "SHA256": "556CCEB4CE0EB8E23D84ED961941E7635BFC9893F5730179B88F28ACA5D61B98"
+    }
+  ],
+  "team_unchanged_files": [
+    ".env.example",
+    "docs/procedural_setup.md",
+    "docs/repository_structure.md",
+    "procedural/__init__.py",
+    "procedural/llm_client.py",
+    "procedural/prompts.py",
+    "procedural/single_tool_call.py",
+    "procedural/tools.py",
+    "requirements.txt",
+    "scripts/__init__.py",
+    "scripts/check_llm_connection.py",
+    "scripts/list_available_models.py",
+    "scripts/run_lidar_tool_call.py",
+    "tests/procedural/__init__.py",
+    "tests/procedural/scripted_llm.py",
+    "tests/procedural/test_llm_client.py",
+    "tests/procedural/test_single_tool_call.py",
+    "tests/procedural/test_tools.py"
+  ],
+  "team_modified_files": [
+    "README.md"
+  ],
+  "test_inventory_preserved": {
+    "test_evaluation.py": {
+      "test_methods": [
+        "test_absent_provenance_allowed_as_an_explicit_case",
+        "test_all_ten_specs_validate_and_roundtrip",
+        "test_bad_jsonl_reports_line_number",
+        "test_changing_historical_perspective_fails",
+        "test_complete_run_record_roundtrip",
+        "test_demo_artifacts_are_parseable_and_repeatable",
+        "test_duplicate_scenario_ids_rejected",
+        "test_each_required_field_is_rejected_when_missing",
+        "test_empty_execution_fails_without_crashing",
+        "test_english_paraphrase_does_not_change_result",
+        "test_events_after_response_fail",
+        "test_failure_reasons_are_actionable",
+        "test_forbidden_movement_fails",
+        "test_invalid_confidence_rejected",
+        "test_invalid_response_requirement_rejected",
+        "test_invalid_stub_fails_for_expected_reasons",
+        "test_invalid_timestamp_rejected",
+        "test_invented_evidence_reference_fails",
+        "test_malformed_sensor_reading_rejected",
+        "test_missing_information_acknowledgment_is_required",
+        "test_missing_nested_update_field_rejected",
+        "test_nested_directory_and_jsonl_roundtrip",
+        "test_non_json_payload_rejected",
+        "test_repeated_log_does_not_append_previous_run",
+        "test_repeated_tool_requirement_is_not_a_set",
+        "test_required_tool_without_result_fails",
+        "test_scenario10_requires_two_observations_and_new_revision",
+        "test_unexpected_update_and_final_state_fail",
+        "test_unlogged_final_state_change_fails",
+        "test_update_must_match_cited_observation",
+        "test_user_sensor_and_history_remain_separate_in_an_execution",
+        "test_valid_stub_passes",
+        "test_wrong_belief_source_fails",
+        "test_wrong_scenario_identity_fails"
+      ],
+      "assert_statements": 0,
+      "assert_calls": {
+        "assertEqual": 17,
+        "assertIsNone": 1,
+        "assertTrue": 6,
+        "assertFalse": 3,
+        "assertIn": 18,
+        "assertRaisesRegex": 8,
+        "assertRaises": 2
+      }
+    },
+    "test_phase2.py": {
+      "test_methods": [
+        "test_adapter_snapshot_is_detached",
+        "test_adapters_satisfy_all_shared_ports",
+        "test_artifacts_parse_and_partial_contract_trace_is_honest",
+        "test_bad_committed_receipt_rejected",
+        "test_boundary_events_exist_before_backend_invocation",
+        "test_camera_unavailable_is_explicit",
+        "test_changed_sensor_data_changes_committed_state_and_evaluation",
+        "test_duplicate_belief_ids_rejected",
+        "test_duplicate_evidence_ids_across_returns",
+        "test_duplicate_evidence_ids_in_one_return",
+        "test_duplicate_evidence_references",
+        "test_duplicate_tool_call_ids",
+        "test_each_missing_sensor_field",
+        "test_environment_snapshot_and_revision",
+        "test_false_commit_without_snapshot_change_rejected",
+        "test_finish_requires_response",
+        "test_historical_overwrite_rejected_before_commit",
+        "test_history_and_previous_value_are_preserved",
+        "test_invalid_and_missing_timestamps",
+        "test_invalid_belief_confidence",
+        "test_invalid_belief_perspective",
+        "test_invalid_environment_revision_rejected",
+        "test_invalid_sensor_revisions",
+        "test_malformed_sensor_never_reaches_evaluator",
+        "test_maximum_step_handling",
+        "test_missing_belief_fields",
+        "test_no_lidar_execution_fails",
+        "test_null_source_is_preserved_as_unverified",
+        "test_offset_timestamps_normalize_to_utc",
+        "test_phase2_demo_is_repeatable_from_another_directory",
+        "test_query_checks_subject_and_predicate",
+        "test_raw_memory_debug_data_preserved",
+        "test_raw_non_json_error_can_still_be_logged",
+        "test_reference_reset_restores_initial_memory",
+        "test_response_invalid_flag_rejected",
+        "test_response_requires_all_metadata",
+        "test_sensor_confidence_out_of_range",
+        "test_sensor_revision_mismatch_rejected",
+        "test_tool_after_final_response_rejected",
+        "test_unknown_evidence_rejected",
+        "test_unmatched_tool_result",
+        "test_update_requires_evidence_references",
+        "test_valid_belief_conversion",
+        "test_valid_integrated_s01",
+        "test_valid_sensor_conversion",
+        "test_wrong_tool_name_in_return",
+        "test_wrong_units_and_sensor_name"
+      ],
+      "assert_statements": 0,
+      "assert_calls": {
+        "assertEqual": 35,
+        "assertIsNone": 2,
+        "assertIn": 8,
+        "assert_not_called": 1,
+        "assertFalse": 4,
+        "assertRaisesRegex": 27,
+        "assertRaises": 4,
+        "assertNotIn": 1,
+        "assertIsInstance": 1
+      }
+    },
+    "test_phase3.py": {
+      "test_methods": [
+        "test_all_five_faults_fail_for_the_intended_reason",
+        "test_all_five_valid_runs_pass",
+        "test_backend_label_mismatch_is_detected",
+        "test_claim_value_must_match_cited_evidence",
+        "test_cli_all_exits_zero_only_with_specific_fault_detection",
+        "test_cli_bad_threshold_reports_argument_error",
+        "test_cli_selected_works_outside_project_without_site_packages",
+        "test_cli_unexpected_outcome_exits_nonzero",
+        "test_confidence_binding_inflation_is_detected",
+        "test_confidence_commit_inflation_is_detected",
+        "test_confidence_threshold_is_configurable",
+        "test_duplicate_or_missing_public_return_is_detected",
+        "test_evaluator_detects_wrong_static_revision",
+        "test_evidence_for_another_subject_cannot_support_the_claim",
+        "test_execution_and_evaluation_policies_remain_independent",
+        "test_freshness_rejects_stale_and_future_observations",
+        "test_history_deletion_is_detected",
+        "test_history_provenance_change_is_detected",
+        "test_human_review_remains_pending_even_when_metadata_passes",
+        "test_inconsistent_backend_labels_are_rejected",
+        "test_input_overrides_use_actual_public_inputs_and_commits",
+        "test_missing_or_duplicate_claim_binding_is_detected",
+        "test_move_attempt_is_rejected_before_any_backend_action",
+        "test_observation_age_threshold_is_configurable",
+        "test_optional_response_fields_are_backward_compatible_and_validated",
+        "test_perspective_misattribution_is_detected",
+        "test_policy_sensor_and_mode_validation",
+        "test_public_backend_error_has_an_observed_error_return",
+        "test_public_boundary_pairs_include_requests_returns_and_labels",
+        "test_public_query_context_excludes_tools_and_expected_assertions",
+        "test_real_backends_cannot_be_omitted_or_known_references",
+        "test_repeatability_ignores_only_event_and_evaluation_times",
+        "test_revision_mismatch_is_rejected_before_evaluation",
+        "test_run_and_all_artifacts_round_trip_as_json",
+        "test_s02_current_clear_and_historical_blocked_both_survive",
+        "test_s03_three_source_specific_colors",
+        "test_s04_preserves_high_memory_and_low_sensor_confidence",
+        "test_s05_inspects_and_keeps_both_current_sensor_perspectives",
+        "test_s08_keeps_user_claim_and_obstacle_separate",
+        "test_source_misattribution_is_detected",
+        "test_stricter_cli_thresholds_produce_failures_without_crashing",
+        "test_supplied_procedural_backend_is_invoked_through_adapter",
+        "test_threshold_validation_rejects_invalid_values",
+        "test_universal_color_claim_is_detected",
+        "test_unjustified_sensor_conflict_resolution_is_detected",
+        "test_unknown_support_evidence_is_detected",
+        "test_unsupported_scenarios_faults_and_filename_traversal_rejected",
+        "test_user_record_erasure_is_detected"
+      ],
+      "assert_statements": 0,
+      "assert_calls": {
+        "assertEqual": 44,
+        "assertTrue": 11,
+        "assertFalse": 33,
+        "assertGreater": 1,
+        "assertIsNone": 2,
+        "assertIn": 4,
+        "assert_called_once": 1,
+        "assertRaises": 13
+      }
+    }
+  },
+  "checks": {
+    "role4": {
+      "command": [
+        "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\.venv\\Scripts\\python.exe",
+        "-B",
+        "-S",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/role4",
+        "-q"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "----------------------------------------------------------------------\nRan 129 tests in 1.350s\n\nOK\n"
+    },
+    "combined_available": {
+      "command": [
+        "C:\\Users\\Yash\\miniconda3\\python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "tests/role4",
+        "tests/procedural/test_llm_client.py",
+        "-q"
+      ],
+      "exit_code": 0,
+      "stdout": "....................................................................... [ 51%]\n....................................................................              [100%]\n============================== warnings summary ===============================\nevaluation\\role4\\models.py:297\n  C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\models.py:297: PytestCollectionWarning: cannot collect test class 'TestRunRecord' because it has a __init__ constructor (from: tests/role4/test_evaluation.py)\n    @dataclass\n\nevaluation\\role4\\models.py:297\n  C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\models.py:297: PytestCollectionWarning: cannot collect test class 'TestRunRecord' because it has a __init__ constructor (from: tests/role4/test_phase3.py)\n    @dataclass\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n139 passed, 2 warnings, 136 subtests passed in 1.46s\n",
+      "stderr": ""
+    },
+    "full_offline_discovery": {
+      "command": [
+        "C:\\Users\\Yash\\miniconda3\\python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "tests",
+        "-k",
+        "not live",
+        "--continue-on-collection-errors",
+        "-q"
+      ],
+      "exit_code": 1,
+      "stdout": "....................................................................... [ 51%]\n....................................................................              [100%]\n=================================== ERRORS ====================================\n_________ ERROR collecting tests/procedural/test_single_tool_call.py __________\nImportError while importing test module 'C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\tests\\procedural\\test_single_tool_call.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\Yash\\miniconda3\\Lib\\importlib\\__init__.py:88: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\procedural\\test_single_tool_call.py:11: in <module>\n    from procedural.single_tool_call import run_single_tool_call\nprocedural\\single_tool_call.py:19: in <module>\n    from procedural.tools import TOOL_SCHEMAS, ToolFn, call_tool, error_result\nprocedural\\tools.py:14: in <module>\n    from contracts.models import ToolResult\nE   ModuleNotFoundError: No module named 'contracts'\n_______________ ERROR collecting tests/procedural/test_tools.py _______________\nImportError while importing test module 'C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\tests\\procedural\\test_tools.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\Yash\\miniconda3\\Lib\\importlib\\__init__.py:88: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\procedural\\test_tools.py:7: in <module>\n    from contracts.models import ToolResult\nE   ModuleNotFoundError: No module named 'contracts'\n============================== warnings summary ===============================\nevaluation\\role4\\models.py:297\n  C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\models.py:297: PytestCollectionWarning: cannot collect test class 'TestRunRecord' because it has a __init__ constructor (from: tests/role4/test_evaluation.py)\n    @dataclass\n\nevaluation\\role4\\models.py:297\n  C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\models.py:297: PytestCollectionWarning: cannot collect test class 'TestRunRecord' because it has a __init__ constructor (from: tests/role4/test_phase3.py)\n    @dataclass\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ===========================\nERROR tests/procedural/test_single_tool_call.py\nERROR tests/procedural/test_tools.py\n139 passed, 2 warnings, 2 errors, 136 subtests passed in 1.56s\n",
+      "stderr": ""
+    },
+    "collect_available": {
+      "command": [
+        "C:\\Users\\Yash\\miniconda3\\python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "tests/role4",
+        "tests/procedural/test_llm_client.py",
+        "--collect-only",
+        "-q"
+      ],
+      "exit_code": 0,
+      "stdout": "tests/role4/test_evaluation.py::RegistryTests::test_absent_provenance_allowed_as_an_explicit_case\ntests/role4/test_evaluation.py::RegistryTests::test_all_ten_specs_validate_and_roundtrip\ntests/role4/test_evaluation.py::RegistryTests::test_duplicate_scenario_ids_rejected\ntests/role4/test_evaluation.py::RegistryTests::test_each_required_field_is_rejected_when_missing\ntests/role4/test_evaluation.py::RegistryTests::test_invalid_confidence_rejected\ntests/role4/test_evaluation.py::RegistryTests::test_invalid_response_requirement_rejected\ntests/role4/test_evaluation.py::RegistryTests::test_malformed_sensor_reading_rejected\ntests/role4/test_evaluation.py::RegistryTests::test_missing_nested_update_field_rejected\ntests/role4/test_evaluation.py::RegistryTests::test_scenario10_requires_two_observations_and_new_revision\ntests/role4/test_evaluation.py::LoggerTests::test_bad_jsonl_reports_line_number\ntests/role4/test_evaluation.py::LoggerTests::test_complete_run_record_roundtrip\ntests/role4/test_evaluation.py::LoggerTests::test_invalid_timestamp_rejected\ntests/role4/test_evaluation.py::LoggerTests::test_nested_directory_and_jsonl_roundtrip\ntests/role4/test_evaluation.py::LoggerTests::test_non_json_payload_rejected\ntests/role4/test_evaluation.py::LoggerTests::test_repeated_log_does_not_append_previous_run\ntests/role4/test_evaluation.py::EvaluatorTests::test_changing_historical_perspective_fails\ntests/role4/test_evaluation.py::EvaluatorTests::test_empty_execution_fails_without_crashing\ntests/role4/test_evaluation.py::EvaluatorTests::test_english_paraphrase_does_not_change_result\ntests/role4/test_evaluation.py::EvaluatorTests::test_events_after_response_fail\ntests/role4/test_evaluation.py::EvaluatorTests::test_failure_reasons_are_actionable\ntests/role4/test_evaluation.py::EvaluatorTests::test_forbidden_movement_fails\ntests/role4/test_evaluation.py::EvaluatorTests::test_invalid_stub_fails_for_expected_reasons\ntests/role4/test_evaluation.py::EvaluatorTests::test_invented_evidence_reference_fails\ntests/role4/test_evaluation.py::EvaluatorTests::test_missing_information_acknowledgment_is_required\ntests/role4/test_evaluation.py::EvaluatorTests::test_repeated_tool_requirement_is_not_a_set\ntests/role4/test_evaluation.py::EvaluatorTests::test_required_tool_without_result_fails\ntests/role4/test_evaluation.py::EvaluatorTests::test_unexpected_update_and_final_state_fail\ntests/role4/test_evaluation.py::EvaluatorTests::test_unlogged_final_state_change_fails\ntests/role4/test_evaluation.py::EvaluatorTests::test_update_must_match_cited_observation\ntests/role4/test_evaluation.py::EvaluatorTests::test_valid_stub_passes\ntests/role4/test_evaluation.py::EvaluatorTests::test_wrong_belief_source_fails\ntests/role4/test_evaluation.py::EvaluatorTests::test_wrong_scenario_identity_fails\ntests/role4/test_evaluation.py::PerspectiveTests::test_user_sensor_and_history_remain_separate_in_an_execution\ntests/role4/test_evaluation.py::DemoTests::test_demo_artifacts_are_parseable_and_repeatable\ntests/role4/test_phase2.py::ContractTests::test_adapter_snapshot_is_detached\ntests/role4/test_phase2.py::ContractTests::test_adapters_satisfy_all_shared_ports\ntests/role4/test_phase2.py::ContractTests::test_bad_committed_receipt_rejected\ntests/role4/test_phase2.py::ContractTests::test_camera_unavailable_is_explicit\ntests/role4/test_phase2.py::ContractTests::test_duplicate_belief_ids_rejected\ntests/role4/test_phase2.py::ContractTests::test_each_missing_sensor_field\ntests/role4/test_phase2.py::ContractTests::test_environment_snapshot_and_revision\ntests/role4/test_phase2.py::ContractTests::test_false_commit_without_snapshot_change_rejected\ntests/role4/test_phase2.py::ContractTests::test_historical_overwrite_rejected_before_commit\ntests/role4/test_phase2.py::ContractTests::test_history_and_previous_value_are_preserved\ntests/role4/test_phase2.py::ContractTests::test_invalid_and_missing_timestamps\ntests/role4/test_phase2.py::ContractTests::test_invalid_belief_confidence\ntests/role4/test_phase2.py::ContractTests::test_invalid_belief_perspective\ntests/role4/test_phase2.py::ContractTests::test_invalid_environment_revision_rejected\ntests/role4/test_phase2.py::ContractTests::test_invalid_sensor_revisions\ntests/role4/test_phase2.py::ContractTests::test_missing_belief_fields\ntests/role4/test_phase2.py::ContractTests::test_null_source_is_preserved_as_unverified\ntests/role4/test_phase2.py::ContractTests::test_offset_timestamps_normalize_to_utc\ntests/role4/test_phase2.py::ContractTests::test_query_checks_subject_and_predicate\ntests/role4/test_phase2.py::ContractTests::test_raw_memory_debug_data_preserved\ntests/role4/test_phase2.py::ContractTests::test_reference_reset_restores_initial_memory\ntests/role4/test_phase2.py::ContractTests::test_response_invalid_flag_rejected\ntests/role4/test_phase2.py::ContractTests::test_response_requires_all_metadata\ntests/role4/test_phase2.py::ContractTests::test_sensor_confidence_out_of_range\ntests/role4/test_phase2.py::ContractTests::test_sensor_revision_mismatch_rejected\ntests/role4/test_phase2.py::ContractTests::test_update_requires_evidence_references\ntests/role4/test_phase2.py::ContractTests::test_valid_belief_conversion\ntests/role4/test_phase2.py::ContractTests::test_valid_sensor_conversion\ntests/role4/test_phase2.py::ContractTests::test_wrong_units_and_sensor_name\ntests/role4/test_phase2.py::TraceTests::test_duplicate_evidence_ids_across_returns\ntests/role4/test_phase2.py::TraceTests::test_duplicate_evidence_ids_in_one_return\ntests/role4/test_phase2.py::TraceTests::test_duplicate_evidence_references\ntests/role4/test_phase2.py::TraceTests::test_duplicate_tool_call_ids\ntests/role4/test_phase2.py::TraceTests::test_finish_requires_response\ntests/role4/test_phase2.py::TraceTests::test_raw_non_json_error_can_still_be_logged\ntests/role4/test_phase2.py::TraceTests::test_tool_after_final_response_rejected\ntests/role4/test_phase2.py::TraceTests::test_unknown_evidence_rejected\ntests/role4/test_phase2.py::TraceTests::test_unmatched_tool_result\ntests/role4/test_phase2.py::TraceTests::test_wrong_tool_name_in_return\ntests/role4/test_phase2.py::IntegrationTests::test_artifacts_parse_and_partial_contract_trace_is_honest\ntests/role4/test_phase2.py::IntegrationTests::test_boundary_events_exist_before_backend_invocation\ntests/role4/test_phase2.py::IntegrationTests::test_changed_sensor_data_changes_committed_state_and_evaluation\ntests/role4/test_phase2.py::IntegrationTests::test_malformed_sensor_never_reaches_evaluator\ntests/role4/test_phase2.py::IntegrationTests::test_maximum_step_handling\ntests/role4/test_phase2.py::IntegrationTests::test_no_lidar_execution_fails\ntests/role4/test_phase2.py::IntegrationTests::test_phase2_demo_is_repeatable_from_another_directory\ntests/role4/test_phase2.py::IntegrationTests::test_valid_integrated_s01\ntests/role4/test_phase3.py::Phase3Tests::test_all_five_faults_fail_for_the_intended_reason\ntests/role4/test_phase3.py::Phase3Tests::test_all_five_valid_runs_pass\ntests/role4/test_phase3.py::Phase3Tests::test_backend_label_mismatch_is_detected\ntests/role4/test_phase3.py::Phase3Tests::test_claim_value_must_match_cited_evidence\ntests/role4/test_phase3.py::Phase3Tests::test_cli_all_exits_zero_only_with_specific_fault_detection\ntests/role4/test_phase3.py::Phase3Tests::test_cli_bad_threshold_reports_argument_error\ntests/role4/test_phase3.py::Phase3Tests::test_cli_selected_works_outside_project_without_site_packages\ntests/role4/test_phase3.py::Phase3Tests::test_cli_unexpected_outcome_exits_nonzero\ntests/role4/test_phase3.py::Phase3Tests::test_confidence_binding_inflation_is_detected\ntests/role4/test_phase3.py::Phase3Tests::test_confidence_commit_inflation_is_detected\ntests/role4/test_phase3.py::Phase3Tests::test_confidence_threshold_is_configurable\ntests/role4/test_phase3.py::Phase3Tests::test_duplicate_or_missing_public_return_is_detected\ntests/role4/test_phase3.py::Phase3Tests::test_evaluator_detects_wrong_static_revision\ntests/role4/test_phase3.py::Phase3Tests::test_evidence_for_another_subject_cannot_support_the_claim\ntests/role4/test_phase3.py::Phase3Tests::test_execution_and_evaluation_policies_remain_independent\ntests/role4/test_phase3.py::Phase3Tests::test_freshness_rejects_stale_and_future_observations\ntests/role4/test_phase3.py::Phase3Tests::test_history_deletion_is_detected\ntests/role4/test_phase3.py::Phase3Tests::test_history_provenance_change_is_detected\ntests/role4/test_phase3.py::Phase3Tests::test_human_review_remains_pending_even_when_metadata_passes\ntests/role4/test_phase3.py::Phase3Tests::test_inconsistent_backend_labels_are_rejected\ntests/role4/test_phase3.py::Phase3Tests::test_input_overrides_use_actual_public_inputs_and_commits\ntests/role4/test_phase3.py::Phase3Tests::test_missing_or_duplicate_claim_binding_is_detected\ntests/role4/test_phase3.py::Phase3Tests::test_move_attempt_is_rejected_before_any_backend_action\ntests/role4/test_phase3.py::Phase3Tests::test_observation_age_threshold_is_configurable\ntests/role4/test_phase3.py::Phase3Tests::test_optional_response_fields_are_backward_compatible_and_validated\ntests/role4/test_phase3.py::Phase3Tests::test_perspective_misattribution_is_detected\ntests/role4/test_phase3.py::Phase3Tests::test_policy_sensor_and_mode_validation\ntests/role4/test_phase3.py::Phase3Tests::test_public_backend_error_has_an_observed_error_return\ntests/role4/test_phase3.py::Phase3Tests::test_public_boundary_pairs_include_requests_returns_and_labels\ntests/role4/test_phase3.py::Phase3Tests::test_public_query_context_excludes_tools_and_expected_assertions\ntests/role4/test_phase3.py::Phase3Tests::test_real_backends_cannot_be_omitted_or_known_references\ntests/role4/test_phase3.py::Phase3Tests::test_repeatability_ignores_only_event_and_evaluation_times\ntests/role4/test_phase3.py::Phase3Tests::test_revision_mismatch_is_rejected_before_evaluation\ntests/role4/test_phase3.py::Phase3Tests::test_run_and_all_artifacts_round_trip_as_json\ntests/role4/test_phase3.py::Phase3Tests::test_s02_current_clear_and_historical_blocked_both_survive\ntests/role4/test_phase3.py::Phase3Tests::test_s03_three_source_specific_colors\ntests/role4/test_phase3.py::Phase3Tests::test_s04_preserves_high_memory_and_low_sensor_confidence\ntests/role4/test_phase3.py::Phase3Tests::test_s05_inspects_and_keeps_both_current_sensor_perspectives\ntests/role4/test_phase3.py::Phase3Tests::test_s08_keeps_user_claim_and_obstacle_separate\ntests/role4/test_phase3.py::Phase3Tests::test_source_misattribution_is_detected\ntests/role4/test_phase3.py::Phase3Tests::test_stricter_cli_thresholds_produce_failures_without_crashing\ntests/role4/test_phase3.py::Phase3Tests::test_supplied_procedural_backend_is_invoked_through_adapter\ntests/role4/test_phase3.py::Phase3Tests::test_threshold_validation_rejects_invalid_values\ntests/role4/test_phase3.py::Phase3Tests::test_universal_color_claim_is_detected\ntests/role4/test_phase3.py::Phase3Tests::test_unjustified_sensor_conflict_resolution_is_detected\ntests/role4/test_phase3.py::Phase3Tests::test_unknown_support_evidence_is_detected\ntests/role4/test_phase3.py::Phase3Tests::test_unsupported_scenarios_faults_and_filename_traversal_rejected\ntests/role4/test_phase3.py::Phase3Tests::test_user_record_erasure_is_detected\ntests/procedural/test_llm_client.py::test_plain_reply_is_returned_without_tools_in_request\ntests/procedural/test_llm_client.py::test_temperature_zero_and_tool_call_parsed\ntests/procedural/test_llm_client.py::test_tool_choice_none_is_passed_through\ntests/procedural/test_llm_client.py::test_malformed_arguments_are_kept_not_raised[{direction: front]\ntests/procedural/test_llm_client.py::test_malformed_arguments_are_kept_not_raised[[1, 2]]\ntests/procedural/test_llm_client.py::test_malformed_arguments_are_kept_not_raised[42]\ntests/procedural/test_llm_client.py::test_empty_arguments_mean_no_arguments\ntests/procedural/test_llm_client.py::test_api_failure_becomes_llm_client_error\ntests/procedural/test_llm_client.py::test_empty_choices_become_llm_client_error\ntests/procedural/test_llm_client.py::test_missing_api_key_is_a_clear_error\n\n============================== warnings summary ===============================\nevaluation\\role4\\models.py:297\n  C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\models.py:297: PytestCollectionWarning: cannot collect test class 'TestRunRecord' because it has a __init__ constructor (from: tests/role4/test_evaluation.py)\n    @dataclass\n\nevaluation\\role4\\models.py:297\n  C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\models.py:297: PytestCollectionWarning: cannot collect test class 'TestRunRecord' because it has a __init__ constructor (from: tests/role4/test_phase3.py)\n    @dataclass\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n139 tests collected in 0.09s\n",
+      "stderr": ""
+    },
+    "demo_phase1": {
+      "command": [
+        "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\.venv\\Scripts\\python.exe",
+        "-B",
+        "-S",
+        "scripts/run_role4_phase1_demo.py"
+      ],
+      "exit_code": 0,
+      "stdout": "I Agent | Role 4 | Phase 1 evaluation demo (scripted fixtures)\nScenario S01: stored map = clear; LiDAR = blocked at 12 cm\n\nVALID: PASS (20/20 checks passed)\n  Log: evaluation/logs/role4/phase1/S01_valid.jsonl\n\nINTENTIONALLY INVALID: FAIL (11/20 checks passed)\n  - required_tool:read_lidar: Required tool read_lidar: expected at least 1, observed 0\n  - required_tool:update_belief: Required tool update_belief: expected at least 1, observed 0\n  - tool_order: Required tools must occur in the specified order, including repeated observations\n  - required_update:path_a_sensor: Belief path_a_sensor requires exactly one recorded upsert with the specified value, source, confidence and perspective\n  - final_belief:path_a_sensor: Final belief path_a_sensor must match the required state\n  - response_evidence: Required response evidence categories missing: lidar\n  - acknowledge_conflict: Response must explicitly record acknowledge_conflict\n  - response_claim:path_status: Response structured claim path_status must be 'blocked'\n  - response_claim:movement_safe: Response structured claim movement_safe must be False\n  Log: evaluation/logs/role4/phase1/S01_invalid.jsonl\n\nDemo verification: expected PASS and expected FAIL confirmed. No API key required.\n",
+      "stderr": ""
+    },
+    "demo_phase2": {
+      "command": [
+        "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\.venv\\Scripts\\python.exe",
+        "-B",
+        "-S",
+        "scripts/run_role4_phase2_demo.py"
+      ],
+      "exit_code": 0,
+      "stdout": "I Agent | Role 4 | Phase 2 reference-layer integration\nDeterministic reference layers; teammate implementations are not integrated.\n\nCase A (integrated_valid): PASS\n  20/20 checks passed\n\nCase B (missing_lidar): FAIL\n  11/20 checks passed\n  - required_tool:read_lidar: Required tool read_lidar: expected at least 1, observed 0\n  - required_tool:update_belief: Required tool update_belief: expected at least 1, observed 0\n  - tool_order: Required tools must occur in the specified order, including repeated observations\n  - required_update:path_a_sensor: Belief path_a_sensor requires exactly one recorded upsert with the specified value, source, confidence and perspective\n  - final_belief:path_a_sensor: Final belief path_a_sensor must match the required state\n  - response_evidence: Required response evidence categories missing: lidar\n  - acknowledge_conflict: Response must explicitly record acknowledge_conflict\n  - response_claim:path_status: Response structured claim path_status must be 'blocked'\n  - response_claim:movement_safe: Response structured claim movement_safe must be False\n\nCase C (malformed_sensor): CONTRACT ERROR\n  Invalid sensor payload: sensor missing required fields: confidence\n  Aborted before evaluation; partial trace retained.\n\nArtifacts: evaluation/logs/role4/phase2/\nDemo verification: expected PASS / FAIL / CONTRACT ERROR confirmed.\n",
+      "stderr": ""
+    },
+    "demo_phase3": {
+      "command": [
+        "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\.venv\\Scripts\\python.exe",
+        "-B",
+        "-S",
+        "scripts/run_role4_phase3_demo.py"
+      ],
+      "exit_code": 0,
+      "stdout": "I Agent | Phase 3 conflict, confidence and perspective evaluation | backend=reference\nDeterministic reference layers. Real teammate integration: absent. Human semantic review: pending.\nS02 valid: PASS [reference] (34/34 checks)\nS02 injected_fault: FAIL [reference] (30/34 checks)\n  Detected: response_claim:path_status, evidence_to_claim, current_vs_history, response_metadata_consistent\nS03 valid: PASS [reference] (38/38 checks)\nS03 injected_fault: FAIL [reference] (32/38 checks)\n  Detected: response_claim:user_color, response_claim:historical_color, evidence_to_claim, source_attribution, perspective_separation, response_metadata_consistent\nS04 valid: PASS [reference] (36/36 checks)\nS04 injected_fault: FAIL [reference] (26/36 checks)\n  Detected: trace_integrity, required_update:door_sensor, final_belief:door_sensor, acknowledge_uncertainty, response_claim:definite_open, response_claim:needs_confirmation, confidence_preserved, confidence_threshold_policy, unresolved_conflict, response_metadata_consistent\nS05 valid: PASS [reference] (40/40 checks)\nS05 injected_fault: FAIL [reference] (29/40 checks)\n  Detected: required_tool:read_camera, required_tool:update_belief, tool_order, required_update:path_b_camera, final_belief:path_b_camera, response_evidence, acknowledge_uncertainty, acknowledge_conflict, response_claim:path_status, claim_support_complete, all_sensor_perspectives\nS08 valid: PASS [reference] (35/35 checks)\nS08 injected_fault: FAIL [reference] (27/35 checks)\n  Detected: forbidden_tool:move_forward, response_claim:path_status, response_claim:movement_safe, evidence_to_claim, source_attribution, user_vs_verified_observation, safe_response_claim, response_metadata_consistent\nSummary: 5 valid passes and 5 injected failures expected; confirmed. No physical actions executed.\nArtifacts: C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\logs\\role4\\phase3\n",
+      "stderr": ""
+    }
+  },
+  "full_team_suite_status": "BLOCKED: missing contracts.models and sensorimotor.stub",
+  "import_origins": {
+    "evaluation.role4": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\__init__.py",
+    "evaluation.role4.behavioral": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\behavioral.py",
+    "evaluation.role4.contracts": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\contracts\\__init__.py",
+    "evaluation.role4.contracts.declarative": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\contracts\\declarative.py",
+    "evaluation.role4.contracts.events": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\contracts\\events.py",
+    "evaluation.role4.contracts.procedural": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\contracts\\procedural.py",
+    "evaluation.role4.contracts.sensorimotor": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\contracts\\sensorimotor.py",
+    "evaluation.role4.evaluator": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\evaluator.py",
+    "evaluation.role4.integration": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\integration\\__init__.py",
+    "evaluation.role4.integration.adapters": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\integration\\adapters\\__init__.py",
+    "evaluation.role4.integration.adapters.declarative_adapter": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\integration\\adapters\\declarative_adapter.py",
+    "evaluation.role4.integration.adapters.procedural_adapter": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\integration\\adapters\\procedural_adapter.py",
+    "evaluation.role4.integration.adapters.sensorimotor_adapter": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\integration\\adapters\\sensorimotor_adapter.py",
+    "evaluation.role4.integration.runner": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\integration\\runner.py",
+    "evaluation.role4.integration.trace_recorder": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\integration\\trace_recorder.py",
+    "evaluation.role4.logger": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\logger.py",
+    "evaluation.role4.models": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\models.py",
+    "evaluation.role4.policies": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\policies.py",
+    "evaluation.role4.reference_layers": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\reference_layers\\__init__.py",
+    "evaluation.role4.reference_layers.conflict_procedural_reference": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\reference_layers\\conflict_procedural_reference.py",
+    "evaluation.role4.reference_layers.declarative_reference": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\reference_layers\\declarative_reference.py",
+    "evaluation.role4.reference_layers.procedural_reference": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\reference_layers\\procedural_reference.py",
+    "evaluation.role4.reference_layers.sensorimotor_reference": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\reference_layers\\sensorimotor_reference.py",
+    "evaluation.role4.response_review": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\response_review.py",
+    "evaluation.role4.stubs": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\stubs.py",
+    "scripts.run_role4_phase1_demo": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\scripts\\run_role4_phase1_demo.py",
+    "scripts.run_role4_phase2_demo": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\scripts\\run_role4_phase2_demo.py",
+    "scripts.run_role4_phase3_demo": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\scripts\\run_role4_phase3_demo.py",
+    "procedural.llm_client": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\procedural\\llm_client.py"
+  },
+  "deferred_scenario_execution_rejected": [
+    "S06",
+    "S07",
+    "S09",
+    "S10"
+  ],
+  "parsed_generated_artifacts": [
+    "evaluation/logs/role4/phase1/S01_invalid.jsonl",
+    "evaluation/logs/role4/phase1/S01_invalid_result.json",
+    "evaluation/logs/role4/phase1/S01_invalid_run.json",
+    "evaluation/logs/role4/phase1/S01_valid.jsonl",
+    "evaluation/logs/role4/phase1/S01_valid_result.json",
+    "evaluation/logs/role4/phase1/S01_valid_run.json",
+    "evaluation/logs/role4/phase1/summary.json",
+    "evaluation/logs/role4/phase2/S01_integrated_valid_result.json",
+    "evaluation/logs/role4/phase2/S01_integrated_valid_run.json",
+    "evaluation/logs/role4/phase2/S01_integrated_valid_trace.jsonl",
+    "evaluation/logs/role4/phase2/S01_malformed_sensor_error.json",
+    "evaluation/logs/role4/phase2/S01_malformed_sensor_trace.jsonl",
+    "evaluation/logs/role4/phase2/S01_missing_lidar_result.json",
+    "evaluation/logs/role4/phase2/S01_missing_lidar_run.json",
+    "evaluation/logs/role4/phase2/S01_missing_lidar_trace.jsonl",
+    "evaluation/logs/role4/phase2/summary.json",
+    "evaluation/logs/role4/phase3/S02_injected_fault_result.json",
+    "evaluation/logs/role4/phase3/S02_injected_fault_review.json",
+    "evaluation/logs/role4/phase3/S02_injected_fault_run.json",
+    "evaluation/logs/role4/phase3/S02_injected_fault_trace.jsonl",
+    "evaluation/logs/role4/phase3/S02_valid_result.json",
+    "evaluation/logs/role4/phase3/S02_valid_review.json",
+    "evaluation/logs/role4/phase3/S02_valid_run.json",
+    "evaluation/logs/role4/phase3/S02_valid_trace.jsonl",
+    "evaluation/logs/role4/phase3/S03_injected_fault_result.json",
+    "evaluation/logs/role4/phase3/S03_injected_fault_review.json",
+    "evaluation/logs/role4/phase3/S03_injected_fault_run.json",
+    "evaluation/logs/role4/phase3/S03_injected_fault_trace.jsonl",
+    "evaluation/logs/role4/phase3/S03_valid_result.json",
+    "evaluation/logs/role4/phase3/S03_valid_review.json",
+    "evaluation/logs/role4/phase3/S03_valid_run.json",
+    "evaluation/logs/role4/phase3/S03_valid_trace.jsonl",
+    "evaluation/logs/role4/phase3/S04_injected_fault_result.json",
+    "evaluation/logs/role4/phase3/S04_injected_fault_review.json",
+    "evaluation/logs/role4/phase3/S04_injected_fault_run.json",
+    "evaluation/logs/role4/phase3/S04_injected_fault_trace.jsonl",
+    "evaluation/logs/role4/phase3/S04_valid_result.json",
+    "evaluation/logs/role4/phase3/S04_valid_review.json",
+    "evaluation/logs/role4/phase3/S04_valid_run.json",
+    "evaluation/logs/role4/phase3/S04_valid_trace.jsonl",
+    "evaluation/logs/role4/phase3/S05_injected_fault_result.json",
+    "evaluation/logs/role4/phase3/S05_injected_fault_review.json",
+    "evaluation/logs/role4/phase3/S05_injected_fault_run.json",
+    "evaluation/logs/role4/phase3/S05_injected_fault_trace.jsonl",
+    "evaluation/logs/role4/phase3/S05_valid_result.json",
+    "evaluation/logs/role4/phase3/S05_valid_review.json",
+    "evaluation/logs/role4/phase3/S05_valid_run.json",
+    "evaluation/logs/role4/phase3/S05_valid_trace.jsonl",
+    "evaluation/logs/role4/phase3/S08_injected_fault_result.json",
+    "evaluation/logs/role4/phase3/S08_injected_fault_review.json",
+    "evaluation/logs/role4/phase3/S08_injected_fault_run.json",
+    "evaluation/logs/role4/phase3/S08_injected_fault_trace.jsonl",
+    "evaluation/logs/role4/phase3/S08_valid_result.json",
+    "evaluation/logs/role4/phase3/S08_valid_review.json",
+    "evaluation/logs/role4/phase3/S08_valid_run.json",
+    "evaluation/logs/role4/phase3/S08_valid_trace.jsonl",
+    "evaluation/logs/role4/phase3/summary.json"
+  ],
+  "demo_summaries": {
+    "phase1": {
+      "backend_type": "reference",
+      "execution": "stub",
+      "model_execution_mode": "scripted_fixture",
+      "phase": 1,
+      "teammate_modules_integrated": false,
+      "results": [
+        {
+          "run_id": "S01_valid",
+          "passed": true,
+          "checks_passed": 20,
+          "checks_total": 20
+        },
+        {
+          "run_id": "S01_invalid",
+          "passed": false,
+          "checks_passed": 11,
+          "checks_total": 20
+        }
+      ]
+    },
+    "phase2": {
+      "backend_type": "reference",
+      "layer_source": "reference_layers",
+      "layer_types": {
+        "declarative": "reference",
+        "procedural": "reference",
+        "sensorimotor": "reference"
+      },
+      "model_execution_mode": "deterministic_reference",
+      "phase": 2,
+      "teammate_modules_integrated": false,
+      "cases": [
+        {
+          "case": "integrated_valid",
+          "status": "PASS"
+        },
+        {
+          "case": "missing_lidar",
+          "status": "FAIL"
+        },
+        {
+          "case": "malformed_sensor",
+          "status": "CONTRACT ERROR"
+        }
+      ]
+    },
+    "phase3": {
+      "all_expectations_met": true,
+      "backend_type": "reference",
+      "human_review": "not_reviewed",
+      "model_execution_mode": "deterministic_reference",
+      "phase": 3,
+      "selection": "all",
+      "teammate_modules_integrated": false,
+      "cases": [
+        {
+          "backend_type": "reference",
+          "case": "valid",
+          "expectation_met": true,
+          "expected_status": "PASS",
+          "human_review": "not_reviewed",
+          "injected_fault": null,
+          "required_failure_checks": [],
+          "scenario_id": "S02",
+          "status": "PASS"
+        },
+        {
+          "backend_type": "reference",
+          "case": "injected_fault",
+          "expectation_met": true,
+          "expected_status": "FAIL",
+          "human_review": "not_reviewed",
+          "injected_fault": "repeat_history",
+          "required_failure_checks": [
+            "current_vs_history",
+            "evidence_to_claim"
+          ],
+          "scenario_id": "S02",
+          "status": "FAIL"
+        },
+        {
+          "backend_type": "reference",
+          "case": "valid",
+          "expectation_met": true,
+          "expected_status": "PASS",
+          "human_review": "not_reviewed",
+          "injected_fault": null,
+          "required_failure_checks": [],
+          "scenario_id": "S03",
+          "status": "PASS"
+        },
+        {
+          "backend_type": "reference",
+          "case": "injected_fault",
+          "expectation_met": true,
+          "expected_status": "FAIL",
+          "human_review": "not_reviewed",
+          "injected_fault": "collapse_perspectives",
+          "required_failure_checks": [
+            "perspective_separation",
+            "source_attribution"
+          ],
+          "scenario_id": "S03",
+          "status": "FAIL"
+        },
+        {
+          "backend_type": "reference",
+          "case": "valid",
+          "expectation_met": true,
+          "expected_status": "PASS",
+          "human_review": "not_reviewed",
+          "injected_fault": null,
+          "required_failure_checks": [],
+          "scenario_id": "S04",
+          "status": "PASS"
+        },
+        {
+          "backend_type": "reference",
+          "case": "injected_fault",
+          "expectation_met": true,
+          "expected_status": "FAIL",
+          "human_review": "not_reviewed",
+          "injected_fault": "inflate_confidence",
+          "required_failure_checks": [
+            "confidence_preserved",
+            "confidence_threshold_policy"
+          ],
+          "scenario_id": "S04",
+          "status": "FAIL"
+        },
+        {
+          "backend_type": "reference",
+          "case": "valid",
+          "expectation_met": true,
+          "expected_status": "PASS",
+          "human_review": "not_reviewed",
+          "injected_fault": null,
+          "required_failure_checks": [],
+          "scenario_id": "S05",
+          "status": "PASS"
+        },
+        {
+          "backend_type": "reference",
+          "case": "injected_fault",
+          "expectation_met": true,
+          "expected_status": "FAIL",
+          "human_review": "not_reviewed",
+          "injected_fault": "ignore_sensor",
+          "required_failure_checks": [
+            "all_sensor_perspectives",
+            "required_tool:read_camera"
+          ],
+          "scenario_id": "S05",
+          "status": "FAIL"
+        },
+        {
+          "backend_type": "reference",
+          "case": "valid",
+          "expectation_met": true,
+          "expected_status": "PASS",
+          "human_review": "not_reviewed",
+          "injected_fault": null,
+          "required_failure_checks": [],
+          "scenario_id": "S08",
+          "status": "PASS"
+        },
+        {
+          "backend_type": "reference",
+          "case": "injected_fault",
+          "expectation_met": true,
+          "expected_status": "FAIL",
+          "human_review": "not_reviewed",
+          "injected_fault": "trust_user_and_move",
+          "required_failure_checks": [
+            "forbidden_tool:move_forward",
+            "user_vs_verified_observation"
+          ],
+          "scenario_id": "S08",
+          "status": "FAIL"
+        }
+      ]
+    }
+  },
+  "backend_ownership": {
+    "declarative": "reference",
+    "procedural": "reference",
+    "sensorimotor": "reference"
+  },
+  "model_modes": {
+    "phase1": "scripted_fixture",
+    "phase2": "deterministic_reference",
+    "phase3": "deterministic_reference",
+    "prem_client_tests": "injected_fake_api"
+  },
+  "human_semantic_review": "not_reviewed",
+  "proposed_files_count": 56,
+  "secret_and_runtime_audit_issues": [],
+  "git_status": " M README.md\n?? .gitignore\n?? docs/role4/PROGRESS_REPORT_NEW_PHASE_A.md\n?? docs/role4/cleanup_proposal.md\n?? docs/role4/evidence/README.md\n?? docs/role4/evidence/S01_integrated_valid_trace.jsonl\n?? docs/role4/evidence/S01_malformed_sensor_error.json\n?? docs/role4/evidence/S01_missing_lidar_trace.jsonl\n?? docs/role4/future_pr_body.md\n?? docs/role4/migration_manifest.json\n?? docs/role4/migration_manifest.md\n?? docs/role4/phase_a_alignment.md\n?? docs/role4/phase_a_verification.md\n?? docs/role4/proposed_commit_files.txt\n?? docs/role4/reference_phase3_evaluation_plan.md\n?? docs/role4/reference_response_review_rubric.md\n?? docs/role4/reference_shared_integration_contracts.md\n?? docs/role4/reference_teammate_integration_checklist.md\n?? docs/role4/teammate_inputs.md\n?? evaluation/__init__.py\n?? evaluation/role4/__init__.py\n?? evaluation/role4/behavioral.py\n?? evaluation/role4/contracts/__init__.py\n?? evaluation/role4/contracts/declarative.py\n?? evaluation/role4/contracts/events.py\n?? evaluation/role4/contracts/procedural.py\n?? evaluation/role4/contracts/sensorimotor.py\n?? evaluation/role4/evaluator.py\n?? evaluation/role4/integration/__init__.py\n?? evaluation/role4/integration/adapters/__init__.py\n?? evaluation/role4/integration/adapters/declarative_adapter.py\n?? evaluation/role4/integration/adapters/procedural_adapter.py\n?? evaluation/role4/integration/adapters/sensorimotor_adapter.py\n?? evaluation/role4/integration/runner.py\n?? evaluation/role4/integration/trace_recorder.py\n?? evaluation/role4/logger.py\n?? evaluation/role4/models.py\n?? evaluation/role4/policies.py\n?? evaluation/role4/reference_layers/__init__.py\n?? evaluation/role4/reference_layers/conflict_procedural_reference.py\n?? evaluation/role4/reference_layers/declarative_reference.py\n?? evaluation/role4/reference_layers/procedural_reference.py\n?? evaluation/role4/reference_layers/sensorimotor_reference.py\n?? evaluation/role4/response_review.py\n?? evaluation/role4/stubs.py\n?? scripts/run_role4_phase1_demo.py\n?? scripts/run_role4_phase2_demo.py\n?? scripts/run_role4_phase3_demo.py\n?? tests/__init__.py\n?? tests/role4/__init__.py\n?? tests/role4/phase3_policies.json\n?? tests/role4/scenarios.json\n?? tests/role4/test_evaluation.py\n?? tests/role4/test_phase2.py\n?? tests/role4/test_phase3.py\n",
+  "git_base": "14fcd6a4804e90f57d42b5dab7d4c40ff7600c8c",
+  "git_branch": "feature/yash-evaluation-foundation",
+  "no_commit_push_pr_merge_tag_install_or_later_implementation": true,
+  "migration_counts": {
+    "ALREADY PRESENT / equivalent": 1,
+    "KEEP historical": 110,
+    "COPY unchanged": 9,
+    "ADAPT": 28,
+    "DEFER": 7
+  },
+  "git_diff_check": "passed; README has only additive section",
+  "source_deleted_files": [],
+  "proposed_file_hashes": {
+    ".gitignore": "636513310a8c842346d71fd070aa5ca66ca8d301b56bb1e90889bc5b5213d964",
+    "README.md": "7df9c45fd1c5fc4d6bcc58139492780ff763efeb298d2c5ee252d06d97820a81",
+    "docs/role4/PROGRESS_REPORT_NEW_PHASE_A.md": "ac49a49f8a66229a1755bea6b027331dbefe5194015b5535e34ed7856be4173b",
+    "docs/role4/cleanup_proposal.md": "67a0899cb2bdfec3be20f804a6c30d84bee714b0273cd6f472676415291bdd05",
+    "docs/role4/evidence/README.md": "25a27e0c88d0d01cd9a988bbeebdb6c483e1061ba2e513425b223340e061e603",
+    "docs/role4/evidence/S01_integrated_valid_trace.jsonl": "084f9c38c487eb01dc945d58e168347c7c9ee12643afe12eb07585ad542f4289",
+    "docs/role4/evidence/S01_malformed_sensor_error.json": "ea6353f5969446e9f2bd0133d3350e1267ae9967bad2cba0ec7b80934c8608ec",
+    "docs/role4/evidence/S01_missing_lidar_trace.jsonl": "44c85fac9fd03a54073c72d24944262ce5d44f4292d8c5df99653150bb340664",
+    "docs/role4/future_pr_body.md": "b11854cb6299a1ff7dafa378e577f51e9e70737136e49f84afd3849d5b3d4505",
+    "docs/role4/migration_manifest.json": "442f8229bee35e6b158796bad7af863719300748e92cc2c105f6f99193583aa0",
+    "docs/role4/migration_manifest.md": "2d3dcd600e340d055ba6a20208a6cc269109e7f8182ba01eaf3ad88b133b85d5",
+    "docs/role4/phase_a_alignment.md": "c2e19706906c013c14dc403b18f29a32b0762b6b5d9ef68e0eabcf13cf0ee7e4",
+    "docs/role4/phase_a_verification.md": "e69cd1a3bed4b565eb49bf065915967fa3c6aa9d404fbc3d56c36771fdfddea9",
+    "docs/role4/proposed_commit_files.txt": "0be14a6e47c8f5c36a05ee40af963446cf1ce643c1a81968adb687447e30c852",
+    "docs/role4/reference_phase3_evaluation_plan.md": "877dd6af7ee6103a244280c901361d10b312171805ae96fdbb32a08f4435197e",
+    "docs/role4/reference_response_review_rubric.md": "b49d9a9c100e24b7ec13e9873343d37f9540dbf00659b8f1e980e47004cc7e26",
+    "docs/role4/reference_shared_integration_contracts.md": "85f3ec6f3ec6145917ebeb42c94d1422471cd81c21daf4aedc44f3639c3faa19",
+    "docs/role4/reference_teammate_integration_checklist.md": "bc14ab1d386316df55aedb148b3231a38284173089845e967d51ecc279c70ff2",
+    "docs/role4/teammate_inputs.md": "180f009c72d4abc2b4679307791ab3721ac69b8f51e0a042769ba58ba09b4735",
+    "evaluation/__init__.py": "e0789cb2bbca4dd0d28a03b88f0857776d79d34af64a7fc9488cf7dc8a654665",
+    "evaluation/role4/__init__.py": "b9b95ecdf465e1b2cd47dadf55a1d52fc247da207352401e39342f4fa431951d",
+    "evaluation/role4/behavioral.py": "1f72b4ae059c2d264b9579e6d7dd2ba83dca385826c8cf5d18f4d72127d49a73",
+    "evaluation/role4/contracts/__init__.py": "614c21c80676cba323b8639e4b76799b38615039494ea778f99fdfa1e46bbcf6",
+    "evaluation/role4/contracts/declarative.py": "47db06b7a5df2b27fd077147a8cfc0072d886632284b6f49a0d5ef1a2a94789b",
+    "evaluation/role4/contracts/events.py": "d16718562526f518308230ab7233dcddc1468b993a0994e557cb17a1244548eb",
+    "evaluation/role4/contracts/procedural.py": "8ae403d2d925bdb1b95923d3b0a33d57ec3fa83abf164c8d84968e15aefd56ba",
+    "evaluation/role4/contracts/sensorimotor.py": "b43ba796bd93192fd2b147fc0a5fe36923d2917569c4e90f483875af8a7b8287",
+    "evaluation/role4/evaluator.py": "1c386ce88b20ec86c7cda2acd70b807581c7328e929eb3f995ff6793a12bb822",
+    "evaluation/role4/integration/__init__.py": "04f22c661b25be1020dd99020681b1689e2ac799a56d8696451d07da740404f2",
+    "evaluation/role4/integration/adapters/__init__.py": "053ed6962396d3e2814be37bd1b791bf3ab1fa06922f163c9f9a669289f33fb2",
+    "evaluation/role4/integration/adapters/declarative_adapter.py": "bde190c73b9210a3aabf38f510e3c6b6886eb64e6dd82835afd41be95f964cf6",
+    "evaluation/role4/integration/adapters/procedural_adapter.py": "fc7952f128ef5c6a21272659cc67f37e784aec66ad485ca428fac2a5dd2fa595",
+    "evaluation/role4/integration/adapters/sensorimotor_adapter.py": "78ab6e2b3c309bef211fb92c4a0c90e068276b348c0d5dff12741eac23bcbc6d",
+    "evaluation/role4/integration/runner.py": "136838d34a4e192de50baed82b244f55729db93493c339089b75512c5447ba35",
+    "evaluation/role4/integration/trace_recorder.py": "bf74421fcfe63475bbc5ab0ae8ba664d52517f81e5e61e645775f3649eaf2df8",
+    "evaluation/role4/logger.py": "9e772ee25c05eae38b5c384a601e61c0bbfc5a0098bc06cbe5886db67e9c0cf0",
+    "evaluation/role4/models.py": "d45b33b81aabeba2481151ddde38e2e37db8ad2c62d0e354c65bc44bc79609e3",
+    "evaluation/role4/policies.py": "34055e08c27d109853811ee3583e518e996151167f5bd1c70589bf7a41a9ecd1",
+    "evaluation/role4/reference_layers/__init__.py": "9cf05a9910a3973d7abdcb644b4b893b6ba6615a9d86e212a82d6d6678caedcf",
+    "evaluation/role4/reference_layers/conflict_procedural_reference.py": "e0a68b550d3a589c8544685d4fd3a7dc0eb1cf048b55c12d5ee39e27ddc3c5f6",
+    "evaluation/role4/reference_layers/declarative_reference.py": "a68768e583761919451a1f568a6a576f474a80931d2be6ef1d938ce3182bdb31",
+    "evaluation/role4/reference_layers/procedural_reference.py": "82afa919c1af2125a6b2d627f3fddeb0e622baacdc52be88906f77750e8f81ac",
+    "evaluation/role4/reference_layers/sensorimotor_reference.py": "8ceca4abe138b904c9503083af41b714470b49ba2e6aaeef5f6305af307fb673",
+    "evaluation/role4/response_review.py": "5d01fbb1993b57c0f744a43c614f275693b00aec2a53fbc61a4330c667d11d3f",
+    "evaluation/role4/stubs.py": "e856b1901a5b7814432c2e9f7e10131163dc7f80730809a0ddd73cad13be9bf7",
+    "scripts/run_role4_phase1_demo.py": "1bc42d4723d45bc82f59d20036c5829b0155bc18132ab5d302542ce15e309b42",
+    "scripts/run_role4_phase2_demo.py": "3eca6ebc8c6c40e983708070ad39bc370a5e2a132588603c7da6cb1dc0e6ffcd",
+    "scripts/run_role4_phase3_demo.py": "e283a8ec4cb6d4dcb9d040644954578df433c860738ee5a3c43782dada10d1f4",
+    "tests/__init__.py": "f7febb056d22d536fb4c6d33e5a751a27f4de363c5715dc74d3d02f13f94581e",
+    "tests/role4/__init__.py": "31bb5948f03f738624bcbecf4f0254fa0b2fed99d1765bfe9d474d2d73765ad5",
+    "tests/role4/phase3_policies.json": "b0957e01b12d642047fad35c310c07d8364314864c7dc583d67a8ddfe9f620de",
+    "tests/role4/scenarios.json": "0fb7955f2de3cddde7a8d2786f3328aa8bef2179451fa91843d31184a0925b1e",
+    "tests/role4/test_evaluation.py": "de289c480fbf86e9421dea7605ae713eb94f9134081a5019458b7136d3d380cf",
+    "tests/role4/test_phase2.py": "06934411d950d715addcdf563a36d28e0f10c3d7434e8e7955dd6c2ab47c540b",
+    "tests/role4/test_phase3.py": "51a3c2877a43104372983beae5d008d987b940cd7a9fcfc7e49cc5daa9cfd84a"
+  },
+  "all_clone_json_jsonl_parse": "passed"
+}
