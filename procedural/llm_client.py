@@ -1,4 +1,4 @@
-"""LLM client: thin wrapper over a hosted OpenAI-compatible chat API (default Groq, 8B).
+"""LLM client: thin wrapper over a hosted OpenAI-compatible chat API.
 
 The agent only sees `LLMBackend.chat`, so the scripted fake LLM and a future local
 model plug in without touching the loop. Temperature defaults to 0 (Guidelines 6).
@@ -15,7 +15,7 @@ from typing import Any, Optional, Protocol
 logger = logging.getLogger(__name__)
 
 DEFAULT_BASE_URL = "https://api.groq.com/openai/v1"
-DEFAULT_MODEL = "openai/gpt-oss-20b"  # Groq retired llama-3.1-8b-instant (Aug 2026)
+DEFAULT_MODEL = "openai/gpt-oss-20b" 
 
 
 class LLMClientError(RuntimeError):
@@ -65,7 +65,7 @@ class LLMClient:
         base_url: Optional[str] = None,
         api_key: Optional[str] = None,
         temperature: float = 0.0,
-        max_tokens: int = 1024,  # gpt-oss spends tokens on hidden reasoning first
+        max_tokens: int = 1024,  
         timeout: float = 30.0,
         client: Any = None,
     ) -> None:

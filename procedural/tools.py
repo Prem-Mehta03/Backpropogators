@@ -48,13 +48,14 @@ def error_result(tool: str, code: str, message: str, retryable: bool = False) ->
     Output: envelope dict with ok=false. Raises pydantic ValidationError on an unknown code.
     """
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    return ToolResult(
-        tool=tool,
-        ok=False,
-        data=None,
-        error={"code": code, "message": message, "retryable": retryable},
-        timestamp=now,
-    ).model_dump()
+    envelope = {
+        "tool": tool,
+        "ok": False,
+        "data": None,
+        "error": {"code": code, "message": message, "retryable": retryable},
+        "timestamp": now,
+    }
+    return ToolResult.model_validate(envelope).model_dump()
 
 
 def _validate_read_lidar(args: dict[str, Any]) -> str:
