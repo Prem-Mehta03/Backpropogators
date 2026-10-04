@@ -1,0 +1,30 @@
+{
+  "name": "scenario_b",
+  "description": "Three perspectives. A box sits ahead under yellow light, so the camera reports brown. ASSUMPTION (Asvin, not from the docs): the box's true colour is red; change true_color if the team decides otherwise. The user's 'red' and the historical 'blue' beliefs are declarative-layer seeds, not part of the world.",
+  "seed": 42,
+  "start_time": "2026-10-03T09:16:00Z",
+  "tick_seconds": 1,
+  "collision_margin_cm": 1,
+  "max_move_cm": 500,
+  "robot": { "x": 0, "y": 0, "heading_deg": 0 },
+  "lighting": { "name": "yellow", "color_shift": { "red": "brown" } },
+  "obstacles": [],
+  "objects": [
+    { "object_id": "box_01", "x": 80, "y": 20, "true_color": "red" }
+  ],
+  "sensors": {
+    "lidar": [
+      {
+        "name": "lidar_front",
+        "direction": "front",
+        "max_range_cm": 400,
+        "blocked_threshold_cm": 30,
+        "confidence": 0.98,
+        "noise_std_cm": 0
+      }
+    ],
+    "camera": { "name": "camera_front", "fov_deg": 60, "max_range_cm": 300, "confidence": 0.9 },
+    "position": { "name": "position", "confidence": 1.0 }
+  },
+  "events": []
+}
