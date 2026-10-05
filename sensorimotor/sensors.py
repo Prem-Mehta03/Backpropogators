@@ -7,9 +7,9 @@ Two levels:
     (``read_lidar``, ``read_camera``, ``get_position``). Each returns a
     ToolResult envelope built in ``_boundary`` and never raises.
 
-Open item (placeholder): the contract does not say which ``status`` a camera
-reading carries. CAMERA_OBSERVED_STATUS / CAMERA_NOT_SEEN_STATUS below are my
-draft choice; confirm with Vyom.
+Decided default: the contract does not say which ``status`` a camera reading
+carries, so CAMERA_OBSERVED_STATUS / CAMERA_NOT_SEEN_STATUS below are my
+choice (see the Interface Guide, section 7).
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from . import _boundary as bd
 from .config import CameraConfig, LidarConfig, LightingConfig
 from .mock_env import MockEnvironment
 
-CAMERA_OBSERVED_STATUS = "clear"  # TODO(contract): confirm camera status values
+CAMERA_OBSERVED_STATUS = "clear"
 CAMERA_NOT_SEEN_STATUS = "unknown"
 DIRECTION_OFFSETS: dict[str, float] = {
     "front": 0.0,

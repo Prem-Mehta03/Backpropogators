@@ -247,8 +247,8 @@ def test_registry_exposes_all_tools_returning_dicts():
 
 
 def test_boundary_unknown_error_code_becomes_internal():
-    res = bd.failure("t", "MADE_UP", "nope", False, "2026-10-03T09:00:00Z")  # model-level helper
-    assert res.error.code == "INTERNAL"
+    res = bd.failure("t", "MADE_UP", "nope", False, "2026-10-03T09:00:00Z")
+    assert res["error"]["code"] == "INTERNAL"
 
 
 # -------------------------------------------------------------------- adapter

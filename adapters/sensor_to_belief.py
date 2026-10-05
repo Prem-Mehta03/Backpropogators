@@ -1,7 +1,7 @@
 """Sensor-to-belief adapter: the one place a reading becomes belief evidence.
 
-SKELETON WITH PLACEHOLDERS. Everything that depends on Vyom or Prem is marked
-``TODO(confirm)``. This module never touches the belief store: it only turns a
+Defaults chosen by Asvin where the Guidelines were silent (see the Interface
+Guide). This module never touches the belief store: it only turns a
 sensor reading into the arguments that ``update_belief`` expects
 (Guidelines 4.5: subject, predicate, object, source, confidence, perspective,
 reason). Prem's tool layer decides what to do with the result.
@@ -15,16 +15,15 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Any
 
-# --- placeholders awaiting confirmation --------------------------------------
-# TODO(confirm, Vyom/Yash): which subject a LiDAR reading describes. The
-# Guidelines' example belief is path_A / status; Scenario A's map belief is
-# assumed to use the same pair so the two can conflict.
+# --- decided defaults (see the Sensorimotor Interface Guide, section 7) ----
+# A LiDAR reading is evidence about path_A / status, so Scenario A's sensor
+# evidence can conflict with the map belief. Change here if the team seeds a
+# different subject.
 LIDAR_SUBJECT = "path_A"
 LIDAR_PREDICATE = "status"
 CAMERA_PREDICATE = "color"
 PERSPECTIVE = "agent_sensor"
-# TODO(confirm, Prem/Vyom): the return shape below (a dict of update_belief
-# arguments) and who calls this function.
+# Return shape: BeliefEvidence, a dataclass holding the update_belief arguments.
 
 
 PERSPECTIVES = ("user", "agent_sensor", "historical", "third_party")

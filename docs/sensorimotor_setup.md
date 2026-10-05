@@ -40,7 +40,7 @@ Scenario files live in `sensorimotor/scenarios/*.json`.
 - Scenario B: the box's true colour is `red`; yellow light shifts red to brown.
 - LiDAR subject for the adapter: `path_A` / `status` (needs Vyom or Yash to confirm).
 
-## Local placeholder (do not commit)
+## Contracts
 
-`dev_shim/contracts_shim.py` stands in for Vyom's `contracts/` until it is on `main`.
-`sensorimotor/_boundary.py` is the only file that imports contract models.
+`sensorimotor/_boundary.py` is the only file that imports from Vyom's `contracts/` package.
+
