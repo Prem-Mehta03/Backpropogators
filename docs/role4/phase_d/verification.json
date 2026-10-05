@@ -1,0 +1,131 @@
+{
+  "branch": "feature/yash-evaluation-foundation",
+  "broken_new_markdown_links": [],
+  "credential_pattern_findings": [],
+  "cumulative_proposed_files": 103,
+  "deck": {
+    "embedded_notes_slides": 3,
+    "font": "Arial",
+    "layout_findings": 0,
+    "native_powerpoint_opened": false,
+    "native_table_slides": [
+      2
+    ],
+    "package_validation": "pass",
+    "path": "docs/role4/phase_d/role4_midproject_review.pptx",
+    "private_receipt": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\logs\\role4\\phase_d_build\\deck_20261003T143500833Z\\role4_midproject_review.pptx.validation.json",
+    "rendered_final_slides": 3,
+    "sha256": "b581b09174ba37634775e776b89b296075f2c7f1a3525cd0a026b707b8d211db",
+    "slides": 3,
+    "visually_inspected": true
+  },
+  "evidence_walkthrough_exit": 0,
+  "exact_five_review_texts_preserved": true,
+  "excluded_material_findings": [],
+  "final_deliverable_sha256": {
+    "docs/role4/PROGRESS_REPORT_NEW_PHASE_D.md": "95b7337ba1727218f5435270881fd6a657c2ab103df4792f55c67ba8de2866ca",
+    "docs/role4/phase_d/assembly_outline.md": "3fd75b8ec316e0698d7b3bd5b334163b1a19f8abbf4175fc56e2162c4d8f46eb",
+    "docs/role4/phase_d/build_role4_deck.mjs": "595b15696283e6b805763de701315bd6e75f82c5daddf825c1bf4d943fe1ebb4",
+    "docs/role4/phase_d/demo_runbook.md": "c0422c5c7589b63e60350ad99558f49fb6cf51cd3438b1d287ccd1129c9d3ff4",
+    "docs/role4/phase_d/evidence_summary.json": "ea1a1baedcc8d416829481d7b0932a0acef035ae2f9ad7a896c6f1d906e54318",
+    "docs/role4/phase_d/human_review_packet.md": "0163f8fae49c1b29f47989a342728e4f4fe3577cc28d369376c48cf9fb4eca97",
+    "docs/role4/phase_d/keywords_and_questions.md": "7b6f375491a99dc7b92a3b1858ed9d44db913976210a155f1df1023f8d02e3ab",
+    "docs/role4/phase_d/pr_body.md": "950c697cac489547d6fa7ea9c1512f3fd5c4b85504ccb8de6931ea3a86ba09e7",
+    "docs/role4/phase_d/proposed_commit_message.txt": "118c8fc39a2d2a70feebd7741d333b911ddfef6eaa5b2ec9515f393b894cae3f",
+    "docs/role4/phase_d/publication_plan.md": "1ab0200577677de51fc7402e66354bd3502fad59f19ad3967e917c1b1e109086",
+    "docs/role4/phase_d/rehearsal_record.json": "0ba058d99a7c88f59a83186867ceda67b250875de77fc54ee44664795684a7b8",
+    "docs/role4/phase_d/role4_midproject_review.pptx": "b581b09174ba37634775e776b89b296075f2c7f1a3525cd0a026b707b8d211db",
+    "docs/role4/phase_d/show_rehearsal_evidence.ps1": "46da84a5cef87812768dfd30e44d3ae09f6939f11c5e30dc9db521b0a8fe5315",
+    "docs/role4/phase_d/slide_content_and_notes.md": "afe356f2af06053ebe7ec0070775829068372812319882a636009c0e05446a3d",
+    "docs/role4/phase_d/speaking_script.md": "986c499a6df3d54f0ff72709e70f24f72700e977be50b67e95b586b08ecb43f0",
+    "docs/role4/phase_d/teammate_decisions_unsent.md": "0b661544b4cb807d787cf2e838280fe70cbbc09e0563b7e8ca93267f645a8a16",
+    "docs/role4/proposed_commit_files_phase_d_cumulative.txt": "8a9f46d9f89aa2246293e776466c4f3b4ca0c2bf6acec1ce94a72531709298d3"
+  },
+  "final_document_counts": {
+    "cumulative": 103,
+    "new_phase_d": 18
+  },
+  "forbidden_actions_performed": [],
+  "full_discovery_collection_errors": 2,
+  "full_discovery_status": "BLOCKED",
+  "git_diff_check": {
+    "exit_code": 0,
+    "stderr": "warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it\n",
+    "stdout": ""
+  },
+  "head": "14fcd6a4804e90f57d42b5dab7d4c40ff7600c8c",
+  "historical_source_changes": [],
+  "historical_source_files_checked": 155,
+  "human_review": "not_reviewed",
+  "implementation_changed": false,
+  "implementation_tests_repeated": false,
+  "manifest_matches_actual_unpublished_files": true,
+  "new_file_count": 18,
+  "new_files": [
+    "docs/role4/PROGRESS_REPORT_NEW_PHASE_D.md",
+    "docs/role4/phase_d/assembly_outline.md",
+    "docs/role4/phase_d/build_role4_deck.mjs",
+    "docs/role4/phase_d/demo_runbook.md",
+    "docs/role4/phase_d/evidence_summary.json",
+    "docs/role4/phase_d/human_review_packet.md",
+    "docs/role4/phase_d/keywords_and_questions.md",
+    "docs/role4/phase_d/pr_body.md",
+    "docs/role4/phase_d/proposed_commit_message.txt",
+    "docs/role4/phase_d/publication_plan.md",
+    "docs/role4/phase_d/rehearsal_record.json",
+    "docs/role4/phase_d/role4_midproject_review.pptx",
+    "docs/role4/phase_d/show_rehearsal_evidence.ps1",
+    "docs/role4/phase_d/slide_content_and_notes.md",
+    "docs/role4/phase_d/speaking_script.md",
+    "docs/role4/phase_d/teammate_decisions_unsent.md",
+    "docs/role4/phase_d/verification.json",
+    "docs/role4/proposed_commit_files_phase_d_cumulative.txt"
+  ],
+  "parsed_json_files": [
+    "docs/role4/evidence/S01_malformed_sensor_error.json",
+    "docs/role4/migration_manifest.json",
+    "docs/role4/phase_a_verification.json",
+    "docs/role4/phase_b_baseline.json",
+    "docs/role4/phase_b_evidence/prem_client_result.json",
+    "docs/role4/phase_b_verification.json",
+    "docs/role4/phase_c_baseline.json",
+    "docs/role4/phase_c_verification.json",
+    "docs/role4/phase_d/evidence_summary.json",
+    "docs/role4/phase_d/rehearsal_record.json",
+    "docs/role4/phase_d/verification.json",
+    "tests/role4/phase3_policies.json",
+    "tests/role4/scenarios.json"
+  ],
+  "peer_review": "pending",
+  "phase": "D",
+  "prepared_at_utc": "2026-10-03T14:45:19.213376+00:00",
+  "prior_clone_changes": [],
+  "prior_clone_files_checked": 373,
+  "rehearsal_id": "20261003T142552617320Z",
+  "rehearsal_modes": [
+    {
+      "exit_code": 0,
+      "mode": "all",
+      "wall_seconds": 0.265
+    },
+    {
+      "exit_code": 0,
+      "mode": "S03",
+      "wall_seconds": 0.153
+    },
+    {
+      "exit_code": 0,
+      "mode": "S07",
+      "wall_seconds": 0.146
+    }
+  ],
+  "scheduled_october_5_review_occurred": false,
+  "scheduled_october_6_presentation_occurred": false,
+  "test_counts_source": "Phase C verification",
+  "test_methods": {
+    "available": 177,
+    "role4": 167,
+    "teammate": 10
+  },
+  "walkthrough_wall_seconds": 0.458
+}

@@ -1,0 +1,1247 @@
+{
+  "source_root": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\I_Agent_Project",
+  "destination_root": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators",
+  "scope": "New Phase A; Phase 1-3 execution only",
+  "files": [
+    {
+      "source": ".gitignore",
+      "classification": "ALREADY PRESENT / equivalent",
+      "destination": ".gitignore",
+      "reason": "Equivalent secret/cache ignore rules created from team conventions, with new generated logs excluded; source file not copied.",
+      "source_sha256_before_baseline": "C93E612ADE9CE26515CDB8ADB3294D233369F3643CD52F9D2CF8BD547CF47E49",
+      "destination_sha256": "636513310A8C842346D71FD070AA5CA66CA8D301B56BB1E90889BC5B5213D964"
+    },
+    {
+      "source": "PROGRESS_REPORT_PHASE_1.md",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "CF8E0F7F6FDD1A4D9E727A057942166933ECF458189FF8DF9D98895416447FF5",
+      "destination_sha256": null
+    },
+    {
+      "source": "PROGRESS_REPORT_PHASE_2.md",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "D9BD372A261AA3750DBE2F82202FE2D59587457BA7FACA48B1509E3BFC89A959",
+      "destination_sha256": null
+    },
+    {
+      "source": "PROGRESS_REPORT_PHASE_3.md",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "CD7E7C507BBA4E67D6DA53C1C3D261E4C0EDCCBDBC4D78E1DE72ECB3D454784A",
+      "destination_sha256": null
+    },
+    {
+      "source": "PROGRESS_REPORT_PHASE_4.md",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "7CAD2DFA581434880753052597214CFD8C1594E30C5FF15973AF78C29D90B74B",
+      "destination_sha256": null
+    },
+    {
+      "source": "README.md",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "71C52D3385241FB86C047368494D50DFC52F87B5F0FC43A8B5E6E8DABD4E8F1E",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase1/S01_invalid_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "BB27238AA63A09DB2B921417EEF680BD0BCDDA5526F2DB81E6A83A8DECF3B865",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase1/S01_invalid_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "D12688198BF7446425E7F06F79AD97F20E8F06E832081594222562CD50A1CB72",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase1/S01_invalid.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "A0B2086314F2352F3A431568DB4A0D3BAE2AC88E613ECAED395E768FB729ABAB",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase1/S01_valid_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "9213B1613509A3C0F7981B7F7904B99E00C1C3FB1DE15E07A5A29D7713B55A79",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase1/S01_valid_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "309FA93B22EAF3120C036C06C749B9FC9EBC07072056B9769FBAF86D4BE6FBEC",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase1/S01_valid.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "2FE75C4BB2C31FF7061E9A32DE9F2B008CF0BE99878896EBDE198BE747C447F6",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase1/summary.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "46C897A73977C590253E11E9D7C39D7A475F99B02741CED3E40B93E577FBFB41",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase2/S01_integrated_valid_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "4C56C069D87DB78535A9CEAAD5880D97E3B410CDE479E1051F92C9F1C36D4B67",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase2/S01_integrated_valid_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "7A51B9CF6B2446D68DD0AC66998726A9AFE4860877E076738FF93680B2377F48",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase2/S01_integrated_valid_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "55460DAADCEFAB6870F7F2BFB9653F4FA78F113CD3AC9ACE3722E2C97F677235",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase2/S01_malformed_sensor_error.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "01A326153C32284FEE0328FEB5385DBFC6653297AF7F62BA33DC8D6F46AE1C58",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase2/S01_malformed_sensor_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "C86E2D50A78A97F8A9F2969CD54723802A219CAD02A833B89C3155A27869FF0A",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase2/S01_missing_lidar_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "5F34521EA1054E9046769E809E9BD827BC7FCF050293D776A1E52796C4A9AB2E",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase2/S01_missing_lidar_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "2AE71C19953504AC17D1115ACE0BE0288E3B174C67735573C02F1E73DE8EA297",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase2/S01_missing_lidar_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "92C2E4E9105FAFB776E073D1B22F704CCFFCCC134405CFC55C05F5449EF9ADA2",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase2/summary.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "B3516E848CB6D5B0BB1DE1D6F57E1BB21A70E9D227CB2F20EFD66B25C40CF5FC",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/baseline.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "81F007991DBB0C9644960EE156A1EEB91D30945D30AB51749A66743B1091EAFA",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S02_injected_fault_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "29970E959C54560B02F7125FE6B9360F05DFD6FC98565EC2A034E978A2BA26A6",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S02_injected_fault_review.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "8E6A80531011B1E991D936BDF678E31E57AC19850927A2266D749ACB211EDB8C",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S02_injected_fault_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "68C225258718B982D78AEBB2DC315FAF51878D74BC3CE0C26D26333592370485",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S02_injected_fault_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "FDB0F9BD9519D3D5FF9CC9BF9AF4DE9DADF5A43794B4937AB677AA54C4298B4E",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S02_valid_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "69A9548325B31B1280BEC76B5ECA5B7D53D8A3EBFD114F9DA5A06B6542B4B729",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S02_valid_review.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "AB96C9E28566D583FD19B4F82CD6523CE69E65D33CA3CCA12A187CF3F454155D",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S02_valid_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "B5E67AF8D1B4D4344FAD8EDE4C400859A0C1E6BC77542C85B9ED5F69B120CC5A",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S02_valid_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "92D647BE3F5E268F4AAFE085A5BA5FE66B8EC960126936AB28C301558CB1AFCA",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S03_injected_fault_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "D1B65328D9A9D55A59E2902614E915A7F8B9FC81F86D2F6031CC6032D8EC135E",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S03_injected_fault_review.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "13150139EFE4DF744EC46E2BCC143AF96907411FDC18161EE6A10B0CB178BC7E",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S03_injected_fault_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "D64EA741D48BBBE63EF3927421FD3C9AB572E3A0327D6700BF3F8ECC0F62FCC3",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S03_injected_fault_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "F688E2444274268C881B9BB712104135BA52E997B89FA81145FEFB2EE0CC8E3D",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S03_valid_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "8DC6DDE9FD8F0707169ABFBB197FF83619A71F26283A14399C919B4508197F43",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S03_valid_review.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "D98A47DA664A21F092F6AA74D94328CDB9DD30488E38BF1DBA6E7FFC7C5DA6BA",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S03_valid_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "F2A0FAF716E5803FEB41FE35EBCE99C5C8E11C6E578A4C2E325A582248BCE561",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S03_valid_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "5B147D9D9CA0911BA1428D783621E4228247B5FA7423F2022DCB52906159E749",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S04_injected_fault_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "73764CBCC097895136D715AFF0BF91EB293772AA9FC49A529BD3D689A35576B7",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S04_injected_fault_review.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "A26DFBE7A42CB06894804C920ACC557193F82CCDB4F645FD6C490C1CCD5CDEDD",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S04_injected_fault_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "20F60B175791E152F32F5E151311916E55E3EB8265400E697C6301F08A8FECF3",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S04_injected_fault_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "9377D62E1320785EC3AD7F860F678AAFCE549CDCD66C2FD893EFB6B234D69508",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S04_valid_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "49339F3BE84948D827D339AF8CBF2C4E66D3D9940C18B49433773A1DBE57EB9E",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S04_valid_review.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "A00FF382796403A8210485D62321B83ABF3F28EC1BD2EB8AB48CC0FB87E34C89",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S04_valid_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "417B8CDA54BE7D8D10D81FADFE1D443CE9B8F03A11F09F2155C2A5A460E41E81",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S04_valid_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "1607B89BAB39702078850C42EF5BC301A5FD961F0442A3A46A10226CC0FFD993",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S05_injected_fault_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "B197D7D2370E9931099EDF890392A8460C1E8A3CB3D7AB833FBB13915305A313",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S05_injected_fault_review.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "BD9635331CEC3E93536C9F1BA791E79DF1958FCA554DE03F33FEF3F80FE04D1B",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S05_injected_fault_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "A135689EECB754837048D4C67B6E15674CCB58CA42551FF7ECBF356E210CC44D",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S05_injected_fault_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "B89805CA305974EDD3E0F543921BC4DBAA6581F41DE1A7CF37CCBB4453BE3001",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S05_valid_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "D3A880FE3BA85CD0B47D2A29CEAAF2C22E5DA4A54ED5AED3A83684F81F81834A",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S05_valid_review.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "A1B8BB3E23788CD371A63F0E0262106D04CF74A9A5FD328313A8B8BDBA031689",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S05_valid_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "0615BED5E1247562E8546C5604839449E4B580D1B406BD1C0D1335E19DC4ECD8",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S05_valid_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "14988154DB455EB8A85F7E3286B6BDDCEA707196B2ABC5CE368A08A162BA0FEC",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S08_injected_fault_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "E2E0577D40D5D3163881A8080DFD5CF875527BA70B37FC48DBDFA9828E49C198",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S08_injected_fault_review.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "AFCC2D709338BE44FBB00291EA94BDB00D674054D4CFACF3084D4F8C49BFC4F8",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S08_injected_fault_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "C2FCACA27C895C7FA7C227377C293A874CADA7CA1DA4B36DEA240CDCB4B90AF0",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S08_injected_fault_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "A6B8DBE50B1999EBCC1B229D6599DE2CE2C384B83A78CCBDEB981825DED9BC2A",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S08_valid_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "36B7DFDADA20CA755AB3432AC01CBE7701BFC9C34566A97FC5B88EA75FE2DF32",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S08_valid_review.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "5647093A76BFAD20BC8C975D635CB624BBDB315C3F4D7A125CCC57CD9E65A931",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S08_valid_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "612089A1DEC44708E17DC6A275F6E7DE094B47787FD8C149478E21AB93CF47AD",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/S08_valid_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "36E6CAA216B967CB55FA03B9BD5619B5168A8571DC0059FE6315007A19028882",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/summary.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "5545E0BCA5B428DFA67CA082B7429CFA0BBF15FF95376B3E8F67EA4D68968DE3",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase3/verification_results.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "955E709DFCC0B32C45A8630AD987C5367E9DD18B18176DAA2B495B25BB211C5D",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/baseline.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "9664527D60AE399B6806681D5D6AAF69DCA0CF868572D89EA1535FD6225C4E03",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S06_injected_fault_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "8D79464CAEB66CBAB33C02F58428AAE4D3562C8BE9A0CFF95F5A09BC838E2562",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S06_injected_fault_review.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "CFB492FDF1FF7DD7806FCD1EB5CFD3F1EE8C65091E507D0C7484021F25785E0F",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S06_injected_fault_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "748DC1D2C93313E507E2C68B8C7E92330653E8448CC9021DBA285EAD5512BAAE",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S06_injected_fault_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "47A4D28BDC23C4507153E16E2B7D9EB4D2ACABAF85EFA38B35D7DA50EED7E989",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S06_valid_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "C0BA8306B2F94B73AC155E722E82257A647234F9D51A2DE2AA1C27F338BD9413",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S06_valid_review.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "2B5D4321D0A6FE8B5BDF43EA59D21C561D7EC5726D0D1EAB52176DF27584A195",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S06_valid_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "F45AD3E51BBEBA0C6CD4B7AAE6F4787987F42EF9616D0673C53515B130CBF4D1",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S06_valid_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "03963EB135D8F6F2794AFA67ECC5BEC601C7B1F9698D3996A38763FD53741E23",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S07_injected_fault_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "AAA145D4256AAEE019BAC729EEFE351AC4218BD67EA1B86028D83CEE3B343607",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S07_injected_fault_review.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "063BDFB958A28BE0C1CA91D86413B433CC1F282DCA7EA6D24EFFE51911132A20",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S07_injected_fault_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "72F35B5CEE7F31961F45C30E273F9C9A2D07CAC1A7ED6546EC21E76060743B01",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S07_injected_fault_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "B5D0BAFC3992D6A97B0644EA62BC63FB4D9829A674B1BB8BF4CB0D4F9727D719",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S07_valid_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "A5A27FAA1752B3185A938683E0E5575C8099831FD866926C92A72C0FC250CCF3",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S07_valid_review.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "C006CBD1E786B9C1E7828AC6EBAC97562BD4160054163CFD48739E9FDBF910CA",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S07_valid_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "8368C705D50906FBFAA87D72D65AAC540E3A046F2A65E97696FBF881D1D156FC",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S07_valid_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "B7BB5F98AB7BD1A134195A5B5C36B02119D929BBB2ADA2D67CA36498714CB8D6",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S09_injected_fault_quarantine.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "8EDDBF12A1489B38AF79C3320C8B35976162EAAD645FAE25AC26815570229ED7",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S09_injected_fault_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "8C4FCF6517513E67A5DC04F6F5AB93D5A0D4B83CAF196D713D067B88912732AA",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S09_injected_fault_review.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "39AD9DF76A2D77732F30C53322497B012F15736C8EE7B574ED8DBA847966AA85",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S09_injected_fault_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "0C3237BB527B45A0ED8E8571CFCA0320E08E9EC53A53DB14BD2937C603ED1402",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S09_injected_fault_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "FAEDB46385845FFF28BCDBFD7B31D9E970675557D8FFC45910606A61185DCA9B",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S09_malformed_provenance_error.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "E34ADB8493F4B41B44F2736963D68E298D293A5CDD1273BFB2A3F65B54B38BE7",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S09_malformed_provenance_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "0A184947F542537E7B7DCAECA2D8AEC4D4C7BAF4A45FD2C086BB869CED09EF6F",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S09_valid_quarantine.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "4CCAD4BE62CAD1BD994ACE3B2D55F15B4248AE6F1A9659AB5AC2BCAAF2E74646",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S09_valid_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "713AC676E0BE370EA7F3B2024A8BCF60ADD5E2FB72EFEDF3F6168FA4510E7482",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S09_valid_review.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "2C5954A1BD4A1AEABDA0421A193B3D57BBDD2DB9BD51628BA9C51EACAF5F4A4C",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S09_valid_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "EC1B31EC7B0CC2F5B4D5379428752BF2DD683FCCD35ED487193D754F450E5677",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S09_valid_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "3965E59C31BB3ACB1DADBA18B11B48D891E765E80EE35DBF7AEC104CCA10C6C7",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S10_injected_fault_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "C41FDD7D396926096648E675CDDCA9B6A22A69915AC580072BD9016CE82D0002",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S10_injected_fault_review.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "1D10110D37A0483565F859164EDC9885F180CDBB079DB9B29FF673A52333AF84",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S10_injected_fault_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "DED7325A6A73363F0B176FFCF6D558029640CAEB33944091AA590FD0920620F0",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S10_injected_fault_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "983E87A8D9ECC79D3AB63E0D26DAAAAF6A58A81753D2711252ECAEA66B1E805E",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S10_valid_result.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "282415C7A7CBE225C7C98EE1CA1E6CCBAD078E21C02A87F30EAAA6821B849148",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S10_valid_review.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "7DF25C57207A72B58CA72A5D759AE73813C490C13A77E27235D2135A3EF08D73",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S10_valid_run.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "34EB092EFABB542ACD7E7F98756FBF085755F7E9C3A272D9E99A9CF343BC7EF2",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/S10_valid_trace.jsonl",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "608329AA6B7139737592E7AD3663B7CF3702A713C1BD616CD428C49F1B1CDE4B",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/scenario_result_matrix.md",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "E7EB7671C2C0EFBF5751DE1DA01BEC02D65C09A84A060C7001B207CAE2DD7512",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/summary.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "1D0003BC961C4DCDB595530AC23C7D5074CA75B15ECAC448AA727647FD0D7358",
+      "destination_sha256": null
+    },
+    {
+      "source": "artifacts/phase4/verification_results.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "EFAF74D38338CAD6F01A285B18210B61ED14B86C7318B9D1272B354CAB1966EB",
+      "destination_sha256": null
+    },
+    {
+      "source": "contracts/__init__.py",
+      "classification": "COPY unchanged",
+      "destination": "evaluation/role4/contracts/__init__.py",
+      "reason": "Byte-for-byte existing Phase 1-3 asset; relocated to scoped team path.",
+      "source_sha256_before_baseline": "614C21C80676CBA323B8639E4B76799B38615039494EA778F99FDFA1E46BBCF6",
+      "destination_sha256": "614C21C80676CBA323B8639E4B76799B38615039494EA778F99FDFA1E46BBCF6"
+    },
+    {
+      "source": "contracts/declarative.py",
+      "classification": "ADAPT",
+      "destination": "evaluation/role4/contracts/declarative.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "D30942206DC81135CE2DD76A367C4DD02B25AE4983E397F637AEC45107E8F659",
+      "destination_sha256": "47DB06B7A5DF2B27FD077147A8CFC0072D886632284B6F49A0D5EF1A2A94789B"
+    },
+    {
+      "source": "contracts/events.py",
+      "classification": "ADAPT",
+      "destination": "evaluation/role4/contracts/events.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "DF98681863040DE520EAC4DCF7718356CB18129B8E7908FD186041A51912FCB9",
+      "destination_sha256": "D16718562526F518308230AB7233DCDDC1468B993A0994E557CB17A1244548EB"
+    },
+    {
+      "source": "contracts/procedural.py",
+      "classification": "ADAPT",
+      "destination": "evaluation/role4/contracts/procedural.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "3F6477AA4947C5B06C78C3EF3D6C2873D01B238802CC03A2C4FD61E604AD9AC1",
+      "destination_sha256": "8AE403D2D925BDB1B95923D3B0A33D57EC3FA83ABF164C8D84968E15AEFD56BA"
+    },
+    {
+      "source": "contracts/sensorimotor.py",
+      "classification": "ADAPT",
+      "destination": "evaluation/role4/contracts/sensorimotor.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "5BCB2D8075D989A985B92E1D91139964DC3A90060F051CB6D94E74FFAC7482E9",
+      "destination_sha256": "B43BA796BD93192FD2B147FC0A5FE36923D2917569C4E90F483875AF8A7B8287"
+    },
+    {
+      "source": "docs/phase3_evaluation_plan.md",
+      "classification": "ADAPT",
+      "destination": "docs/role4/reference_phase3_evaluation_plan.md",
+      "reason": "Historical reference design adapted for clone paths; later Phase 4 material removed; internal proposals explicitly labelled.",
+      "source_sha256_before_baseline": "66FD6F15B5D1A8395B33AA96FF7FFB79BFEA9FB275277D3E56D6CC64E559E91C",
+      "destination_sha256": "877DD6AF7EE6103A244280C901361D10B312171805AE96FDBB32A08F4435197E"
+    },
+    {
+      "source": "docs/phase4_scenario_policies.md",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "F10017609D849255F48F91B8371070EDB3D5979B01B37C0E1712AC2BE35C44E7",
+      "destination_sha256": null
+    },
+    {
+      "source": "docs/phase4_teammate_contract_review.md",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "B5BCDCAD6FB8580FF64B28581FB94AD4BEBFCC088DF6F574CD2385F4F3F1D47E",
+      "destination_sha256": null
+    },
+    {
+      "source": "docs/phase4_temporal_and_missing_evidence.md",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "F70EFE8E4EA4B409A9E615CC5C778F38B359E7670DA6642BF52EBE8697DCCEDC",
+      "destination_sha256": null
+    },
+    {
+      "source": "docs/reorganization_before.txt",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "D0F87305AAE682F1E0DA8388ACDAFB1F4044E207FF2906AA452B0094FE6EF94E",
+      "destination_sha256": null
+    },
+    {
+      "source": "docs/reorganization_manifest.json",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "75209373B71E493891C7E941CFB1B5C16A1FC3D7797D7654A8D3D4BEAAD49690",
+      "destination_sha256": null
+    },
+    {
+      "source": "docs/response_review_rubric.md",
+      "classification": "ADAPT",
+      "destination": "docs/role4/reference_response_review_rubric.md",
+      "reason": "Historical reference design adapted for clone paths; later Phase 4 material removed; internal proposals explicitly labelled.",
+      "source_sha256_before_baseline": "16BCBC211E2A85DA9CAC9DFB95CBF4426DC70603D2DEA85697D8707EA528F122",
+      "destination_sha256": "B49D9A9C100E24B7EC13E9873343D37F9540DBF00659B8F1E980E47004CC7E26"
+    },
+    {
+      "source": "docs/role4_evaluation_plan.md",
+      "classification": "KEEP historical",
+      "destination": null,
+      "reason": "Keep source report, evidence or earlier organization material intact; do not copy redundant outputs or stale completion claims.",
+      "source_sha256_before_baseline": "739A687CC77DD0B8435FC480275D9011EECE36E601CE31C2D55BB0BAAD2BB714",
+      "destination_sha256": null
+    },
+    {
+      "source": "docs/shared_integration_contracts.md",
+      "classification": "ADAPT",
+      "destination": "docs/role4/reference_shared_integration_contracts.md",
+      "reason": "Historical reference design adapted for clone paths; later Phase 4 material removed; internal proposals explicitly labelled.",
+      "source_sha256_before_baseline": "5690414DE91983E4D1E4985B9A1C0318F9193183C534D637FD034C701682E6EA",
+      "destination_sha256": "85F3EC6F3EC6145917EBEB42C94D1422471CD81C21DAF4AEDC44F3639C3FAA19"
+    },
+    {
+      "source": "docs/teammate_integration_checklist.md",
+      "classification": "ADAPT",
+      "destination": "docs/role4/reference_teammate_integration_checklist.md",
+      "reason": "Historical reference design adapted for clone paths; later Phase 4 material removed; internal proposals explicitly labelled.",
+      "source_sha256_before_baseline": "8FBE18AA18B8A7AB0562F66B447E63AAA85C91623E4A505DD835189E00BA9F9A",
+      "destination_sha256": "BC14AB1D386316DF55AEDB148B3231A38284173089845E967D51ECC279C70FF2"
+    },
+    {
+      "source": "evaluation/__init__.py",
+      "classification": "COPY unchanged",
+      "destination": "evaluation/role4/__init__.py",
+      "reason": "Byte-for-byte existing Phase 1-3 asset; relocated to scoped team path.",
+      "source_sha256_before_baseline": "B9B95ECDF465E1B2CD47DADF55A1D52FC247DA207352401E39342F4FA431951D",
+      "destination_sha256": "B9B95ECDF465E1B2CD47DADF55A1D52FC247DA207352401E39342F4FA431951D"
+    },
+    {
+      "source": "evaluation/behavioral.py",
+      "classification": "ADAPT",
+      "destination": "evaluation/role4/behavioral.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "CC2071D47DC872741ADE601474BDC2BCC7902185EFE77B913854D6F7C4310020",
+      "destination_sha256": "1F72B4AE059C2D264B9579E6D7DD2BA83DCA385826C8CF5D18F4D72127D49A73"
+    },
+    {
+      "source": "evaluation/evaluator.py",
+      "classification": "ADAPT",
+      "destination": "evaluation/role4/evaluator.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "4BA1F92CD8C30716B1DD83F76636A1976FD953D418C641E6483890FC8632C1EA",
+      "destination_sha256": "1C386CE88B20EC86C7CDA2ACD70B807581C7328E929EB3F995FF6793A12BB822"
+    },
+    {
+      "source": "evaluation/evidence_validity.py",
+      "classification": "DEFER",
+      "destination": null,
+      "reason": "Existing later-case implementation stays intact in source; not migrated or extended in New Phase A.",
+      "source_sha256_before_baseline": "349D344F529BBC9D7691B81FF0F60F12DD167E5A005ECA80B0FF97A6C23B51BA",
+      "destination_sha256": null
+    },
+    {
+      "source": "evaluation/logger.py",
+      "classification": "ADAPT",
+      "destination": "evaluation/role4/logger.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "1C55A4B480218708A78BCE24992A8B64904B96181E4179EBB8D9E5F5DA3164A5",
+      "destination_sha256": "9E772EE25C05EAE38B5C384A601E61C0BBFC5A0098BC06CBE5886DB67E9C0CF0"
+    },
+    {
+      "source": "evaluation/models.py",
+      "classification": "COPY unchanged",
+      "destination": "evaluation/role4/models.py",
+      "reason": "Byte-for-byte existing Phase 1-3 asset; relocated to scoped team path.",
+      "source_sha256_before_baseline": "D45B33B81AABEBA2481151DDDE38E2E37DB8AD2C62D0E354C65BC44BC79609E3",
+      "destination_sha256": "D45B33B81AABEBA2481151DDDE38E2E37DB8AD2C62D0E354C65BC44BC79609E3"
+    },
+    {
+      "source": "evaluation/phase4_checks.py",
+      "classification": "DEFER",
+      "destination": null,
+      "reason": "Existing later-case implementation stays intact in source; not migrated or extended in New Phase A.",
+      "source_sha256_before_baseline": "55F57ABC3DFCAEAB55F2BDCE39F43685BD5395C75B57AAB7F1D821E6FC9DBA4D",
+      "destination_sha256": null
+    },
+    {
+      "source": "evaluation/phase4_policies.py",
+      "classification": "DEFER",
+      "destination": null,
+      "reason": "Existing later-case implementation stays intact in source; not migrated or extended in New Phase A.",
+      "source_sha256_before_baseline": "89E2EA80742DF54C3E82D0E314990523DE31512AA52BDA17DBBFBF30C94AB52B",
+      "destination_sha256": null
+    },
+    {
+      "source": "evaluation/policies.py",
+      "classification": "ADAPT",
+      "destination": "evaluation/role4/policies.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "0B5205381325F52DD5FAC921404FFD2F31DFC2ECBE76F982B8C5B3506A27EFEA",
+      "destination_sha256": "34055E08C27D109853811EE3583E518E996151167F5BD1C70589BF7A41A9ECD1"
+    },
+    {
+      "source": "evaluation/response_review.py",
+      "classification": "COPY unchanged",
+      "destination": "evaluation/role4/response_review.py",
+      "reason": "Byte-for-byte existing Phase 1-3 asset; relocated to scoped team path.",
+      "source_sha256_before_baseline": "5D01FBB1993B57C0F744A43C614F275693B00AEC2A53FBC61A4330C667D11D3F",
+      "destination_sha256": "5D01FBB1993B57C0F744A43C614F275693B00AEC2A53FBC61A4330C667D11D3F"
+    },
+    {
+      "source": "evaluation/stubs.py",
+      "classification": "ADAPT",
+      "destination": "evaluation/role4/stubs.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "F54645B52D0DE0D9468B534B70F95561CD2D6FE72D41FED73F9374F214C72B04",
+      "destination_sha256": "E856B1901A5B7814432C2E9F7E10131163DC7F80730809A0DDD73CAD13BE9BF7"
+    },
+    {
+      "source": "integration/__init__.py",
+      "classification": "COPY unchanged",
+      "destination": "evaluation/role4/integration/__init__.py",
+      "reason": "Byte-for-byte existing Phase 1-3 asset; relocated to scoped team path.",
+      "source_sha256_before_baseline": "04F22C661B25BE1020DD99020681B1689E2AC799A56D8696451D07DA740404F2",
+      "destination_sha256": "04F22C661B25BE1020DD99020681B1689E2AC799A56D8696451D07DA740404F2"
+    },
+    {
+      "source": "integration/runner.py",
+      "classification": "ADAPT",
+      "destination": "evaluation/role4/integration/runner.py",
+      "reason": "Scoped public reference harness; historical Phase 4 execution hooks removed; supported Phase 1-3 behavior retained.",
+      "source_sha256_before_baseline": "FDA663C603513115CCDB106FFA17FF556975907E96C8F83716BEB0AA52A64BD7",
+      "destination_sha256": "136838D34A4E192DE50BAED82B244F55729DB93493C339089B75512C5447BA35"
+    },
+    {
+      "source": "integration/trace_recorder.py",
+      "classification": "ADAPT",
+      "destination": "evaluation/role4/integration/trace_recorder.py",
+      "reason": "Scoped public reference harness; historical Phase 4 execution hooks removed; supported Phase 1-3 behavior retained.",
+      "source_sha256_before_baseline": "2610872EF3312BBE21FC0813488ED2D90488185C37D672CBB9BEB81077BEDEE9",
+      "destination_sha256": "BF74421FCFE63475BBC5AB0AE8BA664D52517F81E5E61E645775F3649EAF2DF8"
+    },
+    {
+      "source": "integration/adapters/__init__.py",
+      "classification": "COPY unchanged",
+      "destination": "evaluation/role4/integration/adapters/__init__.py",
+      "reason": "Byte-for-byte existing Phase 1-3 asset; relocated to scoped team path.",
+      "source_sha256_before_baseline": "053ED6962396D3E2814BE37BD1B791BF3AB1FA06922F163C9F9A669289F33FB2",
+      "destination_sha256": "053ED6962396D3E2814BE37BD1B791BF3AB1FA06922F163C9F9A669289F33FB2"
+    },
+    {
+      "source": "integration/adapters/declarative_adapter.py",
+      "classification": "ADAPT",
+      "destination": "evaluation/role4/integration/adapters/declarative_adapter.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "8C4DD88B0CD07B08B6D08EBE7E85C775982FC3561DD4F10501C2F32DFF13F693",
+      "destination_sha256": "BDE190C73B9210A3AABF38F510E3C6B6886EB64E6DD82835AFD41BE95F964CF6"
+    },
+    {
+      "source": "integration/adapters/procedural_adapter.py",
+      "classification": "ADAPT",
+      "destination": "evaluation/role4/integration/adapters/procedural_adapter.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "CDA378CE13486969A8E9D264AFD83104CE6A0BF6A5B8B2970B1D48195DD92D94",
+      "destination_sha256": "FC7952F128EF5C6A21272659CC67F37E784AEC66AD485CA428FAC2A5DD2FA595"
+    },
+    {
+      "source": "integration/adapters/sensorimotor_adapter.py",
+      "classification": "ADAPT",
+      "destination": "evaluation/role4/integration/adapters/sensorimotor_adapter.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "2C40078D13311AD5178AFA902BDAAE5393A489A0FD2E6B8A397D2DF56078A3EF",
+      "destination_sha256": "78AB6E2B3C309BEF211FB92C4A0C90E068276B348C0D5DFF12741EAC23BCBC6D"
+    },
+    {
+      "source": "reference_layers/__init__.py",
+      "classification": "COPY unchanged",
+      "destination": "evaluation/role4/reference_layers/__init__.py",
+      "reason": "Byte-for-byte existing Phase 1-3 asset; relocated to scoped team path.",
+      "source_sha256_before_baseline": "9CF05A9910A3973D7ABDCB644B4B893B6BA6615A9D86E212A82D6D6678CAEDCF",
+      "destination_sha256": "9CF05A9910A3973D7ABDCB644B4B893B6BA6615A9D86E212A82D6D6678CAEDCF"
+    },
+    {
+      "source": "reference_layers/conflict_procedural_reference.py",
+      "classification": "ADAPT",
+      "destination": "evaluation/role4/reference_layers/conflict_procedural_reference.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "DECB09850ED0991BA86FEA6E649199A3801F9E975C9711901117E755040C8567",
+      "destination_sha256": "E0A68B550D3A589C8544685D4FD3A7DC0EB1CF048B55C12D5EE39E27DDC3C5F6"
+    },
+    {
+      "source": "reference_layers/declarative_reference.py",
+      "classification": "ADAPT",
+      "destination": "evaluation/role4/reference_layers/declarative_reference.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "E90A548690F7163CC65A20CED1E21E0E2F2D03E8E81E1D6368BED128FD0E210A",
+      "destination_sha256": "A68768E583761919451A1F568A6A576F474A80931D2BE6EF1D938CE3182BDB31"
+    },
+    {
+      "source": "reference_layers/missing_evidence_procedural_reference.py",
+      "classification": "DEFER",
+      "destination": null,
+      "reason": "Existing later-case implementation stays intact in source; not migrated or extended in New Phase A.",
+      "source_sha256_before_baseline": "3FED1731B727408AA3FDA36A247E35D0228454B9E6478DEE28E2283ED69C856C",
+      "destination_sha256": null
+    },
+    {
+      "source": "reference_layers/procedural_reference.py",
+      "classification": "ADAPT",
+      "destination": "evaluation/role4/reference_layers/procedural_reference.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "23E4A1A3E740ECAA39ED3DC724D6613D4F781DA9F4AB668CCCAD845794C33808",
+      "destination_sha256": "82AFA919C1AF2125A6B2D627F3FDDEB0E622BAACDC52BE88906F77750E8F81AC"
+    },
+    {
+      "source": "reference_layers/sensorimotor_reference.py",
+      "classification": "ADAPT",
+      "destination": "evaluation/role4/reference_layers/sensorimotor_reference.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "09456E80076511BB74C870A78CF9ED9615F64005920AD8A48DE27AAD1EB91BF5",
+      "destination_sha256": "8CECA4ABE138B904C9503083AF41B714470B49BA2E6AAEEF5F6305AF307FB673"
+    },
+    {
+      "source": "reference_layers/temporal_sensorimotor_reference.py",
+      "classification": "DEFER",
+      "destination": null,
+      "reason": "Existing later-case implementation stays intact in source; not migrated or extended in New Phase A.",
+      "source_sha256_before_baseline": "EE0C651783508165ECE0F0A833847DD509788B20BB4B0878053229D3F33FDDAC",
+      "destination_sha256": null
+    },
+    {
+      "source": "scripts/run_phase1_demo.py",
+      "classification": "ADAPT",
+      "destination": "scripts/run_role4_phase1_demo.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "1F958F240357FBC1182CC90354199AC49B9A4D1F19566347DEAEA76918EAD8FE",
+      "destination_sha256": "1BC42D4723D45BC82F59D20036C5829B0155BC18132AB5D302542CE15E309B42"
+    },
+    {
+      "source": "scripts/run_phase2_demo.py",
+      "classification": "ADAPT",
+      "destination": "scripts/run_role4_phase2_demo.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "AFB5B233BC2F7ABDC2F84D1D68F35F6EC5B5C7130077D1A445775AFEDF243D48",
+      "destination_sha256": "3ECA6EBC8C6C40E983708070AD39BC370A5E2A132588603C7DA6CB1DC0E6FFCD"
+    },
+    {
+      "source": "scripts/run_phase3_demo.py",
+      "classification": "ADAPT",
+      "destination": "scripts/run_role4_phase3_demo.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "86E4FA5982630B50AB336385A6DCB2AE030696CEF1179139EBBCD07D03545B14",
+      "destination_sha256": "E283A8EC4CB6D4DCB9D040644954578DF433C860738EE5A3C43782DADA10D1F4"
+    },
+    {
+      "source": "scripts/run_phase4_demo.py",
+      "classification": "DEFER",
+      "destination": null,
+      "reason": "Existing later-case implementation stays intact in source; not migrated or extended in New Phase A.",
+      "source_sha256_before_baseline": "49D315AB8331B13CF4CDA2C35BD0A4097B46EA03AEB1BA7A6EB0129033921F76",
+      "destination_sha256": null
+    },
+    {
+      "source": "tests/phase3_policies.json",
+      "classification": "COPY unchanged",
+      "destination": "tests/role4/phase3_policies.json",
+      "reason": "Byte-for-byte existing Phase 1-3 asset; relocated to scoped team path.",
+      "source_sha256_before_baseline": "B0957E01B12D642047FAD35C310C07D8364314864C7DC583D67A8DDFE9F620DE",
+      "destination_sha256": "B0957E01B12D642047FAD35C310C07D8364314864C7DC583D67A8DDFE9F620DE"
+    },
+    {
+      "source": "tests/scenarios.json",
+      "classification": "COPY unchanged",
+      "destination": "tests/role4/scenarios.json",
+      "reason": "Byte-for-byte existing Phase 1-3 asset; relocated to scoped team path.",
+      "source_sha256_before_baseline": "0FB7955F2DE3CDDDE7A8D2786F3328AA8BEF2179451FA91843D31184A0925B1E",
+      "destination_sha256": "0FB7955F2DE3CDDDE7A8D2786F3328AA8BEF2179451FA91843D31184A0925B1E"
+    },
+    {
+      "source": "tests/test_evaluation.py",
+      "classification": "ADAPT",
+      "destination": "tests/role4/test_evaluation.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "15B6785E1892515B92B0F4B5C8BBD33A830BBB711303662A281F96FFDD2C7C47",
+      "destination_sha256": "DE289C480FBF86E9421DEA7605AE713EB94F9134081A5019458B7136D3D380CF"
+    },
+    {
+      "source": "tests/test_phase2.py",
+      "classification": "ADAPT",
+      "destination": "tests/role4/test_phase2.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "DD535473454E60FE51671B0EB6D2432DFFDAC7CD8086ED0C301AF966A92F93E2",
+      "destination_sha256": "06934411D950D715ADDCDF563A36D28E0F10C3D7434E8E7955DD6C2AB47C540B"
+    },
+    {
+      "source": "tests/test_phase3.py",
+      "classification": "ADAPT",
+      "destination": "tests/role4/test_phase3.py",
+      "reason": "Scoped Phase 1-3 evaluation asset; package/fixture/output paths adapted where needed.",
+      "source_sha256_before_baseline": "D885744E8ECF13F09F7CF09C63C2EE4FBC42FA4661709E12C6B3E9DD30005BFD",
+      "destination_sha256": "51A3C2877A43104372983BEAE5D008D987B940CD7A9FCFC7E49CC5DAA9CFD84A"
+    },
+    {
+      "source": "tests/test_phase4.py",
+      "classification": "DEFER",
+      "destination": null,
+      "reason": "Existing later-case implementation stays intact in source; not migrated or extended in New Phase A.",
+      "source_sha256_before_baseline": "376AAD7FA11D310F2469A2DADCF247EA2AF843E8FBFE209ACE1672B16BCF2AE9",
+      "destination_sha256": null
+    }
+  ]
+}

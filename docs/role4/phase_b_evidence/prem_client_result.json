@@ -1,0 +1,160 @@
+{
+  "all_expectations_met": true,
+  "backend_provenance": "real",
+  "cases": [
+    {
+      "actual_api_requests": [
+        {
+          "max_tokens": 1024,
+          "messages": [
+            {
+              "content": "Offline client boundary probe.",
+              "role": "user"
+            }
+          ],
+          "model": "phase-b-offline-fixture",
+          "temperature": 0.0
+        }
+      ],
+      "backend_provenance": "real",
+      "case": "plain_reply",
+      "error": null,
+      "expected_outcome_confirmed": true,
+      "human_review": "not_reviewed",
+      "implementation": "procedural.llm_client.LLMClient",
+      "integration_scope": "partial_pipeline",
+      "model_mode": "fake_api",
+      "observed_reply": {
+        "content": "offline pong",
+        "finish_reason": "stop",
+        "tool_calls": []
+      },
+      "pipeline_stage": "client_chat_only",
+      "source_layer": "procedural",
+      "tools_executed": false
+    },
+    {
+      "actual_api_requests": [
+        {
+          "max_tokens": 1024,
+          "messages": [
+            {
+              "content": "Offline client boundary probe.",
+              "role": "user"
+            }
+          ],
+          "model": "phase-b-offline-fixture",
+          "temperature": 0.0
+        }
+      ],
+      "backend_provenance": "real",
+      "case": "parsed_tool_request",
+      "error": null,
+      "expected_outcome_confirmed": true,
+      "human_review": "not_reviewed",
+      "implementation": "procedural.llm_client.LLMClient",
+      "integration_scope": "partial_pipeline",
+      "model_mode": "fake_api",
+      "observed_reply": {
+        "content": null,
+        "finish_reason": "stop",
+        "tool_calls": [
+          {
+            "arguments": {
+              "direction": "front"
+            },
+            "arguments_error": null,
+            "id": "requested_tool_001",
+            "name": "read_lidar"
+          }
+        ]
+      },
+      "pipeline_stage": "client_chat_only",
+      "source_layer": "procedural",
+      "tools_executed": false
+    },
+    {
+      "actual_api_requests": [
+        {
+          "max_tokens": 1024,
+          "messages": [
+            {
+              "content": "Offline client boundary probe.",
+              "role": "user"
+            }
+          ],
+          "model": "phase-b-offline-fixture",
+          "temperature": 0.0
+        }
+      ],
+      "backend_provenance": "real",
+      "case": "malformed_tool_arguments",
+      "error": null,
+      "expected_outcome_confirmed": true,
+      "human_review": "not_reviewed",
+      "implementation": "procedural.llm_client.LLMClient",
+      "integration_scope": "partial_pipeline",
+      "model_mode": "fake_api",
+      "observed_reply": {
+        "content": null,
+        "finish_reason": "stop",
+        "tool_calls": [
+          {
+            "arguments": {},
+            "arguments_error": "Expecting property name enclosed in double quotes: line 1 column 2 (char 1)",
+            "id": "requested_tool_001",
+            "name": "read_lidar"
+          }
+        ]
+      },
+      "pipeline_stage": "client_chat_only",
+      "source_layer": "procedural",
+      "tools_executed": false
+    },
+    {
+      "actual_api_requests": [
+        {
+          "max_tokens": 1024,
+          "messages": [
+            {
+              "content": "Offline client boundary probe.",
+              "role": "user"
+            }
+          ],
+          "model": "phase-b-offline-fixture",
+          "temperature": 0.0
+        }
+      ],
+      "backend_provenance": "real",
+      "case": "transport_error",
+      "error": {
+        "message": "LLM request failed: Phase B injected transport timeout",
+        "type": "LLMClientError"
+      },
+      "expected_outcome_confirmed": true,
+      "human_review": "not_reviewed",
+      "implementation": "procedural.llm_client.LLMClient",
+      "integration_scope": "partial_pipeline",
+      "model_mode": "fake_api",
+      "observed_reply": null,
+      "pipeline_stage": "client_chat_only",
+      "source_layer": "procedural",
+      "tools_executed": false
+    }
+  ],
+  "complete_agent_integrated": false,
+  "hosted_reliability_measured": false,
+  "human_review": "not_reviewed",
+  "integration_scope": "partial_pipeline",
+  "layer_provenance": {
+    "procedural": "real"
+  },
+  "model_mode": "fake_api",
+  "phase": "NEW_B",
+  "pipeline_stage": "client_chat_only",
+  "tools_executed": false,
+  "unexercised_layers": [
+    "declarative",
+    "sensorimotor"
+  ]
+}

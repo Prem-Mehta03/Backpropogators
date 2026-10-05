@@ -1,0 +1,12 @@
+flowchart LR
+  subgraph Before[Before the live sensor reading]
+    map0["b_000001\npath_A / status = clear\nsource: default_map\nperspective: historical\nconfidence: 1.0\nstatus: active\nvalid_to: null"]
+  end
+
+  subgraph After[Illustrative history after conflict resolution]
+    map1["b_000001\npath_A / status = clear\nconfidence: 1.0\nstatus: superseded\nvalid_to: t1"]
+    map2["b_000002\npath_A / status = clear\nsource: default_map\nperspective: historical\nconfidence: 0.5 example\nstatus: superseded\nsupersedes: b_000001"]
+    lidar["b_000003\npath_A / status = blocked\nsource: lidar_front\nperspective: agent_sensor\nreading: 12 cm\nconfidence: 0.98\nstatus: active\nsupersedes: b_000002"]
+    map1 -->|downgraded successor| map2
+    map2 -->|newer sensor claim| lidar
+  end
