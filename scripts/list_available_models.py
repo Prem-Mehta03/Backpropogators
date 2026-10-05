@@ -17,7 +17,7 @@ def main() -> int:
     if not key:
         print("FAILED: set GROQ_API_KEY in .env first")
         return 1
-    from openai import OpenAI
+    from openai import OpenAI, OpenAIError
 
     client = OpenAI(
         api_key=key,
@@ -25,7 +25,7 @@ def main() -> int:
     )
     try:
         ids = sorted(m.id for m in client.models.list().data)
-    except Exception as exc:  # script boundary: show any API failure plainly
+    except OpenAIError as exc:  # covers connection, auth and rate-limit failures
         print(f"FAILED: {exc}")
         return 1
     print("\n".join(ids))
