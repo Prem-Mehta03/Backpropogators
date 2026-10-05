@@ -5,7 +5,8 @@ Run from the repo root:
     python -m scripts.ask_agent "Is your route clear? Justify your answer."
     python -m scripts.ask_agent --stubs-only --max-steps 6 "What does your front LiDAR read?"
 
-Tools come from scripts/tool_wiring.py (real layers when they exist, stubs otherwise).
+Tools come from scripts/tool_wiring.py (real layers when they exist, fakes otherwise).
+--scenario picks the simulated world, for example --scenario scenario_a.
 The log goes to evaluation/logs/ and is what you read when listing failures per layer.
 """
 
@@ -22,7 +23,7 @@ from dotenv import load_dotenv
 from procedural.agent import DEFAULT_MAX_STEPS, run_agent
 from procedural.llm_client import LLMClient, LLMClientError
 from procedural.state import subjects_outside
-from scripts.tool_wiring import build_tool_registry
+from scripts.tool_wiring import DEFAULT_SCENARIO, build_tool_registry
 
 # Entity ids that exist in memory, with a plain description so the model can map the words in a
 # question ("route") to the right id (path_A). This stands in for the scenario config; replace
@@ -33,7 +34,9 @@ DEFAULT_SUBJECTS: dict[str, str] = {
     "robot": "this robot itself",
 }
 
-DEFAULT_QUESTION = "Is your route clear? Justify your response by inspecting your internal system layers."
+DEFAULT_QUESTION = (
+    "Is your route clear? Justify your response by inspecting your internal system layers."
+)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -42,6 +45,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("question", nargs="?", default=DEFAULT_QUESTION)
     parser.add_argument("--max-steps", type=int, default=DEFAULT_MAX_STEPS)
     parser.add_argument("--stubs-only", action="store_true", help="ignore real layers")
+    parser.add_argument(
+        "--scenario",
+        default=DEFAULT_SCENARIO,
+        help="sensorimotor world to run in (a name from sensorimotor.config.list_scenarios())",
+    )
     parser.add_argument(
         "--no-entity-list",
         action="store_true",
@@ -52,7 +60,13 @@ def main(argv: list[str] | None = None) -> int:
 
     logging.basicConfig(level=logging.INFO)
     load_dotenv()
-    registry, sources = build_tool_registry(use_real=not args.stubs_only)
+    try:
+        registry, sources = build_tool_registry(
+            use_real=not args.stubs_only, scenario=args.scenario
+        )
+    except RuntimeError as exc:
+        print(f"FAILED: {exc}")
+        return 1
     try:
         llm = LLMClient()
     except LLMClientError as exc:
@@ -70,6 +84,7 @@ def main(argv: list[str] | None = None) -> int:
         "run_id": now.strftime("%Y-%m-%dT%H:%M:%SZ") + "-1",
         "model": llm.model,
         "question": result.question,
+        "scenario": None if args.stubs_only else args.scenario,
         "tool_sources": sources,
         "known_subjects": subjects,
         "unknown_subjects_used": unknown,

@@ -5,8 +5,9 @@ like evaluation/runner.py).
 
 - Memory tools: Vyom's BeliefMemory (declarative/belief_graph.py) is created once per run and
   its methods are the five memory tools. Its methods already return ToolResult envelopes.
-- Sensor and action tools: the real module is used when it exists, otherwise the test fake in
-  tests/procedural/fakes fills in. Asvin's code is not on main yet.
+- Sensor and action tools: Asvin's simulated world (sensorimotor.create_sensorimotor) is created
+  once per run and its tool_registry() supplies the six sensor and action tools. If it is
+  missing, or does not provide a tool, the test fake in tests/procedural/fakes fills in.
 
 The sources are logged so you can see which implementation is in use.
 """
@@ -31,15 +32,17 @@ MEMORY_TOOLS: tuple[str, ...] = (
 MEMORY_MODULE = "declarative.belief_graph"
 MEMORY_SOURCE = f"{MEMORY_MODULE}.BeliefMemory"
 
-# Where Asvin's tools are expected to live. Edit these names when his code lands on main.
-SENSOR_MODULES: dict[str, str] = {
-    "read_lidar": "sensorimotor.sensors",
-    "read_camera": "sensorimotor.sensors",
-    "get_position": "sensorimotor.sensors",
-    "move_forward": "sensorimotor.actions",
-    "move_backward": "sensorimotor.actions",
-    "turn": "sensorimotor.actions",
-}
+SENSOR_TOOLS: tuple[str, ...] = (
+    "read_lidar",
+    "read_camera",
+    "get_position",
+    "move_forward",
+    "move_backward",
+    "turn",
+)
+SENSORIMOTOR_MODULE = "sensorimotor"
+SENSORIMOTOR_SOURCE = "sensorimotor.Sensorimotor"
+DEFAULT_SCENARIO = "scenario_a"
 DEMO_TS = "2026-10-03T09:15:00Z"  # when the demo beliefs were stored, before the live reading
 FAKES_PACKAGE = "tests.procedural.fakes"
 FAKE_MEMORY_MODULE = f"{FAKES_PACKAGE}.declarative_fake"
@@ -90,15 +93,37 @@ def build_memory(seed: bool = True) -> Any | None:
     return memory
 
 
+def build_sensorimotor(scenario: str = DEFAULT_SCENARIO, seed: int | None = None) -> Any | None:
+    """Create Asvin's simulated world for one run.
+
+    Returns None if sensorimotor/ does not provide create_sensorimotor yet. Raises RuntimeError
+    if the scenario cannot be loaded (unknown name, invalid file).
+    """
+    module = _import_or_none(SENSORIMOTOR_MODULE)
+    factory = getattr(module, "create_sensorimotor", None) if module is not None else None
+    if factory is None:
+        return None
+    try:
+        return factory(scenario, seed)
+    except Exception as exc:
+        raise RuntimeError(f"Could not start sensorimotor scenario {scenario!r}: {exc}") from exc
+
+
 def build_tool_registry(
-    use_real: bool = True, memory: Any | None = None
+    use_real: bool = True,
+    memory: Any | None = None,
+    sensorimotor: Any | None = None,
+    scenario: str = DEFAULT_SCENARIO,
+    real_sensors: bool = True,
 ) -> tuple[dict[str, ToolFn], dict[str, str]]:
     """Build the registry for run_agent.
 
-    Inputs: use_real=False forces the fakes (offline tests). memory is an existing
-    BeliefMemory to use instead of a freshly seeded one (tests, Yash's runner).
+    Inputs: use_real=False forces the fakes (offline tests). memory and sensorimotor are
+    existing layer objects to use instead of fresh ones (tests, Yash's runner). scenario
+    names the sensorimotor world to build when none is passed. real_sensors=False keeps the
+    real memory but uses the fake sensors (tests that must not depend on Asvin's layer).
     Outputs: (registry of tool name -> function, tool name -> "module" it came from).
-    Raises RuntimeError if neither the real module nor the fake provides a tool.
+    Raises RuntimeError if no implementation exists for a tool, or the scenario is invalid.
     """
     registry: dict[str, ToolFn] = {}
     sources: dict[str, str] = {}
@@ -108,20 +133,24 @@ def build_tool_registry(
             for name in MEMORY_TOOLS:
                 registry[name] = getattr(memory, name)
                 sources[name] = MEMORY_SOURCE
+        world = None
+        if real_sensors:
+            world = sensorimotor if sensorimotor is not None else build_sensorimotor(scenario)
+        if world is not None:
+            provided = world.tool_registry()
+            for name in SENSOR_TOOLS:
+                if name in provided:
+                    registry[name] = provided[name]
+                    sources[name] = SENSORIMOTOR_SOURCE
     for spec in TOOL_SPECS:
         if spec.name in registry:
             continue
-        is_memory = spec.name in MEMORY_TOOLS
-        real = [] if (is_memory or not use_real) else [SENSOR_MODULES[spec.name]]
-        fake = FAKE_MEMORY_MODULE if is_memory else FAKE_SENSOR_MODULE
-        for module_name in [*real, fake]:
-            fn = _load(module_name, spec.name)
-            if fn is not None:
-                registry[spec.name] = fn
-                sources[spec.name] = module_name
-                break
-        else:
+        fake = FAKE_MEMORY_MODULE if spec.name in MEMORY_TOOLS else FAKE_SENSOR_MODULE
+        fn = _load(fake, spec.name)
+        if fn is None:
             raise RuntimeError(f"No implementation found for tool {spec.name}")
+        registry[spec.name] = fn
+        sources[spec.name] = fake
     fakes = sorted(n for n, m in sources.items() if m.startswith(FAKES_PACKAGE))
     logger.info("tools using fakes: %s", fakes or "none")
     return registry, sources
