@@ -1,0 +1,73 @@
+{
+  "phase": "NEW_B",
+  "measured_local_date": "2026-10-03",
+  "role4": {
+    "passed": 129,
+    "seconds": 1.631
+  },
+  "teammate_client": {
+    "passed": 10,
+    "seconds": 0.03
+  },
+  "combined_available": {
+    "passed": 139,
+    "subtests": 136,
+    "warnings": 2
+  },
+  "full_discovery": {
+    "available_passed": 139,
+    "collection_errors": 2,
+    "status": "BLOCKED",
+    "exit_code": 1
+  },
+  "demos": {
+    "phase1": 0,
+    "phase2": 0,
+    "phase3": 0
+  },
+  "source_suite": {
+    "last_measured_phase": "NEW_A",
+    "passed": 169,
+    "historical_phase4_tests": 40,
+    "rerun_in_phase_b": false
+  },
+  "raw_output": "----------------------------------------------------------------------\r\nRan 129 tests in 1.631s\r\n\r\nOK\r\n..........                                                               [100%]\r\n10 passed in 0.03s\r\n....................................................................... [ 51%]\r\n....................................................................              [100%]\r\n============================== warnings summary ===============================\r\nevaluation\\role4\\models.py:297\r\n  C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\models.py:297: PytestCollectionWarning: cannot collect test class 'TestRunRecord' because it has a __init__ constructor (from: tests/role4/test_evaluation.py)\r\n    @dataclass\r\n\r\nevaluation\\role4\\models.py:297\r\n  C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\models.py:297: PytestCollectionWarning: cannot collect test class 'TestRunRecord' because it has a __init__ constructor (from: tests/role4/test_phase3.py)\r\n    @dataclass\r\n\r\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\r\n139 passed, 2 warnings, 136 subtests passed in 1.68s\r\n....................................................................... [ 51%]\r\n....................................................................              [100%]\r\n=================================== ERRORS ====================================\r\n_________ ERROR collecting tests/procedural/test_single_tool_call.py __________\r\nImportError while importing test module 'C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\tests\\procedural\\test_single_tool_call.py'.\r\nHint: make sure your test modules/packages have valid Python names.\r\nTraceback:\r\nC:\\Users\\Yash\\miniconda3\\Lib\\importlib\\__init__.py:88: in import_module\r\n    return _bootstrap._gcd_import(name[level:], package, level)\r\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\ntests\\procedural\\test_single_tool_call.py:11: in <module>\r\n    from procedural.single_tool_call import run_single_tool_call\r\nprocedural\\single_tool_call.py:19: in <module>\r\n    from procedural.tools import TOOL_SCHEMAS, ToolFn, call_tool, error_result\r\nprocedural\\tools.py:14: in <module>\r\n    from contracts.models import ToolResult\r\nE   ModuleNotFoundError: No module named 'contracts'\r\n_______________ ERROR collecting tests/procedural/test_tools.py _______________\r\nImportError while importing test module 'C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\tests\\procedural\\test_tools.py'.\r\nHint: make sure your test modules/packages have valid Python names.\r\nTraceback:\r\nC:\\Users\\Yash\\miniconda3\\Lib\\importlib\\__init__.py:88: in import_module\r\n    return _bootstrap._gcd_import(name[level:], package, level)\r\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\ntests\\procedural\\test_tools.py:7: in <module>\r\n    from contracts.models import ToolResult\r\nE   ModuleNotFoundError: No module named 'contracts'\r\n============================== warnings summary ===============================\r\nevaluation\\role4\\models.py:297\r\n  C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\models.py:297: PytestCollectionWarning: cannot collect test class 'TestRunRecord' because it has a __init__ constructor (from: tests/role4/test_evaluation.py)\r\n    @dataclass\r\n\r\nevaluation\\role4\\models.py:297\r\n  C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\models.py:297: PytestCollectionWarning: cannot collect test class 'TestRunRecord' because it has a __init__ constructor (from: tests/role4/test_phase3.py)\r\n    @dataclass\r\n\r\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\r\n=========================== short test summary info ===========================\r\nERROR tests/procedural/test_single_tool_call.py\r\nERROR tests/procedural/test_tools.py\r\n139 passed, 2 warnings, 2 errors, 136 subtests passed in 1.80s\r\nI Agent | Role 4 | Phase 1 evaluation demo (scripted fixtures)\r\nScenario S01: stored map = clear; LiDAR = blocked at 12 cm\r\n\r\nVALID: PASS (20/20 checks passed)\r\n  Log: evaluation/logs/role4/phase1/S01_valid.jsonl\r\n\r\nINTENTIONALLY INVALID: FAIL (11/20 checks passed)\r\n  - required_tool:read_lidar: Required tool read_lidar: expected at least 1, observed 0\r\n  - required_tool:update_belief: Required tool update_belief: expected at least 1, observed 0\r\n  - tool_order: Required tools must occur in the specified order, including repeated observations\r\n  - required_update:path_a_sensor: Belief path_a_sensor requires exactly one recorded upsert with the specified value, source, confidence and perspective\r\n  - final_belief:path_a_sensor: Final belief path_a_sensor must match the required state\r\n  - response_evidence: Required response evidence categories missing: lidar\r\n  - acknowledge_conflict: Response must explicitly record acknowledge_conflict\r\n  - response_claim:path_status: Response structured claim path_status must be 'blocked'\r\n  - response_claim:movement_safe: Response structured claim movement_safe must be False\r\n  Log: evaluation/logs/role4/phase1/S01_invalid.jsonl\r\n\r\nDemo verification: expected PASS and expected FAIL confirmed. No API key required.\r\nI Agent | Role 4 | Phase 2 reference-layer integration\r\nDeterministic reference layers; teammate implementations are not integrated.\r\n\r\nCase A (integrated_valid): PASS\r\n  20/20 checks passed\r\n\r\nCase B (missing_lidar): FAIL\r\n  11/20 checks passed\r\n  - required_tool:read_lidar: Required tool read_lidar: expected at least 1, observed 0\r\n  - required_tool:update_belief: Required tool update_belief: expected at least 1, observed 0\r\n  - tool_order: Required tools must occur in the specified order, including repeated observations\r\n  - required_update:path_a_sensor: Belief path_a_sensor requires exactly one recorded upsert with the specified value, source, confidence and perspective\r\n  - final_belief:path_a_sensor: Final belief path_a_sensor must match the required state\r\n  - response_evidence: Required response evidence categories missing: lidar\r\n  - acknowledge_conflict: Response must explicitly record acknowledge_conflict\r\n  - response_claim:path_status: Response structured claim path_status must be 'blocked'\r\n  - response_claim:movement_safe: Response structured claim movement_safe must be False\r\n\r\nCase C (malformed_sensor): CONTRACT ERROR\r\n  Invalid sensor payload: sensor missing required fields: confidence\r\n  Aborted before evaluation; partial trace retained.\r\n\r\nArtifacts: evaluation/logs/role4/phase2/\r\nDemo verification: expected PASS / FAIL / CONTRACT ERROR confirmed.\r\nI Agent | Phase 3 conflict, confidence and perspective evaluation | backend=reference\r\nDeterministic reference layers. Real teammate integration: absent. Human semantic review: pending.\r\nS02 valid: PASS [reference] (34/34 checks)\r\nS02 injected_fault: FAIL [reference] (30/34 checks)\r\n  Detected: response_claim:path_status, evidence_to_claim, current_vs_history, response_metadata_consistent\r\nS03 valid: PASS [reference] (38/38 checks)\r\nS03 injected_fault: FAIL [reference] (32/38 checks)\r\n  Detected: response_claim:user_color, response_claim:historical_color, evidence_to_claim, source_attribution, perspective_separation, response_metadata_consistent\r\nS04 valid: PASS [reference] (36/36 checks)\r\nS04 injected_fault: FAIL [reference] (26/36 checks)\r\n  Detected: trace_integrity, required_update:door_sensor, final_belief:door_sensor, acknowledge_uncertainty, response_claim:definite_open, response_claim:needs_confirmation, confidence_preserved, confidence_threshold_policy, unresolved_conflict, response_metadata_consistent\r\nS05 valid: PASS [reference] (40/40 checks)\r\nS05 injected_fault: FAIL [reference] (29/40 checks)\r\n  Detected: required_tool:read_camera, required_tool:update_belief, tool_order, required_update:path_b_camera, final_belief:path_b_camera, response_evidence, acknowledge_uncertainty, acknowledge_conflict, response_claim:path_status, claim_support_complete, all_sensor_perspectives\r\nS08 valid: PASS [reference] (35/35 checks)\r\nS08 injected_fault: FAIL [reference] (27/35 checks)\r\n  Detected: forbidden_tool:move_forward, response_claim:path_status, response_claim:movement_safe, evidence_to_claim, source_attribution, user_vs_verified_observation, safe_response_claim, response_metadata_consistent\r\nSummary: 5 valid passes and 5 injected failures expected; confirmed. No physical actions executed.\r\nArtifacts: C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\logs\\role4\\phase3\r\n",
+  "diagnostic_probes": {
+    "contracts.models": {
+      "exception": "ModuleNotFoundError",
+      "message": "No module named 'contracts'",
+      "missing_name": "contracts"
+    },
+    "sensorimotor.stub": {
+      "exception": "ModuleNotFoundError",
+      "message": "No module named 'sensorimotor'",
+      "missing_name": "sensorimotor"
+    },
+    "procedural.tools": {
+      "exception": "ModuleNotFoundError",
+      "message": "No module named 'contracts'",
+      "missing_name": "contracts"
+    },
+    "procedural.single_tool_call": {
+      "exception": "ModuleNotFoundError",
+      "message": "No module named 'contracts'",
+      "missing_name": "contracts"
+    },
+    "installed": {
+      "pytest": true,
+      "pydantic": true,
+      "dotenv": true,
+      "openai": false,
+      "black": false,
+      "ruff": false
+    },
+    "test_tools.py": {
+      "offline_functions": 7,
+      "live_functions": 0
+    },
+    "test_single_tool_call.py": {
+      "offline_functions": 5,
+      "live_functions": 1
+    }
+  }
+}

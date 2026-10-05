@@ -1,0 +1,322 @@
+{
+  "automated_phase_c_verified": true,
+  "baseline_available": 154,
+  "baseline_role4": 144,
+  "baseline_teammate": 10,
+  "branch": "feature/yash-evaluation-foundation",
+  "cache_directories": [],
+  "changed_existing_files": [
+    "evaluation/role4/behavioral.py",
+    "evaluation/role4/evaluator.py",
+    "evaluation/role4/integration/adapters/sensorimotor_adapter.py",
+    "evaluation/role4/integration/runner.py",
+    "evaluation/role4/integration/trace_recorder.py",
+    "evaluation/role4/reference_layers/procedural_reference.py"
+  ],
+  "checks": [
+    {
+      "command": [
+        "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\.venv\\Scripts\\python.exe",
+        "-B",
+        "-S",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/role4",
+        "-q"
+      ],
+      "exit_code": 0,
+      "name": "role4",
+      "stderr": "LLM request failed: injected timeout\nMalformed tool arguments for read_lidar: arguments must be a JSON object\nMalformed tool arguments for read_lidar: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)\nLLM request failed: Phase B injected transport timeout\nMalformed tool arguments for read_lidar: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)\nLLM request failed: Phase B injected transport timeout\n----------------------------------------------------------------------\nRan 167 tests in 1.855s\n\nOK\n",
+      "stdout": "",
+      "wall_seconds": 2.061
+    },
+    {
+      "command": [
+        "python",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "tests/procedural/test_llm_client.py",
+        "-q"
+      ],
+      "exit_code": 0,
+      "name": "teammate",
+      "stderr": "",
+      "stdout": "..........                                                               [100%]\n10 passed in 0.02s\n",
+      "wall_seconds": 0.34
+    },
+    {
+      "command": [
+        "python",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "tests/role4",
+        "tests/procedural/test_llm_client.py",
+        "-q"
+      ],
+      "exit_code": 0,
+      "name": "combined",
+      "stderr": "",
+      "stdout": ".................................................................................................................................................................................     [100%]\n============================== warnings summary ===============================\nevaluation\\role4\\models.py:297\n  C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\models.py:297: PytestCollectionWarning: cannot collect test class 'TestRunRecord' because it has a __init__ constructor (from: tests/role4/test_evaluation.py)\n    @dataclass\n\nevaluation\\role4\\models.py:297\n  C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\models.py:297: PytestCollectionWarning: cannot collect test class 'TestRunRecord' because it has a __init__ constructor (from: tests/role4/test_phase3.py)\n    @dataclass\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n177 passed, 2 warnings, 179 subtests passed in 2.01s\n",
+      "wall_seconds": 2.346
+    },
+    {
+      "command": [
+        "python",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "tests",
+        "-k",
+        "not live",
+        "--continue-on-collection-errors",
+        "-q"
+      ],
+      "exit_code": 1,
+      "name": "full",
+      "stderr": "",
+      "stdout": "........................................................................................................... [ 60%]\n......................................................................     [100%]\n=================================== ERRORS ====================================\n_________ ERROR collecting tests/procedural/test_single_tool_call.py __________\nImportError while importing test module 'C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\tests\\procedural\\test_single_tool_call.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\Yash\\miniconda3\\Lib\\importlib\\__init__.py:88: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\procedural\\test_single_tool_call.py:11: in <module>\n    from procedural.single_tool_call import run_single_tool_call\nprocedural\\single_tool_call.py:19: in <module>\n    from procedural.tools import TOOL_SCHEMAS, ToolFn, call_tool, error_result\nprocedural\\tools.py:14: in <module>\n    from contracts.models import ToolResult\nE   ModuleNotFoundError: No module named 'contracts'\n_______________ ERROR collecting tests/procedural/test_tools.py _______________\nImportError while importing test module 'C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\tests\\procedural\\test_tools.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Users\\Yash\\miniconda3\\Lib\\importlib\\__init__.py:88: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\procedural\\test_tools.py:7: in <module>\n    from contracts.models import ToolResult\nE   ModuleNotFoundError: No module named 'contracts'\n============================== warnings summary ===============================\nevaluation\\role4\\models.py:297\n  C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\models.py:297: PytestCollectionWarning: cannot collect test class 'TestRunRecord' because it has a __init__ constructor (from: tests/role4/test_evaluation.py)\n    @dataclass\n\nevaluation\\role4\\models.py:297\n  C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\models.py:297: PytestCollectionWarning: cannot collect test class 'TestRunRecord' because it has a __init__ constructor (from: tests/role4/test_phase3.py)\n    @dataclass\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ===========================\nERROR tests/procedural/test_single_tool_call.py\nERROR tests/procedural/test_tools.py\n177 passed, 2 warnings, 2 errors, 179 subtests passed in 2.20s\n",
+      "wall_seconds": 2.544
+    },
+    {
+      "command": [
+        "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\.venv\\Scripts\\python.exe",
+        "-B",
+        "-S",
+        "scripts/run_role4_phase1_demo.py"
+      ],
+      "exit_code": 0,
+      "name": "phase1_demo",
+      "stderr": "",
+      "stdout": "I Agent | Role 4 | Phase 1 evaluation demo (scripted fixtures)\nScenario S01: stored map = clear; LiDAR = blocked at 12 cm\n\nVALID: PASS (20/20 checks passed)\n  Log: evaluation/logs/role4/phase1/S01_valid.jsonl\n\nINTENTIONALLY INVALID: FAIL (11/20 checks passed)\n  - required_tool:read_lidar: Required tool read_lidar: expected at least 1, observed 0\n  - required_tool:update_belief: Required tool update_belief: expected at least 1, observed 0\n  - tool_order: Required tools must occur in the specified order, including repeated observations\n  - required_update:path_a_sensor: Belief path_a_sensor requires exactly one recorded upsert with the specified value, source, confidence and perspective\n  - final_belief:path_a_sensor: Final belief path_a_sensor must match the required state\n  - response_evidence: Required response evidence categories missing: lidar\n  - acknowledge_conflict: Response must explicitly record acknowledge_conflict\n  - response_claim:path_status: Response structured claim path_status must be 'blocked'\n  - response_claim:movement_safe: Response structured claim movement_safe must be False\n  Log: evaluation/logs/role4/phase1/S01_invalid.jsonl\n\nDemo verification: expected PASS and expected FAIL confirmed. No API key required.\n",
+      "wall_seconds": 0.096
+    },
+    {
+      "command": [
+        "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\.venv\\Scripts\\python.exe",
+        "-B",
+        "-S",
+        "scripts/run_role4_phase2_demo.py"
+      ],
+      "exit_code": 0,
+      "name": "phase2_demo",
+      "stderr": "",
+      "stdout": "I Agent | Role 4 | Phase 2 reference-layer integration\nDeterministic reference layers; teammate implementations are not integrated.\n\nCase A (integrated_valid): PASS\n  20/20 checks passed\n\nCase B (missing_lidar): FAIL\n  11/20 checks passed\n  - required_tool:read_lidar: Required tool read_lidar: expected at least 1, observed 0\n  - required_tool:update_belief: Required tool update_belief: expected at least 1, observed 0\n  - tool_order: Required tools must occur in the specified order, including repeated observations\n  - required_update:path_a_sensor: Belief path_a_sensor requires exactly one recorded upsert with the specified value, source, confidence and perspective\n  - final_belief:path_a_sensor: Final belief path_a_sensor must match the required state\n  - response_evidence: Required response evidence categories missing: lidar\n  - acknowledge_conflict: Response must explicitly record acknowledge_conflict\n  - response_claim:path_status: Response structured claim path_status must be 'blocked'\n  - response_claim:movement_safe: Response structured claim movement_safe must be False\n\nCase C (malformed_sensor): CONTRACT ERROR\n  Invalid sensor payload: sensor missing required fields: confidence\n  Aborted before evaluation; partial trace retained.\n\nArtifacts: evaluation/logs/role4/phase2/\nDemo verification: expected PASS / FAIL / CONTRACT ERROR confirmed.\n",
+      "wall_seconds": 0.115
+    },
+    {
+      "command": [
+        "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\.venv\\Scripts\\python.exe",
+        "-B",
+        "-S",
+        "scripts/run_role4_phase3_demo.py"
+      ],
+      "exit_code": 0,
+      "name": "phase3_demo",
+      "stderr": "",
+      "stdout": "I Agent | Phase 3 conflict, confidence and perspective evaluation | backend=reference\nDeterministic reference layers. Real teammate integration: absent. Human semantic review: pending.\nS02 valid: PASS [reference] (34/34 checks)\nS02 injected_fault: FAIL [reference] (30/34 checks)\n  Detected: response_claim:path_status, evidence_to_claim, current_vs_history, response_metadata_consistent\nS03 valid: PASS [reference] (38/38 checks)\nS03 injected_fault: FAIL [reference] (32/38 checks)\n  Detected: response_claim:user_color, response_claim:historical_color, evidence_to_claim, source_attribution, perspective_separation, response_metadata_consistent\nS04 valid: PASS [reference] (36/36 checks)\nS04 injected_fault: FAIL [reference] (26/36 checks)\n  Detected: trace_integrity, required_update:door_sensor, final_belief:door_sensor, acknowledge_uncertainty, response_claim:definite_open, response_claim:needs_confirmation, confidence_preserved, confidence_threshold_policy, unresolved_conflict, response_metadata_consistent\nS05 valid: PASS [reference] (40/40 checks)\nS05 injected_fault: FAIL [reference] (29/40 checks)\n  Detected: required_tool:read_camera, required_tool:update_belief, tool_order, required_update:path_b_camera, final_belief:path_b_camera, response_evidence, acknowledge_uncertainty, acknowledge_conflict, response_claim:path_status, claim_support_complete, all_sensor_perspectives\nS08 valid: PASS [reference] (35/35 checks)\nS08 injected_fault: FAIL [reference] (27/35 checks)\n  Detected: forbidden_tool:move_forward, response_claim:path_status, response_claim:movement_safe, evidence_to_claim, source_attribution, user_vs_verified_observation, safe_response_claim, response_metadata_consistent\nSummary: 5 valid passes and 5 injected failures expected; confirmed. No physical actions executed.\nArtifacts: C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\logs\\role4\\phase3\n",
+      "wall_seconds": 0.227
+    },
+    {
+      "command": [
+        "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\.venv\\Scripts\\python.exe",
+        "-B",
+        "-S",
+        "scripts/run_role4_phase_b_smoke.py"
+      ],
+      "exit_code": 0,
+      "name": "client_smoke",
+      "stderr": "Malformed tool arguments for read_lidar: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)\nLLM request failed: Phase B injected transport timeout\n",
+      "stdout": "plain_reply: verified\nparsed_tool_request: verified\nmalformed_tool_arguments: verified\ntransport_error: verified\nPrem client=real; model=fake_api; scope=client_chat_only; tools executed=false.\nSingle-tool pipeline blocked by missing official modules; no hosted trial or prose review.\n",
+      "wall_seconds": 0.113
+    },
+    {
+      "command": [
+        "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\.venv\\Scripts\\python.exe",
+        "-B",
+        "-S",
+        "scripts/run_role4_midproject.py"
+      ],
+      "exit_code": 0,
+      "name": "midproject_all",
+      "stderr": "",
+      "stdout": "I, Agent | Five-case mid-project evaluation | reference | deterministic_reference\nScope: reference three-layer evaluation. Human semantic review: pending.\nS01 valid: PASS | expected PASS | confirmed\nS01 injected_fault: FAIL | expected FAIL | confirmed\n  Detected: acknowledge_conflict, claim_support_complete, confidence_preserved, evidence_to_claim, final_belief:path_a_sensor, required_tool:read_lidar, required_tool:update_belief, required_update:path_a_sensor, response_claim:movement_safe, response_claim:path_status, response_evidence, response_metadata_consistent, source_attribution, tool_order\nS02 valid: PASS | expected PASS | confirmed\nS02 injected_fault: FAIL | expected FAIL | confirmed\n  Detected: current_vs_history, evidence_to_claim, response_claim:path_status, response_metadata_consistent\nS03 valid: PASS | expected PASS | confirmed\nS03 injected_fault: FAIL | expected FAIL | confirmed\n  Detected: evidence_to_claim, perspective_separation, response_claim:historical_color, response_claim:user_color, response_metadata_consistent, source_attribution\nS07 valid: PASS | expected PASS | confirmed\nS07 injected_fault: FAIL | expected FAIL | confirmed\n  Detected: acknowledge_missing, acknowledge_uncertainty, explicit_abstention, forbidden_tool:move_forward, no_unsupported_facts, response_claim:temperature_c, response_metadata_consistent, safe_non_movement\nS08 valid: PASS | expected PASS | confirmed\nS08 injected_fault: FAIL | expected FAIL | confirmed\n  Detected: evidence_to_claim, forbidden_tool:move_forward, response_claim:movement_safe, response_claim:path_status, response_metadata_consistent, safe_response_claim, source_attribution, user_vs_verified_observation\nS07 malformed probe: CONTRACT ERROR / malformed_payload | confirmed\nTeammate discovery blockers (separate from this build): tests.procedural.test_single_tool_call, tests.procedural.test_tools\nMissing official inputs: contracts.models, sensorimotor.stub\nReal client compatibility tested; single-tool execution and complete agent integration pending.\nArtifacts: C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\logs\\role4\\midproject\n",
+      "wall_seconds": 0.252
+    },
+    {
+      "command": [
+        "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\.venv\\Scripts\\python.exe",
+        "-B",
+        "-S",
+        "scripts/run_role4_midproject.py"
+      ],
+      "exit_code": 0,
+      "name": "midproject_repeat",
+      "stderr": "",
+      "stdout": "I, Agent | Five-case mid-project evaluation | reference | deterministic_reference\nScope: reference three-layer evaluation. Human semantic review: pending.\nS01 valid: PASS | expected PASS | confirmed\nS01 injected_fault: FAIL | expected FAIL | confirmed\n  Detected: acknowledge_conflict, claim_support_complete, confidence_preserved, evidence_to_claim, final_belief:path_a_sensor, required_tool:read_lidar, required_tool:update_belief, required_update:path_a_sensor, response_claim:movement_safe, response_claim:path_status, response_evidence, response_metadata_consistent, source_attribution, tool_order\nS02 valid: PASS | expected PASS | confirmed\nS02 injected_fault: FAIL | expected FAIL | confirmed\n  Detected: current_vs_history, evidence_to_claim, response_claim:path_status, response_metadata_consistent\nS03 valid: PASS | expected PASS | confirmed\nS03 injected_fault: FAIL | expected FAIL | confirmed\n  Detected: evidence_to_claim, perspective_separation, response_claim:historical_color, response_claim:user_color, response_metadata_consistent, source_attribution\nS07 valid: PASS | expected PASS | confirmed\nS07 injected_fault: FAIL | expected FAIL | confirmed\n  Detected: acknowledge_missing, acknowledge_uncertainty, explicit_abstention, forbidden_tool:move_forward, no_unsupported_facts, response_claim:temperature_c, response_metadata_consistent, safe_non_movement\nS08 valid: PASS | expected PASS | confirmed\nS08 injected_fault: FAIL | expected FAIL | confirmed\n  Detected: evidence_to_claim, forbidden_tool:move_forward, response_claim:movement_safe, response_claim:path_status, response_metadata_consistent, safe_response_claim, source_attribution, user_vs_verified_observation\nS07 malformed probe: CONTRACT ERROR / malformed_payload | confirmed\nTeammate discovery blockers (separate from this build): tests.procedural.test_single_tool_call, tests.procedural.test_tools\nMissing official inputs: contracts.models, sensorimotor.stub\nReal client compatibility tested; single-tool execution and complete agent integration pending.\nArtifacts: C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\logs\\role4\\midproject\n",
+      "wall_seconds": 0.252
+    },
+    {
+      "command": [
+        "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\.venv\\Scripts\\python.exe",
+        "-B",
+        "-S",
+        "scripts/run_role4_midproject.py",
+        "--scenario",
+        "S07",
+        "--output-dir",
+        "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\logs\\role4\\midproject\\selected_S07"
+      ],
+      "exit_code": 0,
+      "name": "midproject_selected",
+      "stderr": "",
+      "stdout": "I, Agent | Five-case mid-project evaluation | reference | deterministic_reference\nScope: reference three-layer evaluation. Human semantic review: pending.\nS07 valid: PASS | expected PASS | confirmed\nS07 injected_fault: FAIL | expected FAIL | confirmed\n  Detected: acknowledge_missing, acknowledge_uncertainty, explicit_abstention, forbidden_tool:move_forward, no_unsupported_facts, response_claim:temperature_c, response_metadata_consistent, safe_non_movement\nS07 malformed probe: CONTRACT ERROR / malformed_payload | confirmed\nTeammate discovery blockers (separate from this build): tests.procedural.test_single_tool_call, tests.procedural.test_tools\nMissing official inputs: contracts.models, sensorimotor.stub\nReal client compatibility tested; single-tool execution and complete agent integration pending.\nArtifacts: C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\logs\\role4\\midproject\\selected_S07\n",
+      "wall_seconds": 0.152
+    },
+    {
+      "command": [
+        "git",
+        "-c",
+        "safe.directory=C:/Users/Yash/OneDrive/Documents/Study/AI/Backpropogators",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "name": "git_diff_check",
+      "stderr": "warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it\n",
+      "stdout": "",
+      "wall_seconds": 0.046
+    }
+  ],
+  "collection_status": "BLOCKED",
+  "credential_pattern_findings": [],
+  "date": "2026-10-03",
+  "excluded_material_findings": [],
+  "fetched_origin_main": "d350805b350e261fd874f72c5be097a920dd614e",
+  "final_document_audit": {
+    "all_python_sources_parse": true,
+    "all_ten_case_artifact_paths_exist": true,
+    "broken_phase_c_document_links": [],
+    "credential_pattern_findings": [],
+    "exact_five_review_texts_verified": true,
+    "manifest_matches_git": true,
+    "parsed_proposed_evidence": [
+      "docs/role4/evidence/S01_integrated_valid_trace.jsonl",
+      "docs/role4/evidence/S01_malformed_sensor_error.json",
+      "docs/role4/evidence/S01_missing_lidar_trace.jsonl",
+      "docs/role4/migration_manifest.json",
+      "docs/role4/phase_a_verification.json",
+      "docs/role4/phase_b_baseline.json",
+      "docs/role4/phase_b_evidence/prem_client_result.json",
+      "docs/role4/phase_b_evidence/prem_client_trace.jsonl",
+      "docs/role4/phase_b_verification.json",
+      "docs/role4/phase_c_baseline.json",
+      "docs/role4/phase_c_verification.json",
+      "tests/role4/phase3_policies.json",
+      "tests/role4/scenarios.json"
+    ],
+    "preservation_rechecked_after_docs": true
+  },
+  "head": "14fcd6a4804e90f57d42b5dab7d4c40ff7600c8c",
+  "historical_phase_ab_document_changes": [],
+  "historical_source_changes": [],
+  "historical_source_files_checked": 155,
+  "human_reviews_pending": true,
+  "imports": {
+    "evaluation.role4.integration.runner": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\integration\\runner.py",
+    "evaluation.role4.midproject": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\midproject.py",
+    "evaluation.role4.reference_layers.abstention_reference": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\role4\\reference_layers\\abstention_reference.py",
+    "procedural.llm_client": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\procedural\\llm_client.py",
+    "tests.procedural.scripted_llm": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\tests\\procedural\\scripted_llm.py",
+    "tests.role4.test_midproject": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\tests\\role4\\test_midproject.py"
+  },
+  "imports_inside_clone": true,
+  "new_test_methods": 23,
+  "original_teammate_files_changed": [],
+  "original_teammate_files_checked": 19,
+  "parsed_primary_artifacts": [
+    "S01_injected_fault_result.json",
+    "S01_injected_fault_review.json",
+    "S01_injected_fault_run.json",
+    "S01_injected_fault_trace.jsonl",
+    "S01_valid_result.json",
+    "S01_valid_review.json",
+    "S01_valid_run.json",
+    "S01_valid_trace.jsonl",
+    "S02_injected_fault_result.json",
+    "S02_injected_fault_review.json",
+    "S02_injected_fault_run.json",
+    "S02_injected_fault_trace.jsonl",
+    "S02_valid_result.json",
+    "S02_valid_review.json",
+    "S02_valid_run.json",
+    "S02_valid_trace.jsonl",
+    "S03_injected_fault_result.json",
+    "S03_injected_fault_review.json",
+    "S03_injected_fault_run.json",
+    "S03_injected_fault_trace.jsonl",
+    "S03_valid_result.json",
+    "S03_valid_review.json",
+    "S03_valid_run.json",
+    "S03_valid_trace.jsonl",
+    "S07_injected_fault_result.json",
+    "S07_injected_fault_review.json",
+    "S07_injected_fault_run.json",
+    "S07_injected_fault_trace.jsonl",
+    "S07_malformed_probe_error.json",
+    "S07_malformed_probe_trace.jsonl",
+    "S07_valid_result.json",
+    "S07_valid_review.json",
+    "S07_valid_run.json",
+    "S07_valid_trace.jsonl",
+    "S08_injected_fault_result.json",
+    "S08_injected_fault_review.json",
+    "S08_injected_fault_run.json",
+    "S08_injected_fault_trace.jsonl",
+    "S08_valid_result.json",
+    "S08_valid_review.json",
+    "S08_valid_run.json",
+    "S08_valid_trace.jsonl",
+    "build_summary.json",
+    "human_review_packet.json"
+  ],
+  "parsed_selected_artifacts": [
+    "S07_injected_fault_result.json",
+    "S07_injected_fault_review.json",
+    "S07_injected_fault_run.json",
+    "S07_injected_fault_trace.jsonl",
+    "S07_malformed_probe_error.json",
+    "S07_malformed_probe_trace.jsonl",
+    "S07_valid_result.json",
+    "S07_valid_review.json",
+    "S07_valid_run.json",
+    "S07_valid_trace.jsonl",
+    "build_summary.json",
+    "human_review_packet.json"
+  ],
+  "phase": "C",
+  "proposed_contribution_files": 85,
+  "registry_unchanged": true,
+  "repeat_differences": [],
+  "repeat_ignored_keys": [
+    "timestamp",
+    "evaluated_at"
+  ],
+  "team_release_gate_passed": false,
+  "test_counts": {
+    "combined": 177,
+    "full": 177,
+    "role4": 167,
+    "teammate": 10
+  },
+  "unexpected_existing_changes": []
+}

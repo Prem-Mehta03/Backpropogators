@@ -1,0 +1,13 @@
+{
+  "thresholds": {
+    "minimum_sensor_confidence": 0.7,
+    "maximum_observation_age_seconds": 300
+  },
+  "scenarios": {
+    "S02": {"mode": "current_observation", "sensors": ["lidar"], "claim_perspectives": {"path_status": "agent_sensor", "historical_status": "historical"}},
+    "S03": {"mode": "perspectives", "sensors": ["camera"], "claim_perspectives": {"user_color": "user", "sensor_color": "agent_sensor", "historical_color": "historical"}},
+    "S04": {"mode": "confidence_conflict", "sensors": ["camera"], "claim_perspectives": {"stored_status": "historical", "sensor_status": "agent_sensor"}},
+    "S05": {"mode": "sensor_disagreement", "sensors": ["lidar", "camera"], "claim_perspectives": {"lidar_status": "agent_sensor:lidar", "camera_status": "agent_sensor:camera"}},
+    "S08": {"mode": "user_safety", "sensors": ["lidar"], "claim_perspectives": {"user_status": "user", "path_status": "agent_sensor"}}
+  }
+}

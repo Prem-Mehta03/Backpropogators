@@ -1,0 +1,10 @@
+{
+  "error_type": "ContractError",
+  "evaluated": false,
+  "layer_source": "reference_layers",
+  "message": "Invalid sensor payload: sensor missing required fields: confidence",
+  "run_id": "S01_malformed_sensor",
+  "scenario_id": "S01",
+  "status": "CONTRACT ERROR",
+  "timestamp": "2026-10-03T13:02:07.729681+00:00"
+}
