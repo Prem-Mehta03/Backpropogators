@@ -1,0 +1,30 @@
+{
+  "name": "scenario_a",
+  "description": "Map versus sensor. Robot faces an obstacle 12 cm ahead; lidar_front reads 12 cm, blocked. (The 'map says clear' belief is the declarative layer's seed, not part of the world.)",
+  "seed": 42,
+  "start_time": "2026-10-03T09:16:00Z",
+  "tick_seconds": 1,
+  "collision_margin_cm": 1,
+  "max_move_cm": 500,
+  "robot": { "x": 0, "y": 0, "heading_deg": 0 },
+  "lighting": { "name": "white", "color_shift": {} },
+  "obstacles": [
+    { "obstacle_id": "obstacle_01", "x_min": 12, "y_min": -50, "x_max": 20, "y_max": 50 }
+  ],
+  "objects": [],
+  "sensors": {
+    "lidar": [
+      {
+        "name": "lidar_front",
+        "direction": "front",
+        "max_range_cm": 400,
+        "blocked_threshold_cm": 30,
+        "confidence": 0.98,
+        "noise_std_cm": 0
+      }
+    ],
+    "camera": { "name": "camera_front", "fov_deg": 60, "max_range_cm": 300, "confidence": 0.9 },
+    "position": { "name": "position", "confidence": 1.0 }
+  },
+  "events": []
+}
