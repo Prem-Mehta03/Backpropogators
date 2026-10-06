@@ -1,0 +1,201 @@
+{
+  "date": "2026-10-06",
+  "timezone": "Asia/Calcutta",
+  "workspace": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators-teammate-integration",
+  "original_workspace": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators",
+  "remote": "https://github.com/Prem-Mehta03/Backpropogators.git",
+  "branch": "feature/yash-teammate-integration",
+  "head": "a1e906157ed2e3e2b9c340c5a4f99835d2c22123",
+  "merge_head": "fed032c11f51d9411bf3060ad1e4896388e9b55c",
+  "fetched_heads": {
+    "main": "a1e906157ed2e3e2b9c340c5a4f99835d2c22123",
+    "feature/prem-agent-loop": "fed032c11f51d9411bf3060ad1e4896388e9b55c",
+    "feature/asvin-sensorimotor-core": "49809d131121f784c28fea72b70db2c00e37502b",
+    "feature/vyom-declarative": "06668e49f22ea3448ea9c2a137ccbbe3e992568e"
+  },
+  "merge_status": "conflict_free_uncommitted_in_progress",
+  "prem_comparison": {
+    "ahead": 2,
+    "behind": 6
+  },
+  "inherited_merge_files": 31,
+  "role4_proposed_files": 14,
+  "historical_source_files_unchanged": 155,
+  "existing_reference_code_reports_unchanged": true,
+  "teammate_owned_code_not_edited_by_role4": true,
+  "original_checkout_clean_unchanged": true,
+  "baseline_evidence": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators\\evaluation\\logs\\role4\\teammate_integration",
+  "final_evidence": "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators-teammate-integration\\evaluation\\logs\\role4\\teammate_integration\\final_verified_run",
+  "commands": {
+    "role4": [
+      "C:\\Users\\Yash\\miniconda3\\python.exe",
+      "-B",
+      "scripts/run_role4_offline_checks.py",
+      "--dependency-path",
+      "../.venv/Lib/site-packages",
+      "--suite",
+      "role4"
+    ],
+    "teammate": [
+      "C:\\Users\\Yash\\miniconda3\\python.exe",
+      "-B",
+      "scripts/run_role4_offline_checks.py",
+      "--dependency-path",
+      "../.venv/Lib/site-packages",
+      "--suite",
+      "teammate"
+    ],
+    "full": [
+      "C:\\Users\\Yash\\miniconda3\\python.exe",
+      "-B",
+      "scripts/run_role4_offline_checks.py",
+      "--dependency-path",
+      "../.venv/Lib/site-packages",
+      "--suite",
+      "full"
+    ],
+    "phase1": [
+      "C:\\Users\\Yash\\miniconda3\\python.exe",
+      "-B",
+      "-m",
+      "evaluation.role4.integration.offline",
+      "--output-dir",
+      "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators-teammate-integration\\evaluation\\logs\\role4\\teammate_integration\\final_verified_run\\phase1",
+      "run_role4_phase1_demo.py"
+    ],
+    "phase2": [
+      "C:\\Users\\Yash\\miniconda3\\python.exe",
+      "-B",
+      "-m",
+      "evaluation.role4.integration.offline",
+      "--output-dir",
+      "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators-teammate-integration\\evaluation\\logs\\role4\\teammate_integration\\final_verified_run\\phase2",
+      "run_role4_phase2_demo.py"
+    ],
+    "phase3": [
+      "C:\\Users\\Yash\\miniconda3\\python.exe",
+      "-B",
+      "-m",
+      "evaluation.role4.integration.offline",
+      "run_role4_phase3_demo.py",
+      "--scenario",
+      "all",
+      "--output-dir",
+      "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators-teammate-integration\\evaluation\\logs\\role4\\teammate_integration\\final_verified_run\\phase3"
+    ],
+    "reference_five_case": [
+      "C:\\Users\\Yash\\miniconda3\\python.exe",
+      "-B",
+      "-m",
+      "evaluation.role4.integration.offline",
+      "run_role4_midproject.py",
+      "--scenario",
+      "all",
+      "--output-dir",
+      "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators-teammate-integration\\evaluation\\logs\\role4\\teammate_integration\\final_verified_run\\reference_five_case"
+    ],
+    "teammate_cases": [
+      "C:\\Users\\Yash\\miniconda3\\python.exe",
+      "-B",
+      "scripts/run_role4_teammate_integration.py",
+      "--dependency-path",
+      "../.venv/Lib/site-packages",
+      "--controls",
+      "--output-dir",
+      "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators-teammate-integration\\evaluation\\logs\\role4\\teammate_integration\\final_verified_run\\teammate_cases"
+    ],
+    "full_artifact_verified": [
+      "C:\\Users\\Yash\\miniconda3\\python.exe",
+      "-B",
+      "scripts/run_role4_offline_checks.py",
+      "--dependency-path",
+      "../.venv/Lib/site-packages",
+      "--suite",
+      "full"
+    ],
+    "artifact_verified_demo": [
+      "C:\\Users\\Yash\\miniconda3\\python.exe",
+      "-B",
+      "scripts/run_role4_teammate_integration.py",
+      "--dependency-path",
+      "../.venv/Lib/site-packages",
+      "--controls",
+      "--output-dir",
+      "C:\\Users\\Yash\\OneDrive\\Documents\\Study\\AI\\Backpropogators-teammate-integration\\evaluation\\logs\\role4\\teammate_integration\\final_verified_run\\artifact_verified_cases"
+    ]
+  },
+  "baselines": {
+    "main_default": {
+      "passed": 239,
+      "failed": 5,
+      "collection_errors": 1,
+      "deselected": 1,
+      "missing_dependency": "networkx"
+    },
+    "main_compatible": {
+      "passed": 250,
+      "failed": 5,
+      "collection_errors": 0,
+      "deselected": 1
+    },
+    "candidate_before_edits": {
+      "passed": 366,
+      "failed": 0,
+      "collection_errors": 0,
+      "role4": 167,
+      "teammate": 199
+    }
+  },
+  "final_tests": {
+    "passed": 390,
+    "failed": 0,
+    "collection_errors": 0,
+    "skipped": 0,
+    "role4": 191,
+    "teammate": 199,
+    "new_role4_tests": 24,
+    "warnings": 2,
+    "subtests_reported_separately": 179
+  },
+  "network_controls": [
+    "explicit live module ignore",
+    "old main live node deselect",
+    "API key environment removal",
+    "dotenv loading/value reads disabled",
+    "socket connect and DNS denial"
+  ],
+  "outer_unexpected_blocked_network_attempts": 0,
+  "hosted_calls": 0,
+  "dependencies": {
+    "python": "3.13",
+    "pydantic": "2.13.4",
+    "pytest": "9.1.1",
+    "networkx": "3.6.1 existing ../.venv/Lib/site-packages",
+    "openai": "absent; not required offline"
+  },
+  "demo_runs": 19,
+  "observable_pass": 17,
+  "detected_fail": 2,
+  "all_expected_outcomes_confirmed": true,
+  "artifact_verification": {
+    "cases_verified": 19,
+    "json_jsonl_files_parsed": 76
+  },
+  "detected_defects": [
+    "update_matches_returned_evidence",
+    "no_movement_on_blocked_evidence"
+  ],
+  "pending": [
+    "human_answer_semantics",
+    "peer_review",
+    "leader_scenario_b_fixture_approval",
+    "temperature_integration",
+    "movement_authorization_policy"
+  ],
+  "phase1_2_3_reference_and_five_case_commands_succeeded": true,
+  "committed": false,
+  "pushed": false,
+  "pr_tag_release_created": false,
+  "installed_or_environment_created": false,
+  "phase_e_or_s09_s06_s10_implemented": false
+}
