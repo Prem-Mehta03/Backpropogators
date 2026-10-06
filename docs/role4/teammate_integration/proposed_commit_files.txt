@@ -1,0 +1,15 @@
+docs/role4/teammate_integration/PROGRESS_REPORT_TEAMMATE_INTEGRATION.md
+docs/role4/teammate_integration/README.md
+docs/role4/teammate_integration/api_and_policy_mapping.md
+docs/role4/teammate_integration/candidate_merge_files.txt
+docs/role4/teammate_integration/defects_and_decisions.md
+docs/role4/teammate_integration/proposed_commit_files.txt
+docs/role4/teammate_integration/scenario_alignment.md
+docs/role4/teammate_integration/verification.json
+evaluation/role4/integration/canonical.py
+evaluation/role4/integration/offline.py
+evaluation/role4/integration/teammate_policies.py
+evaluation/role4/integration/teammate_runner.py
+scripts/run_role4_offline_checks.py
+scripts/run_role4_teammate_integration.py
+tests/role4/test_teammate_integration.py

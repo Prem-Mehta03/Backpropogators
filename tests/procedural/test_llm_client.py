@@ -3,19 +3,19 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from typing import Any, Optional
+from typing import Any
 
 import pytest
 
 from procedural.llm_client import LLMClient, LLMClientError
 
 
-def _raw(content: Optional[str], tool_calls: Optional[list] = None) -> SimpleNamespace:
+def _raw(content: str | None, tool_calls: list | None = None) -> SimpleNamespace:
     msg = SimpleNamespace(content=content, tool_calls=tool_calls)
     return SimpleNamespace(choices=[SimpleNamespace(message=msg, finish_reason="stop")])
 
 
-def _fake_api(raw: Any = None, error: Optional[Exception] = None) -> SimpleNamespace:
+def _fake_api(raw: Any = None, error: Exception | None = None) -> SimpleNamespace:
     calls: list[dict[str, Any]] = []
 
     def create(**kwargs: Any) -> Any:
