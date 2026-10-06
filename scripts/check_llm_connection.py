@@ -18,7 +18,9 @@ def main() -> int:
     load_dotenv()
     try:
         client = LLMClient()
-        reply = client.chat([{"role": "user", "content": "Reply with exactly one word: pong"}])
+        reply = client.chat(
+            [{"role": "user", "content": "Reply with exactly one word: pong"}]
+        )
     except LLMClientError as exc:
         print(f"FAILED: {exc}")
         return 1

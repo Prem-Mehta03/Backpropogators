@@ -78,15 +78,24 @@ def run_single_tool_call(
     for step, call in enumerate(first.tool_calls, start=1):
         if call.arguments_error is not None:
             envelope = error_result(
-                call.name, "INVALID_ARGUMENT", f"Malformed arguments: {call.arguments_error}"
+                call.name,
+                "INVALID_ARGUMENT",
+                f"Malformed arguments: {call.arguments_error}",
             )
         else:
             envelope = call_tool(call.name, call.arguments, registry)
         logger.info("step=%d tool=%s ok=%s", step, call.name, envelope["ok"])
         result.tool_calls.append(
-            {"step": step, "tool": call.name, "args": call.arguments, "result": envelope}
+            {
+                "step": step,
+                "tool": call.name,
+                "args": call.arguments,
+                "result": envelope,
+            }
         )
-        messages.append({"role": "tool", "tool_call_id": call.id, "content": json.dumps(envelope)})
+        messages.append(
+            {"role": "tool", "tool_call_id": call.id, "content": json.dumps(envelope)}
+        )
 
     final = llm.chat(messages, TOOL_SCHEMAS, tool_choice="none")
     result.answer = final.content or ""
