@@ -34,9 +34,7 @@ DEFAULT_SUBJECTS: dict[str, str] = {
     "robot": "this robot itself",
 }
 
-DEFAULT_QUESTION = (
-    "Is your route clear? Justify your response by inspecting your internal system layers."
-)
+DEFAULT_QUESTION = "Is your route clear? Justify your response by inspecting your internal system layers."
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -75,7 +73,12 @@ def main(argv: list[str] | None = None) -> int:
 
     subjects = None if args.no_entity_list else DEFAULT_SUBJECTS
     result = run_agent(
-        args.question, llm, registry, max_steps=args.max_steps, known_subjects=subjects
+        args.question,
+        llm,
+        registry,
+        max_steps=args.max_steps,
+        known_subjects=subjects,
+        require_written_ids=True,  # live runs: the answer must name every belief it wrote
     )
     unknown = subjects_outside(result.tool_calls, DEFAULT_SUBJECTS)
 
@@ -91,6 +94,7 @@ def main(argv: list[str] | None = None) -> int:
         "tool_calls": result.tool_calls,
         "model_calls": result.model_calls,
         "evidence_nudges": result.evidence_nudges,
+        "claim_nudges": result.claim_nudges,
         "answer": result.answer,
         "answer_normalized": result.answer_normalized,
         "error": result.error,
@@ -103,6 +107,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"tools called: {[c['tool'] for c in result.tool_calls]}")
     print(f"model calls: {result.model_calls}")
     print(f"evidence nudges: {result.evidence_nudges}")
+    print(f"claim nudges: {result.claim_nudges}")
     print(f"unknown subjects used: {unknown}")
     print(f"error: {result.error}")
     print(f"answer:\n{result.answer}")

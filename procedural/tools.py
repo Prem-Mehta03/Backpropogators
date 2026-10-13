@@ -110,15 +110,27 @@ TOOL_SPECS: tuple[ToolSpec, ...] = (
         "for evidence you actually obtained from a tool or the user.",
         (
             _str("subject", _SUBJECT_HELP, True),
-            _str("predicate", "Property or relation, for example status or color.", True),
+            _str(
+                "predicate", "Property or relation, for example status or color.", True
+            ),
             Param(
                 "object",
                 ("string", "number", "boolean"),
                 "The claimed value, for example clear, red or 12.",
                 True,
             ),
-            _str("source", "Where the evidence came from, for example lidar_front or user.", True),
-            _num("confidence", "Certainty from 0.0 to 1.0.", True, minimum=0.0, maximum=1.0),
+            _str(
+                "source",
+                "Where the evidence came from, for example lidar_front or user.",
+                True,
+            ),
+            _num(
+                "confidence",
+                "Certainty from 0.0 to 1.0.",
+                True,
+                minimum=0.0,
+                maximum=1.0,
+            ),
             _str("perspective", _PERSPECTIVE_HELP, True, enum=PERSPECTIVES),
             _str("reason", "Why this update is being made.", True),
         ),
@@ -128,8 +140,19 @@ TOOL_SPECS: tuple[ToolSpec, ...] = (
         "Lower the confidence of an existing belief, for example when a live reading "
         "contradicts it.",
         (
-            _str("belief_id", "Id of the belief, like b_000123.", True, pattern=BELIEF_ID_PATTERN),
-            _num("new_confidence", "New certainty, 0.0 to 1.0.", True, minimum=0.0, maximum=1.0),
+            _str(
+                "belief_id",
+                "Id of the belief, like b_000123.",
+                True,
+                pattern=BELIEF_ID_PATTERN,
+            ),
+            _num(
+                "new_confidence",
+                "New certainty, lower than the current one. The system sets the final value.",
+                True,
+                minimum=0.0,
+                maximum=1.0,
+            ),
             _str("reason", "Why the belief is being downgraded.", True),
         ),
     ),
@@ -158,7 +181,10 @@ TOOL_SPECS: tuple[ToolSpec, ...] = (
         "Move the robot forward. Returns the new position.",
         (
             _num(
-                "distance_cm", "Distance in centimetres, greater than 0.", True, exclusive_minimum=0
+                "distance_cm",
+                "Distance in centimetres, greater than 0.",
+                True,
+                exclusive_minimum=0,
             ),
         ),
     ),
@@ -167,7 +193,10 @@ TOOL_SPECS: tuple[ToolSpec, ...] = (
         "Move the robot backward. Returns the new position.",
         (
             _num(
-                "distance_cm", "Distance in centimetres, greater than 0.", True, exclusive_minimum=0
+                "distance_cm",
+                "Distance in centimetres, greater than 0.",
+                True,
+                exclusive_minimum=0,
             ),
         ),
     ),
@@ -184,7 +213,11 @@ SPECS_BY_NAME: dict[str, ToolSpec] = {spec.name: spec for spec in TOOL_SPECS}
 
 def _param_schema(param: Param) -> dict[str, Any]:
     schema: dict[str, Any] = {
-        "type": param.json_types[0] if len(param.json_types) == 1 else list(param.json_types),
+        "type": (
+            param.json_types[0]
+            if len(param.json_types) == 1
+            else list(param.json_types)
+        ),
         "description": param.description,
     }
     if param.enum is not None:
@@ -219,7 +252,9 @@ def build_schema(spec: ToolSpec) -> dict[str, Any]:
 TOOL_SCHEMAS: list[dict[str, Any]] = [build_schema(spec) for spec in TOOL_SPECS]
 
 
-def error_result(tool: str, code: str, message: str, retryable: bool = False) -> dict[str, Any]:
+def error_result(
+    tool: str, code: str, message: str, retryable: bool = False
+) -> dict[str, Any]:
     """Build a validated ToolResult error envelope (Guidelines 4.4).
 
     Inputs: tool name, error code from the fixed list, message, retryable flag.
@@ -242,7 +277,9 @@ def _is_type(value: Any, json_type: str) -> bool:
         return isinstance(value, str)
     if json_type == "boolean":
         return isinstance(value, bool)
-    if json_type == "number":  # bool is a subclass of int in Python; reject it explicitly
+    if (
+        json_type == "number"
+    ):  # bool is a subclass of int in Python; reject it explicitly
         return isinstance(value, (int, float)) and not isinstance(value, bool)
     return False
 
@@ -250,7 +287,9 @@ def _is_type(value: Any, json_type: str) -> bool:
 def _check_param(param: Param, value: Any) -> None:
     """Raise ValueError with a model-readable message if the value breaks the spec."""
     if not any(_is_type(value, t) for t in param.json_types):
-        raise ValueError(f"{param.name} must be of type {' or '.join(param.json_types)}")
+        raise ValueError(
+            f"{param.name} must be of type {' or '.join(param.json_types)}"
+        )
     if param.enum is not None and value not in param.enum:
         raise ValueError(f"{param.name} must be one of {list(param.enum)}")
     if isinstance(value, str) and param.pattern and not re.match(param.pattern, value):
@@ -263,7 +302,9 @@ def _check_param(param: Param, value: Any) -> None:
         if param.maximum is not None and value > param.maximum:
             raise ValueError(f"{param.name} must be at most {param.maximum}")
         if param.exclusive_minimum is not None and value <= param.exclusive_minimum:
-            raise ValueError(f"{param.name} must be greater than {param.exclusive_minimum}")
+            raise ValueError(
+                f"{param.name} must be greater than {param.exclusive_minimum}"
+            )
 
 
 def validate_arguments(spec: ToolSpec, args: dict[str, Any]) -> dict[str, Any]:
@@ -285,7 +326,9 @@ def validate_arguments(spec: ToolSpec, args: dict[str, Any]) -> dict[str, Any]:
     return dict(args)
 
 
-def call_tool(name: str, args: dict[str, Any], registry: dict[str, ToolFn]) -> dict[str, Any]:
+def call_tool(
+    name: str, args: dict[str, Any], registry: dict[str, ToolFn]
+) -> dict[str, Any]:
     """Validate arguments, call the registered function, validate the envelope.
 
     Inputs: tool name, argument dict, registry of name -> function.
@@ -314,6 +357,8 @@ def call_tool(name: str, args: dict[str, Any], registry: dict[str, ToolFn]) -> d
         return error_result(name, "INTERNAL", f"Invalid envelope from {name}: {exc}")
     if envelope["tool"] != name:
         return error_result(
-            name, "INTERNAL", f"Envelope names tool {envelope['tool']!r}, expected {name!r}"
+            name,
+            "INTERNAL",
+            f"Envelope names tool {envelope['tool']!r}, expected {name!r}",
         )
     return envelope

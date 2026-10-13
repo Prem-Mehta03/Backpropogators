@@ -54,3 +54,36 @@ def test_answer_format_requires_disagreements_and_exact_writes_to_be_reported() 
         "no resolution was needed" in ANSWER_FORMAT
     )  # the phrase the model must not use
     assert "Report your memory writes exactly" in ANSWER_FORMAT
+
+
+def test_answer_format_tells_the_model_to_report_a_disputed_status() -> None:
+    assert 'status of the\n  belief you recorded is "disputed"' in ANSWER_FORMAT
+    assert "do not\n  present it as settled" in ANSWER_FORMAT
+
+
+def test_answer_format_asks_for_a_closing_memory_status_line() -> None:
+    assert "Memory status:" in ANSWER_FORMAT
+    assert "while that status is disputed" in ANSWER_FORMAT
+
+
+def test_answer_format_only_starts_with_no_or_yes_for_yes_no_questions() -> None:
+    assert 'begin with\n  "No" or "Yes" only for a yes/no question' in ANSWER_FORMAT
+
+
+def test_conflict_answer_shape_depends_on_the_kind_of_question() -> None:
+    assert "For a yes/no question" in ANSWER_FORMAT
+    assert 'Never write\n  "No," as the start of a sentence' in ANSWER_FORMAT
+
+
+def test_answer_format_asks_for_written_beliefs_by_id() -> None:
+    assert "recorded by its belief id" in ANSWER_FORMAT
+
+
+def test_policy_hands_view_disagreements_to_a_person_and_records_their_answer() -> None:
+    assert "perspective user or third_party" in EVIDENCE_POLICY
+    assert "Tell me which one to treat as correct" in EVIDENCE_POLICY
+    assert "perspective user and source user" in EVIDENCE_POLICY
+
+
+def test_policy_says_the_downgrade_value_is_set_by_the_system() -> None:
+    assert "a\n   downgrade value is set by the system" in EVIDENCE_POLICY

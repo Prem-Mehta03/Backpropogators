@@ -62,7 +62,9 @@ def test_unknown_subject_gives_an_empty_ok_reply_not_a_crash() -> None:
 
 def test_box_01_has_user_and_third_party_beliefs() -> None:
     registry, _, _ = _registry()
-    out = call_tool("query_belief", {"subject": "box_01", "predicate": "color"}, registry)
+    out = call_tool(
+        "query_belief", {"subject": "box_01", "predicate": "color"}, registry
+    )
     assert out["ok"] is True
     seen = {(b["perspective"], b["object"]) for b in out["data"]}
     assert {("user", "red"), ("third_party", "blue")} <= seen
@@ -89,7 +91,9 @@ def test_each_registry_gets_its_own_fresh_memory() -> None:
 
 
 def test_unseeded_memory_is_empty() -> None:
-    registry, _ = build_tool_registry(memory=build_memory(seed=False), real_sensors=False)
+    registry, _ = build_tool_registry(
+        memory=build_memory(seed=False), real_sensors=False
+    )
     out = call_tool("query_belief", {"subject": "path_A"}, registry)
     assert out["ok"] is True and not out["data"]
 
@@ -103,7 +107,11 @@ def test_scenario_a_end_to_end_against_real_memory() -> None:
             call("read_lidar", {}, "c2"),
             call(
                 "downgrade_belief",
-                {"belief_id": map_id, "new_confidence": 0.5, "reason": "Live LiDAR contradicts"},
+                {
+                    "belief_id": map_id,
+                    "new_confidence": 0.5,
+                    "reason": "Live LiDAR contradicts",
+                },
                 "c3",
             ),
             call(
@@ -119,7 +127,9 @@ def test_scenario_a_end_to_end_against_real_memory() -> None:
                 },
                 "c4",
             ),
-            say("No, the route is blocked. Map said clear (1.0); LiDAR reads 12 cm blocked."),
+            say(
+                "No, the route is blocked. Map said clear (1.0); LiDAR reads 12 cm blocked."
+            ),
         ]
     )
     out = run_agent(QUESTION, llm, registry)
@@ -133,9 +143,13 @@ def test_scenario_a_end_to_end_against_real_memory() -> None:
     ]
     assert all(c["result"]["ok"] for c in out.tool_calls), out.tool_calls
     history = memory.get_belief_history("path_A", "status")["data"]
-    assert history[0]["object"] == "clear" and len(history) >= 3  # original kept, never deleted
+    assert (
+        history[0]["object"] == "clear" and len(history) >= 3
+    )  # original kept, never deleted
     current = memory.query_belief("path_A", "status")["data"]
-    assert any(b["object"] == "blocked" and b["source"] == "lidar_front" for b in current)
+    assert any(
+        b["object"] == "blocked" and b["source"] == "lidar_front" for b in current
+    )
     assert all(b["object"] != "clear" or b["confidence"] <= 0.5 for b in current)
 
 

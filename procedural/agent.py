@@ -6,22 +6,26 @@ tool problems: failures come back inside AgentResult.error using the fixed error
 
 Two rules are enforced here in code, not left to the prompt (Guidelines 2 and 5):
 - the evidence checklist: a final answer is refused until memory and a sensor were consulted;
-- the provenance guard: memory writes must be backed by evidence gathered in this run.
+- the provenance guard: memory writes must be backed by evidence gathered in this run;
+- the claim check: an answer may not claim a memory write the tool log does not show, and
+  must name every belief the run really wrote.
 """
 
 from __future__ import annotations
 
 import logging
-from collections.abc import Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
 from procedural.answer_text import normalize_answer_text
 from procedural.checklist import DEFAULT_REQUIRED_EVIDENCE, missing_evidence
+from procedural.claims import unbacked_write_claims
 from procedural.llm_client import LLMBackend, LLMClientError, LLMResponse, ToolCall
 from procedural.prompts import (
     MISSING_REPLY_NOTE,
     build_checklist_note,
+    build_claim_note,
     build_system_prompt,
 )
 from procedural.state import MEMORY_TOOLS, AgentState, new_agent_state
@@ -45,6 +49,7 @@ class AgentResult:
     error: dict[str, Any] | None = None
     answer_normalized: bool = False
     evidence_nudges: int = 0
+    claim_nudges: int = 0
 
     @property
     def finished(self) -> bool:
@@ -72,7 +77,11 @@ class ToolOutcome:
 
 
 def execute_tool_call(
-    call: ToolCall, registry: dict[str, ToolFn], tool_log: list[dict[str, Any]]
+    call: ToolCall,
+    registry: dict[str, ToolFn],
+    tool_log: list[dict[str, Any]],
+    known_subjects: Collection[str] = (),
+    question: str = "",
 ) -> ToolOutcome:
     """Run one model-requested tool call and return its ToolResult envelope.
 
@@ -87,7 +96,9 @@ def execute_tool_call(
             f"Malformed arguments: {call.arguments_error}",
         )
         return ToolOutcome(envelope, call.arguments)
-    decision = check_memory_call(call.name, call.arguments, tool_log)
+    decision = check_memory_call(
+        call.name, call.arguments, tool_log, known_subjects, question
+    )
     if decision.error is not None:
         envelope = error_result(call.name, "INVALID_ARGUMENT", decision.error)
         return ToolOutcome(envelope, call.arguments, {"refused": decision.error})
@@ -116,6 +127,7 @@ def build_response(
         error=error,
         answer_normalized=answer_normalized,
         evidence_nudges=state.evidence_nudges,
+        claim_nudges=state.claim_nudges,
     )
 
 
@@ -153,6 +165,7 @@ def run_agent(
     system_prompt: str | None = None,
     known_subjects: Mapping[str, str] | None = None,
     required_evidence: Sequence[tuple[str, ...]] = DEFAULT_REQUIRED_EVIDENCE,
+    require_written_ids: bool = False,
 ) -> AgentResult:
     """Answer a question by letting the model call tools, with a hard step limit.
 
@@ -165,6 +178,8 @@ def run_agent(
     required_evidence is the checklist: each entry is a group of tool names, and at least one
     tool of every group must have been attempted before a final answer is accepted. The
     default needs memory (query_belief) and a sensor. Pass () to switch the checklist off.
+    require_written_ids=True also refuses an answer that does not name every belief the run
+    wrote (live runs switch this on; scripted test answers need not name ids).
     A premature answer is kept in the history, refused, and the model is told what is missing
     (counted in AgentResult.evidence_nudges). Output: AgentResult.
     Error codes in result.error: STEP_LIMIT (no accepted final answer within max_steps model
@@ -186,7 +201,9 @@ def run_agent(
         if reply.tool_calls:
             state.add_assistant_turn(reply.content, reply.tool_calls)
             for call in reply.tool_calls:
-                outcome = execute_tool_call(call, registry, state.tool_log)
+                outcome = execute_tool_call(
+                    call, registry, state.tool_log, known_subjects or (), question
+                )
                 logger.info(
                     "model_call=%d tool=%s ok=%s",
                     state.model_calls,
@@ -211,6 +228,14 @@ def run_agent(
                     "Answer refused, missing evidence: %s", _missing_note(missing)
                 )
                 state.add_user_note(build_checklist_note(missing))
+                continue
+            unbacked = unbacked_write_claims(text, state.tool_log, require_written_ids)
+            if unbacked:
+                state.claim_nudges += 1
+                logger.warning(
+                    "Answer refused, unbacked claims: %s", "; ".join(unbacked)
+                )
+                state.add_user_note(build_claim_note(unbacked))
                 continue
             clean = normalize_answer_text(text)
             return build_response(state, clean, answer_normalized=clean != text)

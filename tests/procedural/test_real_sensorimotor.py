@@ -23,7 +23,8 @@ from tests.procedural.scripted_llm import ScriptedLLM, call, say
 
 _module = importlib.import_module("sensorimotor")
 pytestmark = pytest.mark.skipif(
-    not hasattr(_module, "create_sensorimotor"), reason="sensorimotor layer not on this branch"
+    not hasattr(_module, "create_sensorimotor"),
+    reason="sensorimotor layer not on this branch",
 )
 
 QUESTION = "Is your route clear? Justify your response by inspecting your internal system layers."
