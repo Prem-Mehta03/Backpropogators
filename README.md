@@ -1,6 +1,25 @@
 # Backpropogators
 
-## Role 4 evaluation foundation — New Phase A
+## Final Role 4 evaluation
+
+Run the ten scenarios against the deterministic reference evaluator and against
+the teammate stack with a scripted model in a simulated environment. Every
+trial starts with fresh state. The runner saves per-case logs, traces and
+separate pass rates for the reference and teammate paths. Explicit synthetic
+fixtures and incomplete capabilities are marked in the results.
+
+```powershell
+python -B scripts/run_role4_offline_checks.py --suite full
+python -B scripts/run_role4_final.py --trials 5 --seed 42
+python -B scripts/run_role4_final.py --trials 1 --scenario S01 --scenario S03 --no-controls --show-cases
+```
+
+These commands use the existing Python dependencies in `requirements.txt`.
+The suite can also use an existing compatible dependency directory via
+`--dependency-path`. See the [final evaluation and submission instructions](docs/role4/final/README.md)
+for the measured results, demo, evidence and outstanding team review items.
+
+## Historical Role 4 evaluation foundation — New Phase A
 
 Yash's Phase 1–3 evaluation infrastructure is scoped under `evaluation/role4/`,
 with regression fixtures/tests in `tests/role4/` and three offline demo scripts.
@@ -11,14 +30,13 @@ ports/logger do not replace them. All demo layers are deterministic references.
 From this repository root:
 
 ```powershell
-python -B -S -m unittest discover -s tests/role4 -q
+python -B -S -m unittest tests.role4.test_evaluation -q
 python -B -S scripts/run_role4_phase1_demo.py
 python -B -S scripts/run_role4_phase2_demo.py
 python -B -S scripts/run_role4_phase3_demo.py
 # Available teammate client tests: uses installed pytest and injected fake APIs.
 python -B -m pytest -p no:cacheprovider tests/procedural/test_llm_client.py -q
-# Full offline discovery: currently reports missing shared contracts/sensor module.
-python -B -m pytest -p no:cacheprovider tests -k 'not live' -q
+# For current full offline discovery, use scripts/run_role4_offline_checks.py.
 ```
 
 Always exclude `live` tests for offline runs, even when a key is configured.

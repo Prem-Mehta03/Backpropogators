@@ -25,9 +25,9 @@ class TraceRecorder:
             payload['backend_type'] = self.backend_type
             if 'source_layer' not in payload:
                 tool = payload.get('tool_name', '')
-                if tool.startswith('read_') or tool == 'move_forward':
+                if tool.startswith('read_') or tool in {'move_forward', 'check_environment_revision'}:
                     payload['source_layer'] = 'sensorimotor'
-                elif tool in {'query_memory', 'update_belief'} or kind == 'belief_update':
+                elif tool in {'query_memory', 'update_belief', 'inspect_provenance'} or kind == 'belief_update':
                     payload['source_layer'] = 'declarative'
                 else:
                     payload['source_layer'] = 'procedural'
@@ -128,45 +128,12 @@ class ToolDispatcher:
             raise ContractError(f'Maximum tool steps exceeded: {self.max_steps}')
         call_id = self.recorder.begin_tool(name, arguments)
         self.steps += 1
-        receipt = None
         try:
-            if name in self.forbidden_tools:
-                result = {
-                    'state': 'rejected', 'authorized': False, 'executed': False,
-                    'reason': 'Action forbidden by scenario safety policy', 'evidence': [],
-                }
-            elif name == 'query_memory':
-                beliefs = self.memory.get_beliefs(arguments['subject'], arguments['predicate'])
-                result = {'beliefs': [b.to_dict() for b in beliefs], 'raw': deepcopy(self.memory.last_raw), 'evidence': [{'evidence_id': f'{call_id}:memory:{b.belief_id}', 'category': memory_category(b), 'data': b.to_dict()} for b in beliefs]}
-                if self.abstention and not beliefs:
-                    result.update(status='empty_result', evidence=[{
-                        'evidence_id': f'{call_id}:memory_lookup', 'category': 'memory_lookup',
-                        'data': {'subject': arguments['subject'], 'predicate': arguments['predicate'],
-                                 'status': 'empty_result', 'found': False},
-                    }])
-            elif name in {'read_lidar', 'read_camera'} or (self.abstention and name == 'read_temperature'):
-                try:
-                    observation = getattr(self.sensors, name)()
-                except SensorUnavailable as exc:
-                    if not (self.abstention and name == 'read_temperature'):
-                        raise
-                    result = {'state': 'unavailable', 'status': 'unavailable', 'error_category': 'tool_unavailable',
-                              'error_type': type(exc).__name__, 'message': str(exc), 'evidence': [{
-                                  'evidence_id': f'{call_id}:sensor_availability', 'category': 'sensor_availability',
-                                  'data': {'sensor': 'temperature', 'available': False, 'status': 'unavailable'},
-                              }]}
-                else:
-                    result = {'observation': observation.to_dict(), 'raw': deepcopy(self.sensors.last_raw), 'evidence': [{'evidence_id': observation.evidence_id, 'category': observation.reading.sensor, 'data': observation.to_dict()}]}
-            else:
-                if name == 'update_belief':
-                    refs = self.recorder.require_evidence(arguments['evidence_refs'])
-                    receipt = self.memory.upsert_belief(belief_from_payload(arguments['belief']), refs)
-                    result = {'belief': receipt.after.to_dict(), 'before': receipt.before.to_dict() if receipt.before else None, 'evidence_refs': receipt.evidence_refs, 'evidence': [], 'raw': deepcopy(self.memory.last_raw)}
-                else:
-                    raise ContractError(f'Unsupported tool: {name}')
+            result, receipt = self._dispatch(call_id, name, arguments)
             self.recorder.tool_result(call_id, name, result)
             if receipt:
                 self.recorder.belief_update(call_id, receipt)
+            self._after_result(name, result)
             return deepcopy(result)
         except (ContractError, KeyError, TypeError, ValueError) as exc:
             error = exc if isinstance(exc, ContractError) else ContractError(f'Invalid {name} boundary: {exc}')
@@ -176,6 +143,48 @@ class ToolDispatcher:
             if error is exc:
                 raise
             raise error from exc
+
+    def _dispatch(self, call_id, name, arguments):
+        receipt = None
+        if name in self.forbidden_tools:
+            result = {
+                'state': 'rejected', 'authorized': False, 'executed': False,
+                'reason': 'Action forbidden by scenario safety policy', 'evidence': [],
+            }
+        elif name == 'query_memory':
+            beliefs = self.memory.get_beliefs(arguments['subject'], arguments['predicate'])
+            result = {'beliefs': [b.to_dict() for b in beliefs], 'raw': deepcopy(self.memory.last_raw), 'evidence': [{'evidence_id': f'{call_id}:memory:{b.belief_id}', 'category': memory_category(b), 'data': b.to_dict()} for b in beliefs]}
+            if self.abstention and not beliefs:
+                result.update(status='empty_result', evidence=[{
+                    'evidence_id': f'{call_id}:memory_lookup', 'category': 'memory_lookup',
+                    'data': {'subject': arguments['subject'], 'predicate': arguments['predicate'],
+                             'status': 'empty_result', 'found': False},
+                }])
+        elif name in {'read_lidar', 'read_camera'} or (self.abstention and name == 'read_temperature'):
+            try:
+                observation = getattr(self.sensors, name)()
+            except SensorUnavailable as exc:
+                if not (self.abstention and name == 'read_temperature'):
+                    raise
+                result = {'state': 'unavailable', 'status': 'unavailable', 'error_category': 'tool_unavailable',
+                          'error_type': type(exc).__name__, 'message': str(exc), 'evidence': [{
+                              'evidence_id': f'{call_id}:sensor_availability', 'category': 'sensor_availability',
+                              'data': {'sensor': 'temperature', 'available': False, 'status': 'unavailable'},
+                          }]}
+            else:
+                result = {'observation': observation.to_dict(), 'raw': deepcopy(self.sensors.last_raw), 'evidence': [{'evidence_id': observation.evidence_id, 'category': observation.reading.sensor, 'data': observation.to_dict()}]}
+        else:
+            if name == 'update_belief':
+                refs = self.recorder.require_evidence(arguments['evidence_refs'])
+                receipt = self.memory.upsert_belief(belief_from_payload(arguments['belief']), refs)
+                result = {'belief': receipt.after.to_dict(), 'before': receipt.before.to_dict() if receipt.before else None, 'evidence_refs': receipt.evidence_refs, 'evidence': [], 'raw': deepcopy(self.memory.last_raw)}
+            else:
+                raise ContractError(f'Unsupported tool: {name}')
+        return result, receipt
+
+    def _after_result(self, name, result):
+        """Allow reference fixtures to react after a validated tool result."""
+
 
 def memory_category(belief):
     if belief.perspective == 'user':

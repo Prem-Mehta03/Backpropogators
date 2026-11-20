@@ -182,7 +182,9 @@ def _plan(scenario, control, old_id):
                      ("detect_conflict", {"subject": subject, "predicate": "color" if scenario == "S03" else "status"}), answer]
 
 
-def run_teammate_case(scenario_id, output_dir, control="valid"):
+def run_teammate_case(
+    scenario_id: str, output_dir: str | Path, control: str = "valid", *, seed: int = 42
+) -> dict:
     """Run fresh canonical layers locally; outputs preserve raw evidence and pending semantics."""
     from declarative.belief_graph import BeliefMemory
     from declarative.seed import seed_bot_02_record
@@ -201,7 +203,7 @@ def run_teammate_case(scenario_id, output_dir, control="valid"):
         config["obstacles"] = []  # explicitly derived Scenario A: LiDAR reports its 400 cm range
     if control == "unavailable_evidence":
         config["sensors"]["lidar"][0]["available"] = False
-    world = create_sensorimotor(config, seed=42)
+    world = create_sensorimotor(config, seed=seed)
     world.env.reset()
     recorder = TraceRecorder(scenario_id)
     official = EvaluationLogger(output / "official")

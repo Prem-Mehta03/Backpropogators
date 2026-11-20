@@ -38,7 +38,7 @@ def reference_backends(scenario, *, skip_lidar=False, malformed_lidar=False):
 def run_s01(case_name, memory_backend, procedural_backend, sensor_backend, *, output_dir=None, layer_source='reference_layers', max_steps=8):
     return _execute(load_s01(), case_name, memory_backend, procedural_backend, sensor_backend, output_dir=output_dir, layer_source=layer_source, max_steps=max_steps)
 
-def _execute(scenario, case_name, memory_backend, procedural_backend, sensor_backend, *, output_dir=None, layer_source='reference_layers', max_steps=8, behavioral_policy=None, metadata=None):
+def _execute(scenario, case_name, memory_backend, procedural_backend, sensor_backend, *, output_dir=None, layer_source='reference_layers', max_steps=8, behavioral_policy=None, metadata=None, dispatcher_type=ToolDispatcher, snapshot_final_environment=False):
     if not re.fullmatch('[A-Za-z0-9_-]+', case_name):
         raise ContractError('case_name must be a safe filename identifier')
     run_id = f'{scenario.scenario_id}_{case_name}'
@@ -63,7 +63,7 @@ def _execute(scenario, case_name, memory_backend, procedural_backend, sensor_bac
             recorder.emit('user_query', {'text': scenario.user_query})
         else:
             recorder.start(scenario, run_id, initial, environment)
-        gateway = ToolDispatcher(memory, sensors, recorder, max_steps, scenario.forbidden_tools if metadata else (), abstention=abstention)
+        gateway = dispatcher_type(memory, sensors, recorder, max_steps, scenario.forbidden_tools if metadata else (), abstention=abstention)
         target = ({'subject': behavioral_policy.subject, 'predicate': behavioral_policy.predicate} if abstention else
                   (scenario.initial_beliefs[0].to_dict() if scenario.initial_beliefs else scenario.initial_environment_state['readings'][0]))
         context = QueryContext(gateway, target['subject'], target['predicate'], max_steps)
@@ -71,7 +71,10 @@ def _execute(scenario, case_name, memory_backend, procedural_backend, sensor_bac
         recorder.response(response, procedural.last_raw)
         recorder.finish()
         final = memory.get_belief_snapshot()
-        run = TestRunRecord(scenario.scenario_id, run_id, initial, environment, scenario.user_query, list(recorder.events), final, integration_metadata=deepcopy(metadata))
+        run_metadata = deepcopy(metadata)
+        if snapshot_final_environment:
+            run_metadata['final_environment_state'] = sensors.get_environment_state()
+        run = TestRunRecord(scenario.scenario_id, run_id, initial, environment, scenario.user_query, list(recorder.events), final, integration_metadata=run_metadata)
         result = evaluate(scenario, run, behavioral_policy) if behavioral_policy else evaluate(scenario, run)
         run.result = result
         with EventLogger(output / f'{run_id}_trace.jsonl') as logger:

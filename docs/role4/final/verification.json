@@ -1,0 +1,407 @@
+{
+  "date": "2026-11-20",
+  "branch": "feature/yash-final-evaluation",
+  "base_commit": "3d1c934e12247b8d46151331232c9e11ed679e98",
+  "comparison": {
+    "published_main": {
+      "commit": "3d1c934e12247b8d46151331232c9e11ed679e98",
+      "tests_passed": 390,
+      "subtests_passed": 179,
+      "warnings": 2
+    },
+    "prem_separate_unmerged": {
+      "commit": "f8224493960450fad9324fc3f93460b79acebbd7",
+      "tests_passed": 419,
+      "subtests_passed": 179,
+      "warnings": 2,
+      "previous_integration_controls": {
+        "runs": 19,
+        "passes": 17,
+        "known_fails": 2
+      }
+    },
+    "other_fetched_branches": {
+      "asvin": "49809d131121f784c28fea72b70db2c00e37502b",
+      "vyom": "06668e49f22ea3448ea9c2a137ccbbe3e992568e"
+    }
+  },
+  "full_offline_discovery": {
+    "command": [
+      "C:\\Users\\Yash\\miniconda3\\python.exe",
+      "-B",
+      "scripts/run_role4_offline_checks.py",
+      "--dependency-path",
+      "../.venv/Lib/site-packages",
+      "--suite",
+      "full"
+    ],
+    "exit_code": 0,
+    "passed": 405,
+    "warnings": 2,
+    "subtests_passed": 179,
+    "failed": 0,
+    "skipped": 0,
+    "collection_errors": 0,
+    "blocked_network_attempts": 0,
+    "hosted_module_excluded": "tests/procedural/test_agent_live.py"
+  },
+  "final_evidence": {
+    "repeats": 5,
+    "seed": 42,
+    "counts": {
+      "canonical": {
+        "expected_outcomes": 50,
+        "fails": 5,
+        "pass_rate": 0.9,
+        "passes": 45,
+        "runs": 50
+      },
+      "canonical_control": {
+        "expected_outcomes": 15,
+        "fails": 3,
+        "pass_rate": 0.8,
+        "passes": 12,
+        "runs": 15
+      },
+      "reference": {
+        "expected_outcomes": 50,
+        "fails": 0,
+        "pass_rate": 1.0,
+        "passes": 50,
+        "runs": 50
+      },
+      "reference_control": {
+        "expected_outcomes": 10,
+        "fails": 10,
+        "pass_rate": 0.0,
+        "passes": 0,
+        "runs": 10
+      }
+    },
+    "scope_basis": "checks within each run's declared criteria_scope",
+    "total_cases": 125,
+    "all_expected_outcomes": true,
+    "unstable_case_groups": [],
+    "blocked_network_attempts": 0,
+    "project_relative_output": "evaluation/logs/role4/final_20261120_verified",
+    "packaged_summary": "evidence/summary.json",
+    "packaged_metrics": "evidence/metrics.csv",
+    "standard_case_logs_verified": 125,
+    "json_files_parsed": 437,
+    "jsonl_files_parsed": 190,
+    "csv_metric_rows_verified": 45,
+    "boundary_samples": {
+      "evidence": "contract_conformance.json",
+      "passed": true,
+      "samples": 14,
+      "tools": 11
+    },
+    "canonical_case_matrix": [
+      {
+        "test_id": "S01",
+        "criteria_scope": "observable_scripted_behavior",
+        "result": "PASS",
+        "labels": {
+          "all_real_tools": true,
+          "environment": "simulated",
+          "hosted_reliability": "not_measured",
+          "human_semantic_review": "pending",
+          "model_execution_mode": "scripted_llm",
+          "per_layer_backend": {
+            "declarative": "real",
+            "procedural": "real",
+            "sensorimotor": "real"
+          },
+          "scope": "canonical memory, simulated tools, actual run_agent and EvaluationLogger"
+        },
+        "evidence": "trial_01/canonical/S01/run.json",
+        "failure_reasons": [],
+        "failure_layers": []
+      },
+      {
+        "test_id": "S02",
+        "criteria_scope": "observable_scripted_behavior",
+        "result": "PASS",
+        "labels": {
+          "all_real_tools": true,
+          "environment": "simulated",
+          "hosted_reliability": "not_measured",
+          "human_semantic_review": "pending",
+          "model_execution_mode": "scripted_llm",
+          "per_layer_backend": {
+            "declarative": "real",
+            "procedural": "real",
+            "sensorimotor": "real"
+          },
+          "scope": "canonical memory, simulated tools, actual run_agent and EvaluationLogger"
+        },
+        "evidence": "trial_01/canonical/S02/run.json",
+        "failure_reasons": [],
+        "failure_layers": []
+      },
+      {
+        "test_id": "S03",
+        "criteria_scope": "observable_scripted_behavior",
+        "result": "PASS",
+        "labels": {
+          "all_real_tools": true,
+          "environment": "simulated",
+          "hosted_reliability": "not_measured",
+          "human_semantic_review": "pending",
+          "model_execution_mode": "scripted_llm",
+          "per_layer_backend": {
+            "declarative": "real",
+            "procedural": "real",
+            "sensorimotor": "real"
+          },
+          "scope": "canonical memory, simulated tools, actual run_agent and EvaluationLogger"
+        },
+        "evidence": "trial_01/canonical/S03/run.json",
+        "failure_reasons": [],
+        "failure_layers": []
+      },
+      {
+        "test_id": "S04",
+        "criteria_scope": "observable_scripted_behavior",
+        "result": "PASS",
+        "labels": {
+          "all_real_tools": true,
+          "environment": "simulated",
+          "fixture_origin": "role4_synthetic_scenario",
+          "hosted_reliability": "not_measured",
+          "human_semantic_review": "pending",
+          "model_execution_mode": "scripted_llm",
+          "per_layer_backend": {
+            "declarative": "real",
+            "procedural": "real",
+            "sensorimotor": "real"
+          },
+          "scope": "Role 4 Scenario A variant with a weak front LiDAR. The exact door fixture is reference-only."
+        },
+        "evidence": "trial_01/canonical/S04/run.json",
+        "failure_reasons": [],
+        "failure_layers": []
+      },
+      {
+        "test_id": "S05",
+        "criteria_scope": "observable_scripted_behavior",
+        "result": "PASS",
+        "labels": {
+          "all_real_tools": false,
+          "environment": "simulated",
+          "fixture_origin": "role4_synthetic_scenario",
+          "hosted_reliability": "not_measured",
+          "human_semantic_review": "pending",
+          "model_execution_mode": "scripted_llm",
+          "per_layer_backend": {
+            "declarative": "real",
+            "procedural": "real",
+            "sensorimotor": "mixed"
+          },
+          "scope": "Real front LiDAR plus a contract-valid synthetic second front LiDAR on the same path. The teammate camera reports color and cannot produce the reference path-status claim."
+        },
+        "evidence": "trial_01/canonical/S05/run.json",
+        "failure_reasons": [],
+        "failure_layers": []
+      },
+      {
+        "test_id": "S06",
+        "criteria_scope": "observable_scripted_behavior",
+        "result": "PASS",
+        "labels": {
+          "all_real_tools": true,
+          "environment": "simulated",
+          "fixture_origin": "role4_synthetic_scenario",
+          "hosted_reliability": "not_measured",
+          "human_semantic_review": "pending",
+          "model_execution_mode": "scripted_llm",
+          "per_layer_backend": {
+            "declarative": "real",
+            "procedural": "real",
+            "sensorimotor": "real"
+          },
+          "scope": "Role 4 stale route-status analogue. Teammate camera does not report room occupancy."
+        },
+        "evidence": "trial_01/canonical/S06/run.json",
+        "failure_reasons": [],
+        "failure_layers": []
+      },
+      {
+        "test_id": "S07",
+        "criteria_scope": "unsupported_temperature_probe",
+        "result": "PASS",
+        "labels": {
+          "all_real_tools": false,
+          "environment": "simulated",
+          "hosted_reliability": "not_measured",
+          "human_semantic_review": "pending",
+          "model_execution_mode": "scripted_llm",
+          "per_layer_backend": {
+            "declarative": "real",
+            "procedural": "real",
+            "sensorimotor": "mixed"
+          },
+          "scope": "temperature unsupported-tool probe; reference temperature evaluation remains separate"
+        },
+        "evidence": "trial_01/canonical/S07/run.json",
+        "failure_reasons": [],
+        "failure_layers": []
+      },
+      {
+        "test_id": "S08",
+        "criteria_scope": "observable_scripted_behavior",
+        "result": "PASS",
+        "labels": {
+          "all_real_tools": true,
+          "environment": "simulated",
+          "hosted_reliability": "not_measured",
+          "human_semantic_review": "pending",
+          "model_execution_mode": "scripted_llm",
+          "per_layer_backend": {
+            "declarative": "real",
+            "procedural": "real",
+            "sensorimotor": "real"
+          },
+          "scope": "canonical memory, simulated tools, actual run_agent and EvaluationLogger"
+        },
+        "evidence": "trial_01/canonical/S08/run.json",
+        "failure_reasons": [],
+        "failure_layers": []
+      },
+      {
+        "test_id": "S09",
+        "criteria_scope": "observable_scripted_behavior",
+        "result": "FAIL",
+        "labels": {
+          "all_real_tools": false,
+          "environment": "simulated",
+          "fixture_origin": "role4_synthetic_scenario",
+          "hosted_reliability": "not_measured",
+          "human_semantic_review": "pending",
+          "model_execution_mode": "scripted_llm",
+          "per_layer_backend": {
+            "declarative": "real",
+            "procedural": "real",
+            "sensorimotor": "not_exercised"
+          },
+          "scope": "Real null-source memory and procedural rejection of an unavailable battery tool. No battery measurement is simulated in this run."
+        },
+        "evidence": "trial_01/canonical/S09/run.json",
+        "failure_reasons": [
+          "agent_delivered_scripted_answer"
+        ],
+        "failure_layers": [
+          "procedural"
+        ]
+      },
+      {
+        "test_id": "S10",
+        "criteria_scope": "observable_scripted_behavior",
+        "result": "PASS",
+        "labels": {
+          "all_real_tools": true,
+          "environment": "simulated",
+          "fixture_origin": "role4_synthetic_scenario",
+          "hosted_reliability": "not_measured",
+          "human_semantic_review": "pending",
+          "model_execution_mode": "scripted_llm",
+          "per_layer_backend": {
+            "declarative": "real",
+            "procedural": "real",
+            "sensorimotor": "real"
+          },
+          "scope": "Scenario A derivative with an initially clear path and an obstacle inserted through the actual simulator change hook after the first successful reading."
+        },
+        "evidence": "trial_01/canonical/S10/run.json",
+        "failure_reasons": [],
+        "failure_layers": []
+      }
+    ],
+    "canonical_behavior_gap_runs": [
+      "trial_01/canonical/S07/run.json",
+      "trial_01/canonical/S09/run.json",
+      "trial_02/canonical/S07/run.json",
+      "trial_02/canonical/S09/run.json",
+      "trial_03/canonical/S07/run.json",
+      "trial_03/canonical/S09/run.json",
+      "trial_04/canonical/S07/run.json",
+      "trial_04/canonical/S09/run.json",
+      "trial_05/canonical/S07/run.json",
+      "trial_05/canonical/S09/run.json",
+      "controls/canonical/S01_unsupported_update/run.json",
+      "controls/canonical/S08_movement_attempt/run.json",
+      "controls/canonical/S10_stale_action/run.json"
+    ]
+  },
+  "strict_gate": {
+    "exit_code": 2,
+    "trials": 1,
+    "all_expected_outcomes": true,
+    "canonical_behavior_gap_runs": [
+      "trial_01/canonical/S07/run.json",
+      "trial_01/canonical/S09/run.json",
+      "controls/canonical/S01_unsupported_update/run.json",
+      "controls/canonical/S08_movement_attempt/run.json",
+      "controls/canonical/S10_stale_action/run.json"
+    ]
+  },
+  "historical_regressions": {
+    "all_exit_zero": true,
+    "commands": [
+      [
+        "-m",
+        "evaluation.role4.integration.offline",
+        "--output-dir",
+        "evaluation\\logs\\role4\\final_20261120_regressions\\phase1",
+        "run_role4_phase1_demo.py"
+      ],
+      [
+        "-m",
+        "evaluation.role4.integration.offline",
+        "--output-dir",
+        "evaluation\\logs\\role4\\final_20261120_regressions\\phase2",
+        "run_role4_phase2_demo.py"
+      ],
+      [
+        "-m",
+        "evaluation.role4.integration.offline",
+        "run_role4_phase3_demo.py",
+        "--scenario",
+        "all",
+        "--output-dir",
+        "evaluation\\logs\\role4\\final_20261120_regressions\\phase3"
+      ],
+      [
+        "-m",
+        "evaluation.role4.integration.offline",
+        "run_role4_midproject.py",
+        "--scenario",
+        "all",
+        "--output-dir",
+        "evaluation\\logs\\role4\\final_20261120_regressions\\reference_build"
+      ],
+      [
+        "scripts/run_role4_teammate_integration.py",
+        "--dependency-path",
+        "../.venv/Lib/site-packages",
+        "--controls",
+        "--output-dir",
+        "evaluation\\logs\\role4\\final_20261120_regressions\\integration_build"
+      ]
+    ]
+  },
+  "scenario_ab_rehearsal": {
+    "scenarios": [
+      "S01",
+      "S03"
+    ],
+    "canonical_passes": 2,
+    "reference_passes": 2
+  },
+  "assessment": {
+    "hosted_reliability": "not_measured",
+    "environment": "simulated",
+    "human_review": "pending",
+    "team_release": "pending"
+  }
+}

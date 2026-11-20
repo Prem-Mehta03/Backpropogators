@@ -54,3 +54,11 @@ class SensorimotorAdapter:
 
     def read_temperature(self):
         return self._read('temperature')
+
+    def advance_after_lidar(self) -> dict:
+        """Validate a reference fixture's change receipt against its public state."""
+        receipt = self.backend.advance_after_lidar()
+        snapshot = self.get_environment_state()
+        if receipt != snapshot:
+            raise ContractError('Reference change receipt does not match its public state')
+        return snapshot

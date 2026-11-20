@@ -1,0 +1,15 @@
+flowchart LR
+    Q[Question] --> P[Procedural agent loop]
+    L[Injected scripted model] <-->|Text and tool requests| P
+    P <-->|Validated arguments and ToolResult| C[Tool registry with v1.0 contracts]
+    C <-->|Queries and belief writes| D[Declarative memory]
+    C <-->|Sensor calls and actions| S[Sensorimotor world]
+    D --- H[SQLite history and NetworkX graph]
+    S --- W[Seeded simulated environment]
+    S -->|Measurement| A[Sensor to belief adapter]
+    A -->|Evidence fields| C
+    P --> F[Final answer or error]
+    C --> E[Role 4 trace and checks]
+    D -->|Before and after snapshots| E
+    S -->|Before and after snapshots| E
+    F --> E
