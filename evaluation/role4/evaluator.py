@@ -6,6 +6,8 @@ from evaluation.role4.models import ScenarioSpecification, TestRunRecord, Evalua
 
 def evaluate(scenario: ScenarioSpecification, run: TestRunRecord, behavioral_policy=None) -> EvaluationResult:
     checks = []
+    policy_kind = getattr(behavioral_policy, 'kind', None)
+    extension_events = {'environment_change', 'evidence_invalidated', 'evidence_quarantined'} if policy_kind == 'final_reference' else set()
 
     def check(name: str, passed: bool, detail: str) -> None:
         checks.append({"name": name, "passed": bool(passed), "detail": detail})
@@ -129,7 +131,7 @@ def evaluate(scenario: ScenarioSpecification, run: TestRunRecord, behavioral_pol
             refs = payload["evidence_refs"]
             if any(ref not in evidence for ref in refs):
                 trace_errors.append("Response cites unknown or future evidence")
-        elif event.event_type not in {kind for kind, _ in snapshots} | {"boundary_call", "boundary_result"}:
+        elif event.event_type not in {kind for kind, _ in snapshots} | {"boundary_call", "boundary_result"} | extension_events:
             trace_errors.append(f"Unknown execution event type {event.event_type}")
     if pending:
         trace_errors.append(f"Tools without results: {sorted(pending)}")
@@ -166,9 +168,12 @@ def evaluate(scenario: ScenarioSpecification, run: TestRunRecord, behavioral_pol
         check(f"response_claim:{key}", response.get("claims", {}).get(key) == value,
               f"Response structured claim {key} must be {value!r}")
     if behavioral_policy is not None:
-        if getattr(behavioral_policy, 'kind', None) in {'abstention', 's01_grounding'}:
+        if policy_kind in {'abstention', 's01_grounding'}:
             from evaluation.role4.midproject import midproject_checks
             checks.extend(midproject_checks(scenario, run, behavioral_policy))
+        elif policy_kind == 'final_reference':
+            from evaluation.role4.final_reference import final_reference_checks
+            checks.extend(final_reference_checks(scenario, run, behavioral_policy))
         else:
             from evaluation.role4.behavioral import behavioral_checks
             checks.extend(behavioral_checks(scenario, run, behavioral_policy))
