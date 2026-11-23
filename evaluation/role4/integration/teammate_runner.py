@@ -48,11 +48,26 @@ def trace_consistent(record, events):
     outcomes = record["agent"]["tool_calls"]
     calls = [e.payload for e in events if e.event_type == "teammate_boundary_call"]
     returns = [e.payload for e in events if e.event_type == "teammate_boundary_return"]
-    # run_agent re-reads the LiDAR itself before a move (recheck before action, Prem's P6). That
-    # read reaches the boundary under the move's call id; it is not a model request.
+    # Automatic reads share the move request ID. Verify against the guard receipts before
+    # separating them from dispatches attributable to the model.
     recheck_ids = {r["call_id"] for r in requests if r["name"] in ("move_forward", "move_backward")}
-    calls = [c for c in calls if not (c["tool"] == "read_lidar" and c["call_id"] in recheck_ids)]
-    returns = [r for r in returns if not (r["tool"] == "read_lidar" and r["call_id"] in recheck_ids)]
+    def automatic(entry):
+        return entry["tool"] in {"read_lidar", "read_ultrasonic"} and entry["call_id"] in recheck_ids
+    auto_calls = [(c["call_id"], c["tool"], c["arguments"]) for c in calls if automatic(c)]
+    auto_results = [(r["call_id"], r["tool"], r["raw"]) for r in returns if automatic(r)]
+    auto_expected = [(r["call_id"], receipt) for r, outcome in zip(requests, outcomes)
+                     for receipt in (outcome.get("guard") or {}).get("recheck", {}).get("reads", [])]
+    for call_id, receipt in auto_expected:
+        key = (call_id, receipt["tool"], receipt["args"])
+        if key in auto_calls and (call_id, receipt["tool"], receipt["result"]) not in auto_results:
+            return False
+    if auto_results != [(cid, r["tool"], r["result"]) for cid, r in auto_expected
+                        if (cid, r["tool"], r["args"]) in auto_calls]:
+        return False
+    if returns and returns[-1]["state_after"] != record["state_after"]:
+        return False
+    calls = [c for c in calls if not automatic(c)]
+    returns = [r for r in returns if not automatic(r)]
     if len(requests) != len(outcomes) or len(calls) != len(returns):
         return False
     if any(r["name"] != o["tool"] for r, o in zip(requests, outcomes)):
@@ -72,8 +87,6 @@ def trace_consistent(record, events):
             return False
         if not result["canonical_envelope_valid"] and outcomes[position]["result"].get("error", {}).get("code") != "INTERNAL":
             return False
-    if returns and returns[-1]["state_after"] != record["state_after"]:
-        return False
     return True
 
 
@@ -292,7 +305,7 @@ def run_teammate_case(
             for r, o in zip(requests, result.tool_calls)]
         evaluation = evaluate_teammate(record)
         record["evaluation"] = evaluation.to_dict()
-        record["expected_failures"] = ["update_matches_returned_evidence"] if control == "unsupported_update" else []  # movement_attempt: closed by the recheck before action, so it must now pass
+        record["expected_failures"] = []
         record["expectation_met"] = evaluation.failure_reasons == record["expected_failures"]
         # Agent outcomes include attempts rejected before any boundary dispatch.
         emit("actual_agent_outcome", {"agent": asdict(result), "state_after": after, "evaluation": evaluation.to_dict()})

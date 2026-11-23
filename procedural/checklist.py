@@ -14,6 +14,7 @@ from collections.abc import Sequence
 from typing import Any
 
 SENSOR_TOOLS = ("read_lidar", "read_camera", "get_position")
+DISTANCE_TOOLS = ("read_lidar", "read_ultrasonic")
 
 # Each inner tuple is one requirement: any one tool from it is enough.
 DEFAULT_REQUIRED_EVIDENCE: tuple[tuple[str, ...], ...] = (
@@ -39,12 +40,37 @@ def describe_requirement(group: Sequence[str]) -> str:
 
 
 def missing_evidence(
-    tool_log: list[dict[str, Any]], required: Sequence[Sequence[str]]
+    tool_log: list[dict[str, Any]],
+    required: Sequence[Sequence[str]],
+    registered: Sequence[str] = (),
 ) -> list[str]:
     """List the requirements not yet met.
 
     Inputs: the tool log (state.tool_log) and the requirement groups.
     Output: a description of each unmet requirement, in order; [] when all are met.
     """
-    attempted = {entry["tool"] for entry in tool_log if evidence_attempted(entry)}
+    queried = {
+        str(entry["args"].get("subject", ""))
+        for entry in tool_log if entry["tool"] == "query_belief"
+    }
+    route_query = any(s.startswith("path_") for s in queried)
+    object_query = any(s.startswith("box_") for s in queried)
+    attempted = set()
+    for entry in tool_log:
+        name = entry["tool"]
+        front = (name != "read_lidar"
+                 or entry["args"].get("direction", "front") == "front")
+        if evidence_attempted(entry) and (front or not route_query):
+            attempted.add(name)
+        guard = entry.get("guard", {}).get("recheck", {})
+        if guard.get("direction") == "front":
+            attempted.update(
+                item["tool"] for item in guard.get("reads", ()) if evidence_attempted(item)
+            )
+    if required == DEFAULT_REQUIRED_EVIDENCE:
+        relevant = tuple((name,) for name in DISTANCE_TOOLS if route_query and name in registered)
+        if object_query and "read_camera" in registered:
+            relevant += (("read_camera",),)
+        if relevant:
+            required = (("query_belief",), *relevant)
     return [describe_requirement(g) for g in required if not attempted.intersection(g)]

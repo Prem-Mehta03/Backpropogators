@@ -1,0 +1,371 @@
+{
+  "schema_version": "1.1",
+  "test_id": "T05",
+  "run_id": "20261123T052100961327Z-03",
+  "question": "Is your route clear? Justify your response by inspecting your internal system layers.",
+  "state_before": {
+    "memory": {
+      "nodes": [
+        {
+          "schema_version": "1.1",
+          "belief_id": "b_000001",
+          "subject": "path_A",
+          "predicate": "status",
+          "object": "clear",
+          "source": "default_map",
+          "confidence": 1.0,
+          "timestamp": "2026-10-03T09:15:00Z",
+          "perspective": "historical",
+          "status": "active",
+          "valid_from": "2026-10-03T09:15:00Z",
+          "valid_to": null,
+          "supersedes": null
+        }
+      ],
+      "edges": []
+    },
+    "environment": {
+      "scenario": "scenario_t05_sensor_disagreement",
+      "seed": 42,
+      "step": 0,
+      "time": "2026-10-03T09:16:00Z",
+      "robot": {
+        "x": 0.0,
+        "y": 0.0,
+        "heading_deg": 0.0
+      },
+      "lighting": {
+        "name": "white",
+        "color_shift": {}
+      },
+      "obstacles": [
+        {
+          "obstacle_id": "glass_panel",
+          "x_min": 15.0,
+          "y_min": -50.0,
+          "x_max": 18.0,
+          "y_max": 50.0,
+          "material": "glass"
+        }
+      ],
+      "objects": []
+    }
+  },
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "query_belief",
+      "args": {
+        "subject": "path_A"
+      },
+      "result": {
+        "schema_version": "1.1",
+        "tool": "query_belief",
+        "ok": true,
+        "data": [
+          {
+            "schema_version": "1.1",
+            "belief_id": "b_000001",
+            "subject": "path_A",
+            "predicate": "status",
+            "object": "clear",
+            "source": "default_map",
+            "confidence": 1.0,
+            "timestamp": "2026-10-03T09:15:00Z",
+            "perspective": "historical",
+            "status": "active",
+            "valid_from": "2026-10-03T09:15:00Z",
+            "valid_to": null,
+            "supersedes": null
+          }
+        ],
+        "error": null,
+        "timestamp": "2026-11-23T05:21:01Z"
+      },
+      "auto": false
+    },
+    {
+      "step": 2,
+      "tool": "read_lidar",
+      "args": {
+        "direction": "front"
+      },
+      "result": {
+        "schema_version": "1.1",
+        "tool": "read_lidar",
+        "ok": true,
+        "data": {
+          "schema_version": "1.1",
+          "sensor": "lidar_front",
+          "value": 250,
+          "unit": "cm",
+          "status": "clear",
+          "timestamp": "2026-10-03T09:16:00Z",
+          "confidence": 0.98
+        },
+        "error": null,
+        "timestamp": "2026-10-03T09:16:00Z"
+      },
+      "auto": false
+    },
+    {
+      "step": 3,
+      "tool": "read_ultrasonic",
+      "args": {},
+      "result": {
+        "schema_version": "1.1",
+        "tool": "read_ultrasonic",
+        "ok": true,
+        "data": {
+          "schema_version": "1.1",
+          "sensor": "ultrasonic_front",
+          "value": 15,
+          "unit": "cm",
+          "status": "blocked",
+          "timestamp": "2026-10-03T09:16:00Z",
+          "confidence": 0.85
+        },
+        "error": null,
+        "timestamp": "2026-10-03T09:16:00Z"
+      },
+      "auto": false
+    },
+    {
+      "step": 4,
+      "tool": "update_belief",
+      "args": {
+        "subject": "path_A",
+        "predicate": "status",
+        "object": "clear",
+        "source": "lidar_front",
+        "confidence": 0.98,
+        "perspective": "agent_sensor",
+        "reason": "lidar_front read 250 cm (clear) at 2026-10-03T09:16:00Z"
+      },
+      "result": {
+        "schema_version": "1.1",
+        "tool": "update_belief",
+        "ok": true,
+        "data": {
+          "schema_version": "1.1",
+          "belief_id": "b_000002",
+          "subject": "path_A",
+          "predicate": "status",
+          "object": "clear",
+          "source": "lidar_front",
+          "confidence": 0.98,
+          "timestamp": "2026-10-03T09:16:00Z",
+          "perspective": "agent_sensor",
+          "status": "active",
+          "valid_from": "2026-10-03T09:16:00Z",
+          "valid_to": null,
+          "supersedes": null
+        },
+        "error": null,
+        "timestamp": "2026-10-03T09:16:00Z"
+      },
+      "auto": false
+    },
+    {
+      "step": 5,
+      "tool": "update_belief",
+      "args": {
+        "subject": "path_A",
+        "predicate": "status",
+        "object": "blocked",
+        "source": "ultrasonic_front",
+        "confidence": 0.85,
+        "perspective": "agent_sensor",
+        "reason": "ultrasonic_front read 15 cm (blocked) at 2026-10-03T09:16:00Z"
+      },
+      "result": {
+        "schema_version": "1.1",
+        "tool": "update_belief",
+        "ok": true,
+        "data": {
+          "schema_version": "1.1",
+          "belief_id": "b_000003",
+          "subject": "path_A",
+          "predicate": "status",
+          "object": "blocked",
+          "source": "ultrasonic_front",
+          "confidence": 0.85,
+          "timestamp": "2026-10-03T09:16:00Z",
+          "perspective": "agent_sensor",
+          "status": "disputed",
+          "valid_from": "2026-10-03T09:16:00Z",
+          "valid_to": null,
+          "supersedes": null
+        },
+        "error": null,
+        "timestamp": "2026-10-03T09:16:00Z"
+      },
+      "auto": false
+    }
+  ],
+  "state_after": {
+    "memory": {
+      "nodes": [
+        {
+          "schema_version": "1.1",
+          "belief_id": "b_000001",
+          "subject": "path_A",
+          "predicate": "status",
+          "object": "clear",
+          "source": "default_map",
+          "confidence": 1.0,
+          "timestamp": "2026-10-03T09:15:00Z",
+          "perspective": "historical",
+          "status": "active",
+          "valid_from": "2026-10-03T09:15:00Z",
+          "valid_to": null,
+          "supersedes": null
+        },
+        {
+          "schema_version": "1.1",
+          "belief_id": "b_000002",
+          "subject": "path_A",
+          "predicate": "status",
+          "object": "clear",
+          "source": "lidar_front",
+          "confidence": 0.98,
+          "timestamp": "2026-10-03T09:16:00Z",
+          "perspective": "agent_sensor",
+          "status": "active",
+          "valid_from": "2026-10-03T09:16:00Z",
+          "valid_to": null,
+          "supersedes": null
+        },
+        {
+          "schema_version": "1.1",
+          "belief_id": "b_000003",
+          "subject": "path_A",
+          "predicate": "status",
+          "object": "blocked",
+          "source": "ultrasonic_front",
+          "confidence": 0.85,
+          "timestamp": "2026-10-03T09:16:00Z",
+          "perspective": "agent_sensor",
+          "status": "disputed",
+          "valid_from": "2026-10-03T09:16:00Z",
+          "valid_to": null,
+          "supersedes": null
+        }
+      ],
+      "edges": []
+    },
+    "environment": {
+      "scenario": "scenario_t05_sensor_disagreement",
+      "seed": 42,
+      "step": 0,
+      "time": "2026-10-03T09:16:00Z",
+      "robot": {
+        "x": 0.0,
+        "y": 0.0,
+        "heading_deg": 0.0
+      },
+      "lighting": {
+        "name": "white",
+        "color_shift": {}
+      },
+      "obstacles": [
+        {
+          "obstacle_id": "glass_panel",
+          "x_min": 15.0,
+          "y_min": -50.0,
+          "x_max": 18.0,
+          "y_max": 50.0,
+          "material": "glass"
+        }
+      ],
+      "objects": []
+    }
+  },
+  "answer": "The sensors disagree: LiDAR 250 cm and ultrasonic 15 cm. Please provide more evidence before moving. Memory receipts: b_000002, b_000003.",
+  "expected": "Preserve the map and dispute the agreement of the 250 cm LiDAR and 15 cm ultrasonic readings without moving.",
+  "checks": [
+    {
+      "name": "ordered_tools",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "Required model call order: query_belief, read_lidar, read_ultrasonic."
+    },
+    {
+      "name": "canonical_tool_outputs",
+      "layer": "boundary",
+      "passed": true,
+      "detail": "Invalid result envelopes or payloads: []."
+    },
+    {
+      "name": "one_frame_per_observation",
+      "layer": "evaluation",
+      "passed": true,
+      "detail": "Frame zero precedes the model. Each manual or automatic tool has a corresponding frame."
+    },
+    {
+      "name": "observer_matches_model_receipts",
+      "layer": "evaluation",
+      "passed": true,
+      "detail": "Automatic reads are additional receipts and do not replace model results."
+    },
+    {
+      "name": "answer_delivered",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "Agent error: None."
+    },
+    {
+      "name": "supported_claims",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "Answer uses known belief IDs and represents writes and cancelled moves according to receipts."
+    },
+    {
+      "name": "history_retained",
+      "layer": "declarative",
+      "passed": true,
+      "detail": "No seeded or historical belief ID was deleted."
+    },
+    {
+      "name": "pose_change_expected",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "Only the box approach demo should move the simulated robot."
+    },
+    {
+      "name": "glass_disagreement",
+      "layer": "sensorimotor",
+      "passed": true,
+      "detail": "Real sensors return different readings for the glass fixture."
+    },
+    {
+      "name": "disputed_map_preserved",
+      "layer": "declarative",
+      "passed": true,
+      "detail": "Keep the map, add disputed evidence, and make neither a downgrade nor a move request."
+    },
+    {
+      "name": "conflict_answer",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "Explain both distances and ask for more evidence before relying on either."
+    }
+  ],
+  "result": "PASS",
+  "model": "scripted_llm",
+  "trace_file": "agent_run_20261123T052100961327Z-03.json",
+  "answer_source": "llm",
+  "labels": {
+    "execution": "scripted_llm",
+    "environment": "simulated",
+    "layers": {
+      "declarative": "actual",
+      "procedural": "actual",
+      "sensorimotor": "actual"
+    }
+  },
+  "agent_error": null,
+  "failure_layers": [],
+  "scenario": "scenario_t05_sensor_disagreement",
+  "started_utc": "2026-11-23T05:21:01.578668Z"
+}

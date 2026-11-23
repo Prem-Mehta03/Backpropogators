@@ -4,6 +4,7 @@ import json
 
 import pytest
 
+from contracts.version import SCHEMA_VERSION
 from contracts.validators import success_result
 from evaluation.role4.final_suite import run_suite
 from evaluation.role4.integration.conformance import validate_tool_output
@@ -28,14 +29,14 @@ def test_final_suite_separates_good_runs_known_failures_and_scoped_probe(tmp_pat
     assert summary["counts"]["reference"]["passes"] == 4
     assert summary["counts"]["reference_control"]["fails"] == 2
     assert summary["counts"]["canonical"]["passes"] == 4
-    assert summary["counts"]["canonical_control"]["fails"] == 1
-    assert len(summary["canonical_behavior_gaps"]) == 3  # two temperature probes, one movement defect
+    assert summary["counts"]["canonical_control"]["fails"] == 0
+    assert len(summary["canonical_behavior_gaps"]) == 2  # two historical temperature probes
     assert all(row["stable_tool_sequence_and_checks"] for row in summary["metrics"])
     assert summary["conformance"] == {"passed": True, "tools": 11, "samples": 14,
                                        "evidence": "contract_conformance.json"}
     for row in summary["runs"]:
         run = json.loads((output / row["evidence"]).read_text(encoding="utf-8"))
-        assert run["schema_version"] == "1.0"
+        assert run["schema_version"] == SCHEMA_VERSION
         assert run["run_id"] == row["run_id"]
         assert {"question", "answer", "expected", "tool_calls", "state_before", "state_after", "checks"} <= run.keys()
         assert run["result"] == row["result"]

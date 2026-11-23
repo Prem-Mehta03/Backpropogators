@@ -8,9 +8,50 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from contracts.version import SCHEMA_VERSION
+from contracts.version import SCHEMA_VERSION, SUPPORTED_SCHEMA_VERSIONS
 
 logger = logging.getLogger(__name__)
+
+_TEST_FIELDS = frozenset({
+    "question", "state_before", "tool_calls", "state_after", "answer",
+    "expected", "checks", "result",
+})
+_IDENTITY_FIELDS = frozenset({"schema_version", "test_id", "run_id"})
+
+
+def _validate_test_payload(payload: dict[str, Any]) -> None:
+    missing = _TEST_FIELDS.difference(payload)
+    if missing:
+        raise ValueError(f"test log missing fields: {', '.join(sorted(missing))}")
+    if payload["result"] not in ("PASS", "FAIL"):
+        raise ValueError("test log result must be PASS or FAIL")
+    if not isinstance(payload["state_before"], dict) or not isinstance(payload["state_after"], dict):
+        raise TypeError("test log states must be objects")
+    if not isinstance(payload["tool_calls"], list) or not isinstance(payload["checks"], list):
+        raise TypeError("tool_calls and checks must be lists")
+    for field in ("model", "trace_file"):
+        if field in payload and (
+            not isinstance(payload[field], str) or not payload[field].strip()
+        ):
+            raise ValueError(f"{field} must be a nonempty string when supplied")
+    if "answer_source" in payload and payload["answer_source"] not in ("llm", "fallback_summary"):
+        raise ValueError("answer_source must be llm or fallback_summary")
+
+
+def load_test_log(path: str | Path) -> dict[str, Any]:
+    """Read a v1.0 or v1.1 evaluation record. Raise for malformed or unsupported data."""
+    record = json.loads(Path(path).read_text(encoding="utf-8"))
+    if (
+        not isinstance(record, dict)
+        or not isinstance(record.get("schema_version"), str)
+        or record["schema_version"] not in SUPPORTED_SCHEMA_VERSIONS
+    ):
+        raise ValueError("unsupported test log schema version")
+    for field in ("test_id", "run_id"):
+        if not isinstance(record.get(field), str) or not record[field].strip():
+            raise ValueError(f"test log {field} must be nonempty")
+    _validate_test_payload(record)
+    return record
 
 
 class EvaluationLogger:
@@ -51,31 +92,11 @@ class EvaluationLogger:
         self, test_id: str, run_id: str, payload: dict[str, Any]
     ) -> Path:
         """Write the standard evaluation record to a test-specific JSON file."""
-        required = {
-            "question",
-            "state_before",
-            "tool_calls",
-            "state_after",
-            "answer",
-            "expected",
-            "checks",
-            "result",
-        }
-        missing = required.difference(payload)
-        if missing:
-            raise ValueError(f"test log missing fields: {', '.join(sorted(missing))}")
+        _validate_test_payload(payload)
         if not test_id.strip() or not run_id.strip():
             raise ValueError("test_id and run_id must be non-empty")
-        if payload["result"] not in ("PASS", "FAIL"):
-            raise ValueError("test log result must be PASS or FAIL")
-        if not isinstance(payload["state_before"], dict) or not isinstance(
-            payload["state_after"], dict
-        ):
-            raise TypeError("test log states must be objects")
-        if not isinstance(payload["tool_calls"], list) or not isinstance(
-            payload["checks"], list
-        ):
-            raise TypeError("tool_calls and checks must be lists")
+        if _IDENTITY_FIELDS.intersection(payload):
+            raise ValueError("test log payload cannot override its identity or schema version")
         record = {
             "schema_version": SCHEMA_VERSION,
             "test_id": test_id,

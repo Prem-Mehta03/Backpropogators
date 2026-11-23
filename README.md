@@ -1,5 +1,24 @@
 # Backpropogators
 
+## Final stretch review candidate
+
+The contract v1.1 runner evaluates T01–T10 on the actual memory, procedural
+agent and deterministic sensorimotor simulator. The scripted path takes no
+API quota. Each run captures its starting state, ordered tool receipts
+(including automatic safety checks), final state, answer, checks, and a trace
+that can play back in 3-D.
+
+```powershell
+python -B scripts/run_role4_offline_checks.py --suite full
+python -B -m evaluation.runner --fake --repeats 3 --output-dir evaluation/logs/final/rehearsal
+python -B -m evaluation.summarize --logs evaluation/logs/final/rehearsal
+python -B scripts/live_ui.py --replay <path-to-agent_run.json>
+```
+
+See the [reproduction and review guide](docs/final_stretch/README.md), the
+[recorded results](evaluation/results/results_table.md), and the
+[verified logs](evaluation/logs/final/verified_20261123/).
+
 ## Final Role 4 evaluation
 
 Run the ten scenarios against the deterministic reference evaluator and against

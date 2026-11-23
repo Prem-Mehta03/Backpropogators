@@ -7,3 +7,5 @@ __pycache__/
 .venv/
 venv/
 evaluation/logs/role4/
+evaluation/logs/final/*
+!evaluation/logs/final/verified_20261123/

@@ -33,8 +33,12 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--declarative
 .badge { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--sensor); color: var(--sensor); }
 .badge.replay { border-color: var(--amber); color: var(--amber); }
 
-.grid { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(300px, 360px) minmax(0, 1fr) minmax(300px, 380px); gap: 10px; }
-@media (max-width: 1100px) { .grid { grid-template-columns: minmax(0, 1fr); overflow-y: auto; } .panel { min-height: 420px; } }
+.grid { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(230px, 0.75fr) minmax(400px, 1.8fr) minmax(245px, 0.85fr); gap: 10px; }
+@media (max-width: 970px) {
+  .grid { grid-template-columns: minmax(0, 1fr); overflow-y: auto; }
+  .panel { min-height: 420px; }
+  .world-panel { min-height: 690px; grid-row: 1; }
+}
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
 .panel > header { padding: 10px 12px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .panel > header h2 { font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
@@ -64,6 +68,18 @@ form.ask button { background: var(--fg); color: var(--bg); border: 0; border-rad
 form.ask button:disabled { opacity: .45; cursor: default; }
 
 /* graph */
+.world-stage { flex: 2.25; position: relative; min-height: 260px; border-bottom: 1px solid var(--line); }
+#world-canvas { width: 100%; height: 100%; position: absolute; inset: 0; display: block; touch-action: none; }
+#world-hud { pointer-events: none; position: absolute; left: 10px; top: 9px; max-width: calc(100% - 20px); white-space: pre-line; overflow-wrap: anywhere; font-size: 12px; background: #111926e6; border-radius: 5px; padding: 5px 8px; }
+#world-fallback { position: absolute; inset: 55px 20px 0; text-align: center; color: var(--muted); padding-top: 40px; }
+.graph-title { padding: 7px 12px; color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--line); }
+.playbar { display: flex; align-items: center; flex-wrap: wrap; padding: 6px 10px; gap: 6px; border-bottom: 1px solid var(--line); }
+.playbar[hidden] { display: none; }
+#scrub { flex: 1; min-width: 60px; }
+#frame-count { color: var(--muted); white-space: nowrap; font-family: var(--mono); font-size: 11px; }
+#camera-view, #play-speed { background: var(--panel2); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 5px; }
+.ev.current { border-color: var(--sensor); background: var(--panel2); }
+.it.changed { border-left: 2px solid var(--sensor); padding-left: 5px; }
 .stage { position: relative; flex: 1; min-height: 0; }
 #gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
 #gl:active { cursor: grabbing; }
@@ -103,8 +119,7 @@ form.ask button:disabled { opacity: .45; cursor: default; }
 <div class="app">
   <div class="top">
     <div>
-      <h1>I, Agent <span class="sub">live run · Team BackPropogators</span></h1>
-      <div class="sub">Every line below comes from the running agent and the real memory and sensor layers.</div>
+      <h1>I, Agent <span class="sub">Team Backpropogators</span></h1>
     </div>
     <div class="right">
       <span class="badge" id="mode">live</span>
@@ -127,8 +142,28 @@ form.ask button:disabled { opacity: .45; cursor: default; }
       </form>
     </section>
 
-    <section class="panel">
-      <header><h2>Belief graph · 3D</h2><span>drag to rotate · scroll to zoom · double-click to reset · hover a node</span></header>
+    <section class="panel world-panel">
+      <header><h2>Simulated world</h2>
+        <select aria-label="Camera view" id="camera-view">
+          <option value="orbit">Orbit</option><option value="follow" selected>Follow</option><option value="top">Top-down</option>
+        </select>
+      </header>
+      <div class="world-stage">
+        <canvas id="world-canvas" aria-label="3D view of the recorded simulated world"></canvas>
+        <div id="world-hud"></div>
+        <p id="world-fallback" hidden>WebGL is unavailable. The readings, trace, and belief table remain available.</p>
+      </div>
+      <div class="playbar" id="playbar" hidden>
+        <button class="btn" id="play">Play</button>
+        <button class="btn" id="back" aria-label="Previous frame">←</button>
+        <button class="btn" id="forward" aria-label="Next frame">→</button>
+        <select aria-label="Playback speed" id="play-speed">
+          <option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option>
+        </select>
+        <input id="scrub" type="range" min="0" max="0" value="0" aria-label="Replay timeline">
+        <span id="frame-count"></span>
+      </div>
+      <div class="graph-title">Belief graph</div>
       <div class="stage" id="stage">
         <canvas id="gl"></canvas>
         <div class="nogl" id="nogl">3D view needs WebGL. Open this page in Chrome or Edge.</div>
@@ -153,6 +188,7 @@ form.ask button:disabled { opacity: .45; cursor: default; }
 </div>
 
 <script src="/three.min.js"></script>
+<script src="/world3d.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -161,6 +197,8 @@ const SUGGEST = {
   scenario_b: ["What color does the user think the object is, what color do you register it as, and what does your data history say its true state is?", "What color is box_01?", "I say box_01 is red. Please record that.", "What color is box_99?"]
 };
 let scenario = "scenario_a", busy = false, session = { beliefs: [], observations: [] };
+let worldViewer, recording = null, replayIndex = 0, playTimer = null;
+let changedNodes = new Set();
 
 /* ---------- chat + trace ---------- */
 function formatAnswer(text) {
@@ -188,8 +226,8 @@ function summarize(tool, env) {
   const d = "ok" in env ? env.data : env;
   if (tool === "query_belief") return { text: Array.isArray(d) && d.length ? d.map((b) => `${b.belief_id}: ${b.subject} ${b.predicate} = ${b.object} (${b.source}, ${Number(b.confidence).toFixed(2)})`).join("\n") : "No beliefs found." };
   if (tool === "update_belief" || tool === "downgrade_belief") return { text: `Wrote ${d.belief_id}: ${d.subject} ${d.predicate} = ${d.object}, confidence ${Number(d.confidence).toFixed(2)}${d.supersedes ? ", supersedes " + d.supersedes : ""}${d.status === "disputed" ? " [disputed]" : ""}` };
-  if (tool === "read_lidar") return { text: `${d.value} ${d.unit}, status ${d.status}, confidence ${d.confidence}` };
-  if (tool === "read_camera") return { text: `sees ${d.value && d.value.color}, confidence ${d.confidence}` };
+  if (tool === "read_lidar" || tool === "read_ultrasonic") return { text: `${d.value} ${d.unit}, status ${d.status}, confidence ${d.confidence}` };
+  if (tool === "read_camera") return { text: d.value?.color ? `sees ${d.value.color}, confidence ${d.confidence}` : "Nothing in view." };
   return { text: JSON.stringify(d) };
 }
 let trace = null, typingMsg = null;
@@ -224,8 +262,10 @@ function handle(ev) {
     else if (ev.text) trace.texts.push({ n: ev.n, text: ev.text });
   } else if (ev.type === "tool") {
     const s = summarize(ev.tool, ev.result);
-    trace.rows.push(addEv(layerOf(ev.tool), ev.tool, argsText(ev.args), s.text, s.bad));
+    const row = addEv(layerOf(ev.tool), ev.tool + (ev.auto ? " · automatic" : ""), argsText(ev.args), s.text, s.bad);
+    if (!ev.auto) trace.rows.push(row);
   } else if (ev.type === "session") { session = ev; updateGraph(); renderSO(); }
+  else if (ev.type === "frame") worldViewer.show(ev.frame);
   else if (ev.type === "final") finish(ev);
 }
 function finish(f) {
@@ -266,8 +306,8 @@ function sourcesFor(f) {
 }
 function renderSO() {
   const bs = session.beliefs.slice().sort((a, b) => a.belief_id.localeCompare(b.belief_id));
-  $("stored").innerHTML = bs.length ? bs.map((b) => `<div class="it ${b.superseded_by ? "sup" : ""}"><span>${b.belief_id}</span> ${esc(b.subject)} ${esc(b.predicate)} = <b>${esc(b.object)}</b> ${Number(b.confidence).toFixed(2)}</div>`).join("") : '<p class="empty">Nothing yet.</p>';
-  $("observed").innerHTML = session.observations.length ? session.observations.map((o) => `<div class="it"><span>${esc(o.sensor)}</span> ${esc(o.subject)} ${esc(o.predicate)} = <b>${esc(o.object)}</b>${o.value && o.unit ? " (" + o.value + " " + o.unit + ")" : ""} ${Number(o.confidence).toFixed(2)}</div>`).join("") : '<p class="empty">No sensor read yet.</p>';
+  $("stored").innerHTML = bs.length ? bs.map((b) => `<div class="it ${b.status === "superseded" || b.superseded_by ? "sup" : ""} ${changedNodes.has(b.belief_id) ? "changed" : ""}"><span>${esc(b.belief_id)}</span> ${esc(b.subject)} ${esc(b.predicate)} = <b>${esc(b.object)}</b> ${Number(b.confidence).toFixed(2)} · ${esc(b.perspective)} · ${esc(b.status)}</div>`).join("") : '<p class="empty">Nothing yet.</p>';
+  $("observed").innerHTML = session.observations.length ? session.observations.map((o) => `<div class="it"><span>${esc(o.sensor)}</span> ${esc(o.subject)} ${esc(o.predicate)} = <b>${esc(o.object)}</b>${o.value != null && o.unit ? " (" + esc(o.value) + " " + esc(o.unit) + ")" : ""} ${Number(o.confidence).toFixed(2)}</div>`).join("") : '<p class="empty">No sensor read yet.</p>';
 }
 function ask(q) {
   if (busy || !q.trim()) return;
@@ -285,15 +325,17 @@ function ask(q) {
   es.onerror = () => { es.close(); if (busy) { busy = false; $("send").disabled = false; addMsg("agent err", "Lost connection to the local server."); } };
 }
 function renderChips() {
-  $("chips").innerHTML = SUGGEST[scenario].map((s, i) => `<button class="q" data-i="${i}">${esc(s.length > 70 ? s.slice(0, 68) + "…" : s)}</button>`).join("");
-  $("chips").querySelectorAll(".q").forEach((b) => b.addEventListener("click", () => ask(SUGGEST[scenario][Number(b.dataset.i)])));
+  const prompts = SUGGEST[scenario] || SUGGEST[scenario.startsWith("scenario_b") ? "scenario_b" : "scenario_a"];
+  $("chips").innerHTML = prompts.map((s, i) => `<button class="q" data-i="${i}">${esc(s.length > 70 ? s.slice(0, 68) + "…" : s)}</button>`).join("");
+  $("chips").querySelectorAll(".q").forEach((b) => b.addEventListener("click", () => ask(prompts[Number(b.dataset.i)])));
 }
 function setScenarioButtons() { document.querySelectorAll("#scn button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.s === scenario))); }
 async function reset(s) {
   if (busy) return;
-  const r = await fetch("/api/reset?scenario=" + s); const st = await r.json();
+  const r = await fetch("/api/reset?scenario=" + encodeURIComponent(s)); const st = await r.json();
   scenario = st.scenario; setScenarioButtons(); renderChips();
   session = st; updateGraph(true); renderSO(); setChecks(null);
+  worldViewer.show(st.frame || null, false);
   $("chat").innerHTML = ""; $("trace").innerHTML = '<p class="empty">Ask a question. Each model call, tool call and rule check appears here as it happens.</p>';
   $("runno").textContent = ""; $("trace-meta").textContent = "";
   if (st.error) addMsg("agent err", "Setup problem: " + esc(st.error));
@@ -357,10 +399,10 @@ function updateGraph(hard) {
   if (!G) return;
   if (hard) { G.nodes.forEach((n) => G.root.remove(n.group)); G.nodes.clear(); G.hubs.forEach((h) => G.root.remove(h.group)); G.hubs.clear(); }
   G.lines.forEach((l) => { G.root.remove(l); if (l.geometry) l.geometry.dispose(); }); G.lines = [];
-  const bySubject = {}; session.beliefs.forEach((b) => (bySubject[b.subject] = bySubject[b.subject] || []).push(b));
+  const bySubject = Object.create(null); session.beliefs.forEach((b) => (bySubject[b.subject] = bySubject[b.subject] || []).push(b));
   session.observations.forEach((o) => (bySubject[o.subject] = bySubject[o.subject] || []));
   const subjects = Object.keys(bySubject), m = subjects.length, SX = 3.4, SZ = 6.5;
-  const hubAt = {}, nodeFor = {}, rowX = {};
+  const hubAt = Object.create(null), nodeFor = Object.create(null), rowX = Object.create(null);
   /* one row per subject: beliefs run left to right in the order they were written, the hub sits below, sensor readings above */
   subjects.forEach((s, i) => {
     const z = (i - (m - 1) / 2) * -SZ;
@@ -381,7 +423,7 @@ function updateGraph(hard) {
   subjects.forEach((s) => {
     const list = bySubject[s].slice().sort((a, b) => a.belief_id.localeCompare(b.belief_id));
     list.forEach((b, j) => {
-      const sup = !!b.superseded_by, sig = `${sup}|${b.status}|${b.confidence}`, key = "b:" + b.belief_id;
+      const sup = b.status === "superseded" || !!b.superseded_by, sig = `${sup}|${b.status}|${b.confidence}`, key = "b:" + b.belief_id;
       const old = G.nodes.get(key);
       if (old && old.sig !== sig) { G.root.remove(old.group); G.nodes.delete(key); }
       const n = place(key, () => {
@@ -389,11 +431,12 @@ function updateGraph(hard) {
         const col = sup ? css("--grey") : b.status === "disputed" ? css("--amber") : css("--declarative");
         const r = 0.3 + 0.35 * Number(b.confidence);
         const mesh = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 18), new THREE.MeshStandardMaterial({ color: col, transparent: true, opacity: sup ? 0.4 : 1, roughness: 0.4 }));
-        mesh.userData.info = `<b>${b.belief_id}</b><br>${esc(b.subject)} ${esc(b.predicate)} = <b>${esc(b.object)}</b><br>source ${esc(b.source)} · ${esc(b.perspective)}<br>confidence ${Number(b.confidence).toFixed(2)} · ${sup ? "superseded by " + b.superseded_by : esc(b.status)}${b.supersedes ? "<br>supersedes " + b.supersedes : ""}`;
+        mesh.userData.info = `<b>${esc(b.belief_id)}</b><br>${esc(b.subject)} ${esc(b.predicate)} = <b>${esc(b.object)}</b><br>source ${esc(b.source)} · ${esc(b.perspective)}<br>confidence ${Number(b.confidence).toFixed(2)} · ${b.superseded_by ? "superseded by " + esc(b.superseded_by) : esc(b.status)}${b.supersedes ? "<br>supersedes " + esc(b.supersedes) : ""}`;
         group.add(mesh);
         const lb = label(b.belief_id, `${b.object} · ${Number(b.confidence).toFixed(2)}`, sup ? "#6b768a" : "#e6ebf3"); lb.position.set(0, r + 0.65, 0); group.add(lb);
         return { group, mesh, sig };
       });
+      if (changedNodes.has(b.belief_id)) n.pulse = G.timeNow() + 1.35;
       n.group.position.set((j - (list.length - 1) / 2) * SX, 0, hubAt[s].z);
       nodeFor[b.belief_id] = n;
       link(hubAt[s], n.group.position, "--line", 0.7);
@@ -412,12 +455,12 @@ function updateGraph(hard) {
     });
     n.group.position.set(rowX[o.subject] || 0, 2.9, (hubAt[o.subject] || { z: 0 }).z);
     link(hubAt[o.subject], n.group.position, "--sensor", 0.35);
-    session.beliefs.filter((b) => b.subject === o.subject && b.predicate === o.predicate && !b.superseded_by && String(b.object) !== String(o.object))
+    session.beliefs.filter((b) => b.subject === o.subject && b.predicate === o.predicate && ["historical", "agent_sensor"].includes(b.perspective) && b.status !== "superseded" && !b.superseded_by && String(b.object) !== String(o.object))
       .forEach((b) => link(n.group.position, nodeFor[b.belief_id].group.position, "--amber", 0.95, true));
   });
   session.beliefs.forEach((b) => { if (b.supersedes && nodeFor[b.belief_id] && nodeFor[b.supersedes]) arrow(nodeFor[b.belief_id].group.position, nodeFor[b.supersedes].group.position); });
-  const live = {};
-  session.beliefs.filter((b) => !b.superseded_by).forEach((b) => { const k = b.subject + "|" + b.predicate; (live[k] = live[k] || []).push(b); });
+  const live = Object.create(null);
+  session.beliefs.filter((b) => b.status !== "superseded" && !b.superseded_by && ["historical", "agent_sensor"].includes(b.perspective)).forEach((b) => { const k = b.subject + "|" + b.predicate; (live[k] = live[k] || []).push(b); });
   Object.values(live).forEach((arr) => { for (let i = 0; i < arr.length; i++) for (let j = i + 1; j < arr.length; j++) if (arr[i].object !== arr[j].object) link(nodeFor[arr[i].belief_id].group.position, nodeFor[arr[j].belief_id].group.position, "--amber", 0.95, true); });
   function link(a, b, colVar, opacity, dashed) {
     if (!a || !b) return;
@@ -432,14 +475,133 @@ function updateGraph(hard) {
   }
 }
 
+function replayObservations(frame) {
+  const rows = [];
+  for (const [sensor, reading] of Object.entries(frame.world.sensors)) {
+    if (!reading || reading.status === "unknown" || reading.status === "error") continue;
+    if (sensor === "camera_front" && reading.value?.color) {
+      rows.push({key: sensor, sensor, subject: reading.value.object_id, predicate: "color",
+        object: reading.value.color, confidence: reading.confidence, run: 1});
+    } else if (sensor === "lidar_front" || sensor === "ultrasonic_front") {
+      rows.push({key: sensor, sensor, subject: "path_A", predicate: "status",
+        object: reading.status, value: reading.value, unit: reading.unit || "cm",
+        confidence: reading.confidence, run: 1});
+    }
+  }
+  return rows;
+}
+
+function showReplay(index, animate = true) {
+  const frames = recording.frames;
+  const previous = frames[replayIndex];
+  replayIndex = Math.max(0, Math.min(frames.length - 1, index));
+  const frame = frames[replayIndex];
+  const old = new Map(previous.beliefs.map(belief => [belief.belief_id, JSON.stringify(belief)]));
+  changedNodes = new Set(frame.beliefs.filter(belief => old.get(belief.belief_id) !== JSON.stringify(belief)).map(belief => belief.belief_id));
+  session = {beliefs: frame.beliefs, observations: replayObservations(frame)};
+  updateGraph(true);
+  renderSO();
+  worldViewer.show(frame, animate);
+  $("scrub").value = replayIndex;
+  $("frame-count").textContent = `${replayIndex + 1} / ${frames.length}`;
+  $("back").disabled = replayIndex === 0;
+  $("forward").disabled = replayIndex === frames.length - 1;
+  trace.rows.forEach((row, i) => row.classList.toggle("current", i === replayIndex - 1));
+  if (trace.rows[replayIndex - 1]) trace.rows[replayIndex - 1].scrollIntoView({block: "nearest"});
+  const last = replayIndex === frames.length - 1;
+  $("recorded-answer").hidden = !last;
+  setChecks(last ? recording : null);
+}
+
+function stopPlayback() {
+  if (playTimer !== null) clearTimeout(playTimer);
+  playTimer = null;
+  $("play").textContent = "Play";
+}
+
+function queuePlayback() {
+  playTimer = setTimeout(() => {
+    showReplay(replayIndex + 1);
+    if (replayIndex === recording.frames.length - 1) stopPlayback();
+    else queuePlayback();
+  }, 1600 / Number($("play-speed").value));
+}
+
+function loadReplay(data) {
+  recording = data;
+  $("mode").textContent = data.labels?.model_execution_mode === "scripted_llm" || data.model === "scripted_llm"
+    ? "scripted replay" : "recorded replay";
+  $("playbar").hidden = false;
+  for (const id of ["scn", "reset", "form", "chips"]) $(id).style.display = "none";
+  $("scrub").max = data.frames.length - 1;
+  $("runno").textContent = data.scenario || data.frames[0].world.scenario || "";
+  const question = data.question || "Recorded demonstration";
+  addMsg("user", esc(question));
+  const answer = addMsg("agent", data.error
+    ? `<div class="who">Recorded error</div>${esc(data.error.code)}: ${esc(data.error.message)}`
+    : `<div class="who">Recorded answer</div>${formatAnswer(data.answer || "")}`);
+  answer.id = "recorded-answer";
+  resetTrace(question);
+  const calls = data.tool_calls || [];
+  let modelIndex = 0;
+  for (const frame of data.frames.slice(1)) {
+    const tool = frame.tool;
+    if (!tool) {
+      trace.rows.push(addEv("procedural", `step ${frame.step}`, "", "State snapshot"));
+      continue;
+    }
+    const actual = tool.auto ? null : calls[modelIndex++];
+    const result = tool.result || (actual?.tool === tool.name ? actual.result : null);
+    const readingName = tool.name === "read_lidar" ? `lidar_${tool.args?.direction || "front"}`
+      : {read_ultrasonic: "ultrasonic_front", read_camera: "camera_front"}[tool.name];
+    const savedReading = readingName ? frame.world.sensors[readingName] : null;
+    const summary = result ? summarize(tool.name, result) : tool.ok && savedReading
+      ? summarize(tool.name, savedReading) : {text: tool.ok ? "Completed" : "Rejected", bad: !tool.ok};
+    trace.rows.push(addEv(layerOf(tool.name), `${frame.step} · ${tool.name}${tool.auto ? " · automatic" : ""}`,
+      argsText(tool.args), summary.text, summary.bad));
+  }
+  showReplay(0, false);
+}
+
+$("camera-view").addEventListener("change", event => worldViewer.setMode(event.target.value));
+$("play").addEventListener("click", () => {
+  if (playTimer !== null) { stopPlayback(); return; }
+  if (recording.frames.length < 2) return;
+  if (replayIndex === recording.frames.length - 1) showReplay(0, false);
+  $("play").textContent = "Pause";
+  queuePlayback();
+});
+$("back").addEventListener("click", () => { stopPlayback(); showReplay(replayIndex - 1); });
+$("forward").addEventListener("click", () => { stopPlayback(); showReplay(replayIndex + 1); });
+$("scrub").addEventListener("input", event => { stopPlayback(); showReplay(Number(event.target.value), false); });
+document.addEventListener("keydown", event => {
+  if (["INPUT", "SELECT", "BUTTON", "TEXTAREA"].includes(event.target.tagName)) return;
+  const view = {"1": "orbit", "2": "follow", "3": "top"}[event.key];
+  if (view) { $("camera-view").value = view; worldViewer.setMode(view); }
+  if (!recording) return;
+  const action = {" ": "play", ArrowLeft: "back", ArrowRight: "forward"}[event.key];
+  if (action) { event.preventDefault(); $(action).click(); }
+});
+
 function boot() {
+  worldViewer = new WorldViewer($("world-canvas"), $("world-hud"), $("world-fallback"));
+  worldViewer.show(null);
   initGL();
-  fetch("/api/state").then((r) => r.json()).then((st) => {
-    scenario = st.scenario; setScenarioButtons(); renderChips(); session = st; renderSO(); setChecks(null);
+  fetch("/api/state").then((r) => r.json()).then(async (st) => {
+    scenario = st.scenario;
+    if (st.has_recording) {
+      $("mode").classList.add("replay");
+      const response = await fetch("/api/replay");
+      if (!response.ok) throw new Error("The recording cannot be loaded.");
+      loadReplay(await response.json());
+      return;
+    }
+    setScenarioButtons(); renderChips(); session = st; renderSO(); setChecks(null);
     $("mode").textContent = st.replay ? "replay · recorded runs" : "live"; $("mode").classList.toggle("replay", !!st.replay);
     if (st.error) addMsg("agent err", "Setup problem: " + esc(st.error));
+    worldViewer.show(st.frame || null, false);
     updateGraph(true);
-  });
+  }).catch(() => addMsg("agent err", "Could not load the demo from the local server."));
 }
 boot();
 </script>

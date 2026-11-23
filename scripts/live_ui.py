@@ -8,7 +8,8 @@ with a 3D belief graph and a live step trace. Every question runs the real agent
 scripts/ask_agent.py, and streams each model call and tool call to the page as it happens.
 
     python scripts/live_ui.py                      # live: needs GROQ_API_KEY like ask_agent.py
-    python scripts/live_ui.py --replay             # no model calls: plays back recorded runs
+    python scripts/live_ui.py --replay trace.json  # no model calls: play recorded frames
+    python scripts/live_ui.py --replay             # legacy recorded conversations
     python scripts/live_ui.py --scenario scenario_b --port 8765
 
 Memory persists between questions in one session, so a downgrade or a person's answer shows up
@@ -42,8 +43,8 @@ SUBJECTS = {
     "box_01": "the box the user is asking about",
     "robot": "this robot itself",
 }
-SCENARIOS = ("scenario_a", "scenario_b")
-SENSOR_TOOLS = ("read_lidar", "read_camera")
+SCENARIOS = tuple(sorted(p.stem for p in (ROOT / "sensorimotor" / "scenarios").glob("*.json")))
+SENSOR_TOOLS = ("read_lidar", "read_ultrasonic", "read_camera")
 MEMORY_WRITES = ("update_belief", "downgrade_belief")
 
 
@@ -176,8 +177,12 @@ def pick_registry(built: Any) -> dict[str, Any]:
 
 
 class LiveSession:
-    def __init__(self, scenario: str, replay: bool) -> None:
+    def __init__(
+        self, scenario: str, replay: bool, replay_trace: dict[str, Any] | None = None
+    ) -> None:
         self.scenario, self.replay = scenario, replay
+        self.replay_trace = replay_trace
+        self.initial_frame: dict[str, Any] | None = None
         self.state = SessionState()
         self.run_no = 0
         self.busy = threading.Lock()
@@ -194,6 +199,10 @@ class LiveSession:
         self.state = SessionState()
         self.run_no = 0
         self.error = None
+        self.initial_frame = None
+        if self.replay_trace is not None:
+            self.initial_frame = self.replay_trace["frames"][0]
+            return
         if self.replay:
             for subject, args in (("path_A", None), ("box_01", None)):
                 env = REPLAY_SEED[subject]
@@ -206,8 +215,8 @@ class LiveSession:
                 build_tool_registry,
             )
 
-            memory = build_memory(seed=True)
             sensorimotor = build_sensorimotor(scenario)
+            memory = build_memory(seed=True)
             self.memory, self.world = memory, sensorimotor
             built = build_tool_registry(
                 use_real=True,
@@ -216,6 +225,12 @@ class LiveSession:
                 scenario=scenario,
             )
             self.registry = pick_registry(built)
+            from scripts.frame_recorder import FrameRecorder
+
+            if memory is not None and sensorimotor is not None:
+                initial = FrameRecorder(sensorimotor.env, memory)
+                initial.capture_initial()
+                self.initial_frame = initial.frames[0] if initial.frames else None
             if self.llm is None:
                 try:
                     from dotenv import load_dotenv  # type: ignore[import-not-found]
@@ -263,25 +278,6 @@ class LiveSession:
         from procedural.agent import run_agent
         from procedural.prompts import PROMPT_VERSION
 
-        def traced(name: str, fn: Any):
-            def wrapped(*a: Any, **k: Any) -> Any:
-                result = fn(*a, **k)
-                args = k if k else {"args": list(a)}
-                self.state.absorb(name, plain(args), result, self.run_no)
-                emit(
-                    {
-                        "type": "tool",
-                        "tool": name,
-                        "args": plain(args),
-                        "result": plain(result),
-                    }
-                )
-                emit({"type": "session", **self.state.snapshot()})
-                return result
-
-            return wrapped
-
-        registry = {name: traced(name, fn) for name, fn in self.registry.items()}
         llm = TracingLLM(self.llm, emit)
         recorder = None
         if self.memory is not None and self.world is not None:
@@ -289,14 +285,26 @@ class LiveSession:
 
             recorder = FrameRecorder(self.world.env, self.memory)
             recorder.capture_initial()  # frame 0, before the first model call
+            if recorder.frames:
+                emit({"type": "frame", "frame": recorder.frames[-1]})
+
+        def capture_step(step, tool, args, result, auto):
+            self.state.absorb(tool, args, result, self.run_no)
+            emit({"type": "tool", "tool": tool, "args": args, "result": result, "auto": auto})
+            emit({"type": "session", **self.state.snapshot()})
+            if recorder is not None:
+                count = len(recorder.frames)
+                recorder.on_step(step, tool, args, result, auto)
+                if len(recorder.frames) > count:
+                    emit({"type": "frame", "frame": recorder.frames[-1]})
         try:
             result = run_agent(
                 question,
                 llm,
-                registry,
+                self.registry,
                 known_subjects=SUBJECTS,
                 require_written_ids=True,
-                on_step=recorder.on_step if recorder else None,
+                on_step=capture_step,
             )
         except Exception as exc:
             traceback.print_exc()
@@ -323,6 +331,7 @@ class LiveSession:
             "claim_nudges": result.claim_nudges,
             "claim_refusals": plain(result.claim_refusals),
             "answer_source": result.answer_source,
+            "model": getattr(self.llm, "model", None),
             "prompt_version": PROMPT_VERSION,
             "answer_normalized": result.answer_normalized,
         }
@@ -618,14 +627,23 @@ class Handler(BaseHTTPRequestHandler):
                 {
                     "scenario": SESSION.scenario,
                     "replay": SESSION.replay,
+                    "has_recording": SESSION.replay_trace is not None,
+                    "frame": SESSION.initial_frame,
                     "error": SESSION.error,
                     "run": SESSION.run_no,
                     **SESSION.state.snapshot(),
                 }
             )
+        elif url.path == "/api/replay":
+            if SESSION.replay_trace is None:
+                self._json({"error": "no saved trace loaded"}, 404)
+            else:
+                self._json(SESSION.replay_trace)
         elif url.path == "/api/reset":
             scenario = (query.get("scenario") or [SESSION.scenario])[0]
-            if scenario not in SCENARIOS:
+            if SESSION.replay_trace is not None:
+                self._json({"error": "the recorded scenario cannot be changed"}, 400)
+            elif scenario not in SCENARIOS:
                 self._json({"error": "unknown scenario"}, 400)
             elif not SESSION.busy.acquire(blocking=False):
                 self._json({"error": "a question is still running"}, 409)
@@ -638,13 +656,17 @@ class Handler(BaseHTTPRequestHandler):
                     {
                         "scenario": SESSION.scenario,
                         "replay": SESSION.replay,
+                        "frame": SESSION.initial_frame,
                         "error": SESSION.error,
                         "run": 0,
                         **SESSION.state.snapshot(),
                     }
                 )
         elif url.path == "/api/ask":
-            self._stream_answer((query.get("q") or [""])[0].strip())
+            if SESSION.replay_trace is not None:
+                self._json({"error": "asking is disabled in saved replay mode"}, 405)
+            else:
+                self._stream_answer((query.get("q") or [""])[0].strip())
         else:
             self._static(url.path)
 
@@ -705,6 +727,33 @@ class Handler(BaseHTTPRequestHandler):
             pass
 
 
+def load_trace(path: Path) -> dict[str, Any]:
+    """Read the documented frame format and reject traces with no renderable frames."""
+    def invalid_number(value: str) -> None:
+        raise ValueError(f"non-JSON number {value}")
+
+    trace = json.loads(path.read_text(encoding="utf-8"), parse_constant=invalid_number)
+    if not isinstance(trace, dict):
+        raise ValueError("expected a JSON object")
+    frames = trace.get("frames")
+    if not isinstance(frames, list) or not frames:
+        raise ValueError("expected a trace containing nonempty frames[]")
+    previous = -1
+    for index, frame in enumerate(frames):
+        if not isinstance(frame, dict):
+            raise ValueError(f"frame {index} must be an object")
+        step = frame.get("step")
+        if type(step) is not int or step <= previous or (index == 0 and step != 0):
+            raise ValueError("frames must begin at step 0 and increase by step")
+        world = frame.get("world")
+        if not isinstance(world, dict) or not {
+            "bounds_cm", "robot", "obstacles", "objects", "lighting", "sensors"
+        } <= world.keys() or not isinstance(frame.get("beliefs"), list):
+            raise ValueError(f"frame {step} is missing world or belief data")
+        previous = step
+    return trace
+
+
 def main() -> None:
     global SESSION
     parser = argparse.ArgumentParser(
@@ -713,10 +762,19 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--scenario", choices=SCENARIOS, default="scenario_a")
     parser.add_argument(
-        "--replay", action="store_true", help="play back recorded runs, no model calls"
+        "--replay", type=Path, nargs="?", const=Path("."),
+        help="play a saved trace with frames, or omit the path for legacy playback",
     )
     args = parser.parse_args()
-    SESSION = WORKER.submit(LiveSession, args.scenario, args.replay).result()
+    replay_trace = None
+    scenario = args.scenario
+    if args.replay is not None and args.replay != Path("."):
+        try:
+            replay_trace = load_trace(args.replay)
+        except (OSError, ValueError) as exc:
+            parser.error(f"could not read replay: {exc}")
+        scenario = replay_trace.get("scenario") or replay_trace["frames"][0]["world"].get("scenario") or scenario
+    SESSION = WORKER.submit(LiveSession, scenario, args.replay is not None, replay_trace).result()
     server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
     mode = "REPLAY (recorded runs)" if args.replay else "LIVE (real model and layers)"
     print(f"I, Agent live UI: {mode}\nOpen http://127.0.0.1:{args.port}")

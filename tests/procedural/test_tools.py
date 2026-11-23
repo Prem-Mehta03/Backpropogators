@@ -50,6 +50,7 @@ CONTRACT = {
     ),
     "detect_conflict": ({"subject", "predicate"}, {"subject", "predicate"}),
     "read_lidar": ({"direction"}, set()),
+    "read_ultrasonic": (set(), set()),
     "read_camera": ({"target"}, set()),
     "get_position": (set(), set()),
     "move_forward": ({"distance_cm"}, {"distance_cm"}),
@@ -100,7 +101,7 @@ def test_schemas_are_json_serialisable_objects() -> None:
         assert schema["function"]["description"]
 
 
-@pytest.mark.parametrize("name", sorted(CONTRACT))
+@pytest.mark.parametrize("name", sorted(VALID_ARGS))
 def test_valid_call_reaches_the_stub_and_returns_a_valid_envelope(name: str) -> None:
     out = call_tool(name, VALID_ARGS[name], REGISTRY)
     assert out["tool"] == name

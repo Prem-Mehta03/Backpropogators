@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from evaluation.logger import EvaluationLogger
+from evaluation.logger import EvaluationLogger, load_test_log
 
 
 def test_event_writer_records_run_id_and_timestamp(tmp_path: Path) -> None:
@@ -17,7 +17,7 @@ def test_event_writer_records_run_id_and_timestamp(tmp_path: Path) -> None:
     saved = json.loads((tmp_path / "events.jsonl").read_text(encoding="utf-8"))
     assert event == saved
     assert saved["run_id"] == "run_001"
-    assert saved["schema_version"] == "1.0"
+    assert saved["schema_version"] == "1.1"
     assert saved["timestamp"].endswith("Z")
 
 
@@ -33,13 +33,25 @@ def test_test_log_writer_matches_team_fields(tmp_path: Path) -> None:
         "expected": "Abstain when evidence is missing.",
         "checks": [],
         "result": "PASS",
+        "model": "scripted",
+        "trace_file": "agent_run_fixture.json",
+        "answer_source": "fallback_summary",
     }
     path = logger.write_test_log("T07_missing_data", "run_001", payload)
     saved = json.loads(path.read_text(encoding="utf-8"))
-    assert saved["schema_version"] == "1.0"
+    assert saved["schema_version"] == "1.1"
     assert saved["test_id"] == "T07_missing_data"
     assert saved["run_id"] == "run_001"
     assert saved["result"] == "PASS"
+    assert saved["model"] == "scripted"
+    assert saved["trace_file"] == "agent_run_fixture.json"
+    assert saved["answer_source"] == "fallback_summary"
+    assert load_test_log(path) == saved
+    legacy_path = tmp_path / "legacy.json"
+    legacy = {k: v for k, v in saved.items() if k not in {"model", "trace_file", "answer_source"}}
+    legacy["schema_version"] = "1.0"
+    legacy_path.write_text(json.dumps(legacy), encoding="utf-8")
+    assert load_test_log(legacy_path) == legacy
     second_path = logger.write_test_log("T07_missing_data", "run_002", payload)
     assert second_path != path
     assert path.exists() and second_path.exists()

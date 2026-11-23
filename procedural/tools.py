@@ -9,6 +9,7 @@ ToolResult envelope dict; nothing raises across the boundary (Guidelines 4.4).
 from __future__ import annotations
 
 import logging
+import math
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -17,13 +18,13 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from contracts.models import ToolResult
+from contracts.models import SensorReading, ToolResult
+from contracts.version import SCHEMA_VERSION
 
 logger = logging.getLogger(__name__)
 
 ToolFn = Callable[..., dict[str, Any]]
 
-SCHEMA_VERSION = "1.0"  # contract v1.0, required on every ToolResult
 PERSPECTIVES = ("user", "agent_sensor", "historical", "third_party")
 BELIEF_ID_PATTERN = r"^b_\d{6}$"
 
@@ -119,8 +120,9 @@ TOOL_SPECS: tuple[ToolSpec, ...] = (
                 "The claimed value, for example clear, red or 12.",
                 True,
             ),
-            _str(
+            Param(
                 "source",
+                ("string", "null"),
                 "Where the evidence came from, for example lidar_front or user.",
                 True,
             ),
@@ -169,6 +171,11 @@ TOOL_SPECS: tuple[ToolSpec, ...] = (
         "Read the live LiDAR distance sensor. Returns value (cm), status "
         "(clear, blocked, unknown or error), timestamp and confidence.",
         (_str("direction", "Sensor direction. Defaults to front."),),
+    ),
+    ToolSpec(
+        "read_ultrasonic",
+        "Read the live front ultrasonic range sensor. Returns distance (cm), "
+        "status, timestamp and confidence. Available in selected scenarios.",
     ),
     ToolSpec(
         "read_camera",
@@ -252,6 +259,11 @@ def build_schema(spec: ToolSpec) -> dict[str, Any]:
 TOOL_SCHEMAS: list[dict[str, Any]] = [build_schema(spec) for spec in TOOL_SPECS]
 
 
+def registered_tool_schemas(registry: dict[str, ToolFn]) -> list[dict[str, Any]]:
+    """Return only schemas for tools connected in this run."""
+    return [schema for schema in TOOL_SCHEMAS if schema["function"]["name"] in registry]
+
+
 def error_result(
     tool: str, code: str, message: str, retryable: bool = False
 ) -> dict[str, Any]:
@@ -273,6 +285,8 @@ def error_result(
 
 
 def _is_type(value: Any, json_type: str) -> bool:
+    if json_type == "null":
+        return value is None
     if json_type == "string":
         return isinstance(value, str)
     if json_type == "boolean":
@@ -297,6 +311,8 @@ def _check_param(param: Param, value: Any) -> None:
     if isinstance(value, str) and not value.strip():
         raise ValueError(f"{param.name} must not be empty")
     if isinstance(value, (int, float)) and not isinstance(value, bool):
+        if isinstance(value, float) and not math.isfinite(value):
+            raise ValueError(f"{param.name} must be finite")
         if param.minimum is not None and value < param.minimum:
             raise ValueError(f"{param.name} must be at least {param.minimum}")
         if param.maximum is not None and value > param.maximum:
@@ -345,6 +361,8 @@ def call_tool(
         return error_result(name, "INVALID_ARGUMENT", str(exc))
     fn = registry.get(name)
     if fn is None:
+        if name == "read_ultrasonic":
+            return error_result(name, "INVALID_ARGUMENT", "Ultrasonic sensor is not registered for this scenario")
         return error_result(name, "INTERNAL", f"Tool {name} is not connected")
     try:
         result = fn(**clean)
@@ -361,4 +379,15 @@ def call_tool(
             "INTERNAL",
             f"Envelope names tool {envelope['tool']!r}, expected {name!r}",
         )
+    if name in {"read_lidar", "read_ultrasonic", "read_camera", "get_position",
+                "move_forward", "move_backward", "turn"} and envelope["ok"]:
+        try:
+            reading = SensorReading.model_validate(envelope["data"])
+            if name == "read_ultrasonic" and (
+                reading.sensor != "ultrasonic_front" or reading.unit != "cm"
+                or not isinstance(reading.value, (int, float)) or reading.value < 0
+            ):
+                raise ValueError("expected an ultrasonic_front distance in cm")
+        except ValueError as exc:
+            return error_result(name, "INTERNAL", f"Invalid sensor reading from {name}: {exc}")
     return envelope

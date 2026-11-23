@@ -1,0 +1,319 @@
+{
+  "schema_version": "1.1",
+  "test_id": "T06",
+  "run_id": "20261123T052100961327Z-03",
+  "question": "Is your route clear? Justify your response by inspecting your internal system layers.",
+  "state_before": {
+    "memory": {
+      "nodes": [
+        {
+          "schema_version": "1.1",
+          "belief_id": "b_000001",
+          "subject": "path_A",
+          "predicate": "status",
+          "object": "blocked",
+          "source": "default_map",
+          "confidence": 1.0,
+          "timestamp": "2026-09-01T09:00:00Z",
+          "perspective": "historical",
+          "status": "superseded",
+          "valid_from": "2026-09-01T09:00:00Z",
+          "valid_to": "2026-10-02T09:16:00Z",
+          "supersedes": null
+        },
+        {
+          "schema_version": "1.1",
+          "belief_id": "b_000002",
+          "subject": "path_A",
+          "predicate": "status",
+          "object": "clear",
+          "source": "floor_plan_rev2",
+          "confidence": 0.9,
+          "timestamp": "2026-10-02T09:16:00Z",
+          "perspective": "historical",
+          "status": "active",
+          "valid_from": "2026-10-02T09:16:00Z",
+          "valid_to": null,
+          "supersedes": "b_000001"
+        }
+      ],
+      "edges": [
+        {
+          "from": "b_000001",
+          "to": "b_000002",
+          "relation": "supersedes"
+        }
+      ]
+    },
+    "environment": {
+      "scenario": "scenario_t06_stale_map",
+      "seed": 42,
+      "step": 0,
+      "time": "2026-10-03T09:16:00Z",
+      "robot": {
+        "x": 0.0,
+        "y": 0.0,
+        "heading_deg": 0.0
+      },
+      "lighting": {
+        "name": "white",
+        "color_shift": {}
+      },
+      "obstacles": [],
+      "objects": []
+    }
+  },
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "query_belief",
+      "args": {
+        "subject": "path_A"
+      },
+      "result": {
+        "schema_version": "1.1",
+        "tool": "query_belief",
+        "ok": true,
+        "data": [
+          {
+            "schema_version": "1.1",
+            "belief_id": "b_000002",
+            "subject": "path_A",
+            "predicate": "status",
+            "object": "clear",
+            "source": "floor_plan_rev2",
+            "confidence": 0.9,
+            "timestamp": "2026-10-02T09:16:00Z",
+            "perspective": "historical",
+            "status": "active",
+            "valid_from": "2026-10-02T09:16:00Z",
+            "valid_to": null,
+            "supersedes": "b_000001"
+          }
+        ],
+        "error": null,
+        "timestamp": "2026-11-23T05:21:01Z"
+      },
+      "auto": false
+    },
+    {
+      "step": 2,
+      "tool": "get_belief_history",
+      "args": {
+        "subject": "path_A",
+        "predicate": "status"
+      },
+      "result": {
+        "schema_version": "1.1",
+        "tool": "get_belief_history",
+        "ok": true,
+        "data": [
+          {
+            "schema_version": "1.1",
+            "belief_id": "b_000001",
+            "subject": "path_A",
+            "predicate": "status",
+            "object": "blocked",
+            "source": "default_map",
+            "confidence": 1.0,
+            "timestamp": "2026-09-01T09:00:00Z",
+            "perspective": "historical",
+            "status": "superseded",
+            "valid_from": "2026-09-01T09:00:00Z",
+            "valid_to": "2026-10-02T09:16:00Z",
+            "supersedes": null
+          },
+          {
+            "schema_version": "1.1",
+            "belief_id": "b_000002",
+            "subject": "path_A",
+            "predicate": "status",
+            "object": "clear",
+            "source": "floor_plan_rev2",
+            "confidence": 0.9,
+            "timestamp": "2026-10-02T09:16:00Z",
+            "perspective": "historical",
+            "status": "active",
+            "valid_from": "2026-10-02T09:16:00Z",
+            "valid_to": null,
+            "supersedes": "b_000001"
+          }
+        ],
+        "error": null,
+        "timestamp": "2026-11-23T05:21:01Z"
+      },
+      "auto": false
+    },
+    {
+      "step": 3,
+      "tool": "read_lidar",
+      "args": {
+        "direction": "front"
+      },
+      "result": {
+        "schema_version": "1.1",
+        "tool": "read_lidar",
+        "ok": true,
+        "data": {
+          "schema_version": "1.1",
+          "sensor": "lidar_front",
+          "value": 250,
+          "unit": "cm",
+          "status": "clear",
+          "timestamp": "2026-10-03T09:16:00Z",
+          "confidence": 0.98
+        },
+        "error": null,
+        "timestamp": "2026-10-03T09:16:00Z"
+      },
+      "auto": false
+    }
+  ],
+  "state_after": {
+    "memory": {
+      "nodes": [
+        {
+          "schema_version": "1.1",
+          "belief_id": "b_000001",
+          "subject": "path_A",
+          "predicate": "status",
+          "object": "blocked",
+          "source": "default_map",
+          "confidence": 1.0,
+          "timestamp": "2026-09-01T09:00:00Z",
+          "perspective": "historical",
+          "status": "superseded",
+          "valid_from": "2026-09-01T09:00:00Z",
+          "valid_to": "2026-10-02T09:16:00Z",
+          "supersedes": null
+        },
+        {
+          "schema_version": "1.1",
+          "belief_id": "b_000002",
+          "subject": "path_A",
+          "predicate": "status",
+          "object": "clear",
+          "source": "floor_plan_rev2",
+          "confidence": 0.9,
+          "timestamp": "2026-10-02T09:16:00Z",
+          "perspective": "historical",
+          "status": "active",
+          "valid_from": "2026-10-02T09:16:00Z",
+          "valid_to": null,
+          "supersedes": "b_000001"
+        }
+      ],
+      "edges": [
+        {
+          "from": "b_000001",
+          "to": "b_000002",
+          "relation": "supersedes"
+        }
+      ]
+    },
+    "environment": {
+      "scenario": "scenario_t06_stale_map",
+      "seed": 42,
+      "step": 0,
+      "time": "2026-10-03T09:16:00Z",
+      "robot": {
+        "x": 0.0,
+        "y": 0.0,
+        "heading_deg": 0.0
+      },
+      "lighting": {
+        "name": "white",
+        "color_shift": {}
+      },
+      "obstacles": [],
+      "objects": []
+    }
+  },
+  "answer": "Yes. The 2026-09-01 entry is stale. The newer floor_plan_rev2 and the LiDAR reading of 250 cm both support a clear route.",
+  "expected": "Retain closed September map history, use the newer plan and clear LiDAR.",
+  "checks": [
+    {
+      "name": "ordered_tools",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "Required model call order: query_belief, read_lidar."
+    },
+    {
+      "name": "canonical_tool_outputs",
+      "layer": "boundary",
+      "passed": true,
+      "detail": "Invalid result envelopes or payloads: []."
+    },
+    {
+      "name": "one_frame_per_observation",
+      "layer": "evaluation",
+      "passed": true,
+      "detail": "Frame zero precedes the model. Each manual or automatic tool has a corresponding frame."
+    },
+    {
+      "name": "observer_matches_model_receipts",
+      "layer": "evaluation",
+      "passed": true,
+      "detail": "Automatic reads are additional receipts and do not replace model results."
+    },
+    {
+      "name": "answer_delivered",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "Agent error: None."
+    },
+    {
+      "name": "supported_claims",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "Answer uses known belief IDs and represents writes and cancelled moves according to receipts."
+    },
+    {
+      "name": "history_retained",
+      "layer": "declarative",
+      "passed": true,
+      "detail": "No seeded or historical belief ID was deleted."
+    },
+    {
+      "name": "pose_change_expected",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "Only the box approach demo should move the simulated robot."
+    },
+    {
+      "name": "stale_map_history",
+      "layer": "declarative",
+      "passed": true,
+      "detail": "The newer plan closes the dated entry while retaining it."
+    },
+    {
+      "name": "fresh_reading",
+      "layer": "sensorimotor",
+      "passed": true,
+      "detail": "The route is checked with a current clear reading."
+    },
+    {
+      "name": "stale_answer",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "Cite the newer plan and LiDAR and identify the September map as outdated."
+    }
+  ],
+  "result": "PASS",
+  "model": "scripted_llm",
+  "trace_file": "agent_run_20261123T052100961327Z-03.json",
+  "answer_source": "llm",
+  "labels": {
+    "execution": "scripted_llm",
+    "environment": "simulated",
+    "layers": {
+      "declarative": "actual",
+      "procedural": "actual",
+      "sensorimotor": "actual"
+    }
+  },
+  "agent_error": null,
+  "failure_layers": [],
+  "scenario": "scenario_t06_stale_map",
+  "started_utc": "2026-11-23T05:21:01.598468Z"
+}

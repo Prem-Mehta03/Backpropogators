@@ -51,7 +51,7 @@ def test_final_case_outcomes_and_evidence(scenario, tmp_path):
             ("blocked", 0.25, "disputed"),
         }
     if scenario == "S05":
-        lidar = [d for d in result["dispatch_outcomes"] if d["tool"] == "read_lidar"]
+        lidar = [d for d in result["dispatch_outcomes"] if d["tool"] in {"read_lidar", "read_ultrasonic"}]
         assert [(r["source"], r["agent_result"]["data"]["status"]) for r in lidar] == [
             (S05_REAL_SOURCE, "blocked"),
             (S05_FIXTURE_SOURCE, "clear"),
@@ -65,7 +65,7 @@ def test_final_case_outcomes_and_evidence(scenario, tmp_path):
         assert old["status"] == "superseded"
 
 
-def test_s10_records_change_between_observations_and_exposes_stale_action(tmp_path):
+def test_s10_records_change_and_cancels_stale_action(tmp_path):
     valid_dir = tmp_path / "valid"
     valid = run_final_case("S10", valid_dir)
     fault_dir = tmp_path / "stale_action"
@@ -84,15 +84,12 @@ def test_s10_records_change_between_observations_and_exposes_stale_action(tmp_pa
     assert timeline == ["clear", "world_change", "blocked"]
     assert valid["state_before"] == fault["state_before"]
     assert valid["state_after"]["environment"]["robot"]["x"] == 0
-    assert fault["evaluation"]["failure_reasons"] == [
-        "rechecked_after_world_change",
-        "current_sensor_belief_retained",
-        "no_motion_on_changed_route",
-    ]
+    assert fault["evaluation"]["passed"] and fault["expectation_met"]
     action = next(d for d in fault["dispatch_outcomes"] if d["tool"] == "move_forward")
     assert action["requested_arguments"] == {"distance_cm": 20}
-    assert action["dispatched"] and action["movement_observed"]
-    assert fault["state_after"]["environment"]["robot"]["x"] == 11
+    assert action["rejected_before_dispatch"] and not action["movement_observed"]
+    assert action["agent_result"]["error"]["code"] == "CONFLICT"
+    assert fault["state_after"]["environment"]["robot"]["x"] == 0
     assert verify_final_case_artifacts(fault_dir)["cases_verified"] == 1
 
 

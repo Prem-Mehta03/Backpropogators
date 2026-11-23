@@ -213,7 +213,7 @@ def test_every_output_validates_and_is_json():
         assert isinstance(res, dict)
         json.dumps(dumped)
         assert bd.ToolResult.model_validate(dumped)
-        assert dumped["schema_version"] == "1.0" and dumped["timestamp"].endswith("Z")
+        assert dumped["schema_version"] == bd.SCHEMA_VERSION and dumped["timestamp"].endswith("Z")
         assert dumped["ok"] == (dumped["error"] is None)
 
 
@@ -256,6 +256,49 @@ def test_adapter_lidar_blocked():
     ev = reading_to_evidence(data(create_sensorimotor("scenario_a").sensors.read_lidar()))
     assert (ev.subject, ev.predicate, ev.object) == ("path_A", "status", "blocked")
     assert (ev.source, ev.confidence, ev.perspective) == ("lidar_front", 0.98, "agent_sensor")
+
+
+def test_glass_blocks_ultrasound_and_movement_but_not_lidar():
+    sm = create_sensorimotor("scenario_t05_sensor_disagreement")
+    registry = sm.tool_registry()
+    lidar = data(registry["read_lidar"]())
+    ultrasonic = data(registry["read_ultrasonic"]())
+    assert (lidar.value, lidar.status, lidar.confidence) == (250, "clear", 0.98)
+    assert (ultrasonic.value, ultrasonic.status, ultrasonic.confidence) == (15, "blocked", 0.85)
+    belief = reading_to_evidence(ultrasonic)
+    assert (belief.subject, belief.object, belief.source) == ("path_A", "blocked", "ultrasonic_front")
+    move = data(registry["move_forward"](50))
+    assert move.status == "blocked" and move.value["x"] == 14
+    assert "read_ultrasonic" not in create_sensorimotor("scenario_a").tool_registry()
+
+
+def test_first_call_returns_prechange_receipt_and_world_export_is_read_only():
+    from sensorimotor.world_view import export_frame
+
+    sm = create_sensorimotor("scenario_t10_world_change")
+    initial = export_frame(sm.env)
+    assert initial["world"]["sensors"]["lidar_front"] is None
+    assert not initial["world"]["obstacles"]
+    first = data(sm.sensors.read_lidar())
+    assert first.value == 250 and sm.env.step_count == 0
+    snapshot = sm.env.get_state()
+    after = export_frame(sm.env)
+    assert after["world"]["obstacles"][0]["id"] == "cart_01"
+    assert after["world"]["obstacles"][0]["added_at_step"] == 1
+    assert after["world"]["sensors"]["lidar_front"]["value"] == first.value
+    assert export_frame(sm.env) == after and sm.env.get_state() == snapshot
+    after["world"]["sensors"]["lidar_front"]["value"] = -1
+    second = data(sm.sensors.read_lidar())
+    assert second.value == 40 and second.timestamp > first.timestamp
+    sm.env.reset()
+    assert export_frame(sm.env) == initial
+
+
+def test_b_approach_moves_from_unobserved_to_brown():
+    sm = create_sensorimotor("scenario_b_approach")
+    assert data(sm.sensors.read_camera("box_01")).value["color"] is None
+    assert data(sm.actions.move_forward(200)).value["x"] == 200
+    assert data(sm.sensors.read_camera("box_01")).value["color"] == "brown"
 
 
 def test_adapter_camera_and_dict_input():

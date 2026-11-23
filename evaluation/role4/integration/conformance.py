@@ -43,6 +43,9 @@ def probe_registry(output: Path, seed: int) -> dict:
         require_real_tools(registry, sources, memory, world)
         query = {"subject": "box_01", "predicate": "color"}
         memory.add_belief("box_01", "color", "red", "user", 0.9, "user", "2026-10-03T09:15:00Z")
+        map_seed = memory.add_belief(
+            "path_A", "status", "clear", "default_map", 1.0, "historical", "2026-10-03T09:15:00Z"
+        )
 
         def probe(tool: str, arguments: dict, expected_ok: bool = True) -> dict:
             raw = registry[tool](**arguments)
@@ -67,11 +70,10 @@ def probe_registry(output: Path, seed: int) -> dict:
         probe("move_forward", {"distance_cm": 1})
         probe("move_backward", {"distance_cm": 1})
         probe("turn", {"degrees": 10})
-        update = probe("update_belief", {**query, "object": "red", "source": "user", "confidence": 0.9,
+        probe("update_belief", {**query, "object": "red", "source": "user", "confidence": 0.9,
                                         "perspective": "user", "reason": "contract probe"})
-        payload = update.get("data") if isinstance(update, dict) else None
-        current_id = payload.get("belief_id", "b_999998") if isinstance(payload, dict) else "b_999998"
-        probe("downgrade_belief", {"belief_id": current_id, "new_confidence": 0.4, "reason": "contract probe"})
+        probe("downgrade_belief", {"belief_id": map_seed["data"]["belief_id"], "new_confidence": 0.4,
+                                   "reason": "contract probe"})
         probe("downgrade_belief", {"belief_id": "b_999999", "new_confidence": 0.4, "reason": "contract probe"}, False)
         probe("query_belief", {"subject": ""}, False)
         probe("read_lidar", {"direction": "invalid"}, False)

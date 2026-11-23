@@ -71,6 +71,53 @@ def test_clear_path_with_room_to_spare_lets_the_move_run() -> None:
     assert check.details["passed"] is True and check.details["required_cm"] == 50
 
 
+def test_a_blocked_ultrasonic_read_cancels_clear_lidar_and_notifies_both() -> None:
+    registry = fake_registry(lidar_envelope(250))
+    registry["read_ultrasonic"] = lambda: {
+        **lidar_envelope(15, "blocked", "ultrasonic_front"),
+        "tool": "read_ultrasonic",
+    }
+    events = []
+    out = run_agent(
+        "Move forward 20 cm",
+        ScriptedLLM([
+            call("move_forward", {"distance_cm": 20}, "move"),
+            say("The move was cancelled. The robot did not move."),
+        ]),
+        registry,
+        required_evidence=(),
+        on_step=lambda *event: events.append(event),
+    )
+    assert [(name, auto) for _, name, _, _, auto in events] == [
+        ("read_lidar", True), ("read_ultrasonic", True), ("move_forward", False),
+    ]
+    (move,) = out.tool_calls
+    assert move["result"]["error"]["code"] == "CONFLICT"
+    assert "ultrasonic" in move["result"]["error"]["message"]
+    assert [read["result"] for read in move["guard"]["recheck"]["reads"]] == [
+        events[0][3], events[1][3],
+    ]
+
+
+def test_blocked_status_cancels_even_if_the_reported_distance_is_large() -> None:
+    check = recheck_before_action(
+        "move_forward", {"distance_cm": 20}, fake_registry(lidar_envelope(250, "blocked"))
+    )
+    assert check is not None and check.cancel is not None
+
+
+def test_malformed_move_is_rejected_before_any_recheck() -> None:
+    events: list[str] = []
+    out = run_agent(
+        "Move forward",
+        ScriptedLLM([call("move_forward", {"distance_cm": 20, "unknown": True}), say("Refused.")]),
+        fake_registry(lidar_envelope(250), events),
+        required_evidence=(),
+    )
+    assert not events
+    assert out.tool_calls[0]["result"]["error"]["code"] == "INVALID_ARGUMENT"
+
+
 def test_reading_exactly_distance_plus_margin_is_allowed_one_less_is_not() -> None:
     ok = recheck_before_action(
         "move_forward", {"distance_cm": 20}, fake_registry(lidar_envelope(50))
@@ -316,6 +363,13 @@ def test_cancelled_moves_are_found_by_the_recheck_phrase_only() -> None:
     assert cancelled_moves([cancelled, other]) == [cancelled]
 
 
+def test_a_cancelled_move_cannot_be_reported_as_movement() -> None:
+    cancelled = entry("move_forward", ok=False, code="CONFLICT")
+    cancelled["result"]["error"]["message"] = "Move cancelled: recheck before action."
+    problems = undisclosed_actions("The move was cancelled. I moved anyway.", [cancelled])
+    assert problems and "no move tool succeeded" in problems[0]
+
+
 def test_disclosure_problems_get_their_own_note_without_the_make_the_call_advice() -> (
     None
 ):
@@ -353,4 +407,4 @@ def test_a_rear_lidar_read_does_not_look_like_a_sensor_disagreement() -> None:
 def test_fallback_summary_lists_a_move_that_ran() -> None:
     log = [entry("move_forward", data={"sensor": "position"})]
     log[0]["args"] = {"distance_cm": 5}
-    assert "ran (the robot moved)" in build_fallback_summary("q", log)
+    assert "move_forward requested 5 cm. Action result:" in build_fallback_summary("q", log)

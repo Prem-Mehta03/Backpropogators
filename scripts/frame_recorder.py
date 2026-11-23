@@ -126,7 +126,7 @@ class FrameRecorder:
                 {
                     "step": step,
                     "sim_time": sim_time,
-                    "tool": tool,
+                    "tool": copy.deepcopy(tool),
                     "world": world,
                     "beliefs": self._beliefs(),
                 }
@@ -157,5 +157,8 @@ class FrameRecorder:
             self._last_readings[data["sensor"]] = data
         self._add(
             step,
-            {"name": tool, "args": args, "ok": bool(result.get("ok")), "auto": auto},
+            {
+                "name": tool, "args": args, "ok": bool(result.get("ok")),
+                "auto": auto, "result": result,
+            },
         )

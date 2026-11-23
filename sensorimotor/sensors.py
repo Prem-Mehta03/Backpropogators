@@ -1,4 +1,4 @@
-"""Sensors: LiDAR, camera (with lighting model) and position.
+"""Sensors: LiDAR, ultrasound, camera (with lighting model) and position.
 
 Two levels:
   * ``measure_*`` functions are pure: environment in, ``RawReading`` out, no
@@ -57,9 +57,20 @@ def apparent_color(true_color: str, lighting: LightingConfig) -> str:
 
 # ------------------------------------------------------------ pure measures
 def measure_lidar(env: MockEnvironment, cfg: LidarConfig) -> RawReading:
-    """Distance to the nearest obstacle along the sensor direction."""
+    """Distance to the nearest solid obstacle along the sensor direction."""
+    return _measure_distance(env, cfg, ignore_glass=True)
+
+
+def measure_ultrasonic(env: MockEnvironment, cfg: LidarConfig) -> RawReading:
+    """Forward distance including glass, which reflects this simulated sensor."""
+    return _measure_distance(env, cfg, ignore_glass=False)
+
+
+def _measure_distance(
+    env: MockEnvironment, cfg: LidarConfig, *, ignore_glass: bool
+) -> RawReading:
     offset = DIRECTION_OFFSETS[cfg.direction]
-    dist = env.ray_distance(offset, cfg.max_range_cm)
+    dist = env.ray_distance(offset, cfg.max_range_cm, ignore_glass=ignore_glass)
     if dist is None:
         value = cfg.max_range_cm  # nothing in range
     else:
@@ -121,6 +132,11 @@ class Sensors:
     def __init__(self, env: MockEnvironment) -> None:
         self._env = env
 
+    def _read(self, tool, body) -> dict[str, Any]:
+        receipt = bd.run_tool(tool, self._env.now_iso, body)
+        self._env.complete_tool_call(receipt)
+        return receipt
+
     def read_lidar(self, direction: str = "front"):
         """Read a LiDAR. Args: direction in front/back/left/right (default front).
 
@@ -141,7 +157,17 @@ class Sensors:
                 )
             return to_reading(measure_lidar(self._env, cfg))
 
-        return bd.run_tool("read_lidar", self._env.now_iso, body)
+        return self._read("read_lidar", body)
+
+    def read_ultrasonic(self) -> dict[str, Any]:
+        """Read the enabled front ultrasonic sensor. Error: SENSOR_UNAVAILABLE."""
+        def body():
+            cfg = self._env.scenario.ultrasonic
+            if cfg is None or not cfg.available:
+                raise bd.ToolFailure("SENSOR_UNAVAILABLE", "Ultrasonic sensor is unavailable", True)
+            return to_reading(measure_ultrasonic(self._env, cfg))
+
+        return self._read("read_ultrasonic", body)
 
     def read_camera(self, target: str | None = None):
         """Read the front camera. Args: target (optional object_id).
@@ -161,7 +187,7 @@ class Sensors:
                 raise bd.ToolFailure("NOT_FOUND", f"No object '{target}' in the world")
             return to_reading(measure_camera(self._env, cfg, target))
 
-        return bd.run_tool("read_camera", self._env.now_iso, body)
+        return self._read("read_camera", body)
 
     def get_position(self):
         """Read the robot pose. No arguments.
@@ -175,4 +201,4 @@ class Sensors:
                 raise bd.ToolFailure("SENSOR_UNAVAILABLE", "Position sensor is unavailable", True)
             return to_reading(measure_position(self._env, cfg.name, cfg.confidence))
 
-        return bd.run_tool("get_position", self._env.now_iso, body)
+        return self._read("get_position", body)

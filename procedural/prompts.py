@@ -28,6 +28,7 @@ Evidence policy:
    subject and the relevant sensor tool. The system will not accept an answer until you have
    done both. If either still returns no data after the checks in rule 3, say plainly that
    evidence is missing. Do not fill the gap with a guess.
+   For a route, try read_lidar and read_ultrasonic when the ultrasonic tool is available.
 3. Memory lookups:
    - The subject must be an exact entity id (see the entity list below, if one is given).
      Never use a description such as "route" or "the box" as a subject.
@@ -49,8 +50,9 @@ Evidence policy:
 7. When a stored belief with perspective historical (for example the default map) and a live
    reading disagree and you trust the live reading, and the reading is strong (confidence at
    least 0.6) and no other distance sensor contradicts it, do this, in order. If the reading
-   is weak, or two distance sensors disagree, change nothing: report every reading and the
-   stored belief, say the state is disputed, and ask for more evidence. If the reading
+   is weak, or two distance sensors disagree, do not downgrade the stored belief. Record
+   the actual sensor evidence separately, report the disputed result if present, and ask
+   for more evidence. If the reading
    agrees with the stored belief, change nothing either: say the observation confirms it.
    a. Call downgrade_belief on the stored belief. Use its belief_id from the query_belief
       result, a new_confidence lower than its current one, and a short reason.
@@ -70,9 +72,9 @@ Evidence policy:
    example that the way ahead is clear), record it with update_belief using
    perspective user and source user. The system sets the confidence for a person's
    statement. Still check it against your own sensor: it is never a verified fact.
-10. Before every move_forward or move_backward the system re-reads the LiDAR itself and
-   cancels the move if the path is no longer clear (a reading below the requested distance
-   plus a 30 cm margin). If a move is cancelled, say so, give the reading, say the robot did
+10. Before a move the system re-reads the LiDAR in the direction of travel and the ultrasonic
+   sensor when enabled. It cancels if either says blocked or reads less than the requested
+   distance plus a 30 cm margin. If a move is cancelled, say so, give the reading, say the robot did
    not move, and do not retry the same distance. Never claim the robot moved unless the move
    tool returned ok. If one memory write succeeded and the other failed, say which one failed.
 """
@@ -86,7 +88,7 @@ B. Missing source. If a belief's source is null, say its source is unknown and i
    was lowered. Say you did not rely on it alone: base the answer on the live reading.
 C. Disputed or conflicting evidence. If a belief is marked disputed, or two sensors disagree,
    give each side with its value, source and confidence. Say the state is disputed, do not
-   call either side the fact, change no memory, and ask for more evidence, such as a recheck.
+   call either side the fact, keep prior beliefs separate, and ask for more evidence, such as a recheck.
 D. Weak reading. A live reading with confidence below 0.6 cannot overrule a stored belief.
    Give the reading and its confidence, say it is too weak to change memory, keep the stored
    belief as the record, do not state either side as fact, and suggest reading again.

@@ -1,0 +1,443 @@
+{
+  "tests": {
+    "T01": {
+      "scripted_llm": {
+        "runs": 3,
+        "passes": 3,
+        "fallback_count": 0,
+        "models": [
+          "scripted_llm"
+        ],
+        "failing_layers": {},
+        "receipts": [
+          {
+            "run_id": "20261123T052100961327Z-01",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          },
+          {
+            "run_id": "20261123T052100961327Z-02",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          },
+          {
+            "run_id": "20261123T052100961327Z-03",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          }
+        ]
+      },
+      "live": {
+        "runs": 0,
+        "passes": 0,
+        "fallback_count": 0,
+        "models": [],
+        "failing_layers": {},
+        "receipts": []
+      }
+    },
+    "T02": {
+      "scripted_llm": {
+        "runs": 3,
+        "passes": 3,
+        "fallback_count": 0,
+        "models": [
+          "scripted_llm"
+        ],
+        "failing_layers": {},
+        "receipts": [
+          {
+            "run_id": "20261123T052100961327Z-01",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          },
+          {
+            "run_id": "20261123T052100961327Z-02",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          },
+          {
+            "run_id": "20261123T052100961327Z-03",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          }
+        ]
+      },
+      "live": {
+        "runs": 0,
+        "passes": 0,
+        "fallback_count": 0,
+        "models": [],
+        "failing_layers": {},
+        "receipts": []
+      }
+    },
+    "T03": {
+      "scripted_llm": {
+        "runs": 3,
+        "passes": 3,
+        "fallback_count": 0,
+        "models": [
+          "scripted_llm"
+        ],
+        "failing_layers": {},
+        "receipts": [
+          {
+            "run_id": "20261123T052100961327Z-01",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          },
+          {
+            "run_id": "20261123T052100961327Z-02",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          },
+          {
+            "run_id": "20261123T052100961327Z-03",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          }
+        ]
+      },
+      "live": {
+        "runs": 0,
+        "passes": 0,
+        "fallback_count": 0,
+        "models": [],
+        "failing_layers": {},
+        "receipts": []
+      }
+    },
+    "T04": {
+      "scripted_llm": {
+        "runs": 3,
+        "passes": 3,
+        "fallback_count": 0,
+        "models": [
+          "scripted_llm"
+        ],
+        "failing_layers": {},
+        "receipts": [
+          {
+            "run_id": "20261123T052100961327Z-01",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          },
+          {
+            "run_id": "20261123T052100961327Z-02",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          },
+          {
+            "run_id": "20261123T052100961327Z-03",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          }
+        ]
+      },
+      "live": {
+        "runs": 0,
+        "passes": 0,
+        "fallback_count": 0,
+        "models": [],
+        "failing_layers": {},
+        "receipts": []
+      }
+    },
+    "T05": {
+      "scripted_llm": {
+        "runs": 3,
+        "passes": 3,
+        "fallback_count": 0,
+        "models": [
+          "scripted_llm"
+        ],
+        "failing_layers": {},
+        "receipts": [
+          {
+            "run_id": "20261123T052100961327Z-01",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          },
+          {
+            "run_id": "20261123T052100961327Z-02",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          },
+          {
+            "run_id": "20261123T052100961327Z-03",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          }
+        ]
+      },
+      "live": {
+        "runs": 0,
+        "passes": 0,
+        "fallback_count": 0,
+        "models": [],
+        "failing_layers": {},
+        "receipts": []
+      }
+    },
+    "T06": {
+      "scripted_llm": {
+        "runs": 3,
+        "passes": 3,
+        "fallback_count": 0,
+        "models": [
+          "scripted_llm"
+        ],
+        "failing_layers": {},
+        "receipts": [
+          {
+            "run_id": "20261123T052100961327Z-01",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          },
+          {
+            "run_id": "20261123T052100961327Z-02",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          },
+          {
+            "run_id": "20261123T052100961327Z-03",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          }
+        ]
+      },
+      "live": {
+        "runs": 0,
+        "passes": 0,
+        "fallback_count": 0,
+        "models": [],
+        "failing_layers": {},
+        "receipts": []
+      }
+    },
+    "T07": {
+      "scripted_llm": {
+        "runs": 3,
+        "passes": 3,
+        "fallback_count": 0,
+        "models": [
+          "scripted_llm"
+        ],
+        "failing_layers": {},
+        "receipts": [
+          {
+            "run_id": "20261123T052100961327Z-01",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          },
+          {
+            "run_id": "20261123T052100961327Z-02",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          },
+          {
+            "run_id": "20261123T052100961327Z-03",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          }
+        ]
+      },
+      "live": {
+        "runs": 0,
+        "passes": 0,
+        "fallback_count": 0,
+        "models": [],
+        "failing_layers": {},
+        "receipts": []
+      }
+    },
+    "T08": {
+      "scripted_llm": {
+        "runs": 3,
+        "passes": 3,
+        "fallback_count": 0,
+        "models": [
+          "scripted_llm"
+        ],
+        "failing_layers": {},
+        "receipts": [
+          {
+            "run_id": "20261123T052100961327Z-01",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          },
+          {
+            "run_id": "20261123T052100961327Z-02",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          },
+          {
+            "run_id": "20261123T052100961327Z-03",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          }
+        ]
+      },
+      "live": {
+        "runs": 0,
+        "passes": 0,
+        "fallback_count": 0,
+        "models": [],
+        "failing_layers": {},
+        "receipts": []
+      }
+    },
+    "T09": {
+      "scripted_llm": {
+        "runs": 3,
+        "passes": 3,
+        "fallback_count": 0,
+        "models": [
+          "scripted_llm"
+        ],
+        "failing_layers": {},
+        "receipts": [
+          {
+            "run_id": "20261123T052100961327Z-01",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          },
+          {
+            "run_id": "20261123T052100961327Z-02",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          },
+          {
+            "run_id": "20261123T052100961327Z-03",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          }
+        ]
+      },
+      "live": {
+        "runs": 0,
+        "passes": 0,
+        "fallback_count": 0,
+        "models": [],
+        "failing_layers": {},
+        "receipts": []
+      }
+    },
+    "T10": {
+      "scripted_llm": {
+        "runs": 3,
+        "passes": 3,
+        "fallback_count": 0,
+        "models": [
+          "scripted_llm"
+        ],
+        "failing_layers": {},
+        "receipts": [
+          {
+            "run_id": "20261123T052100961327Z-01",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          },
+          {
+            "run_id": "20261123T052100961327Z-02",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          },
+          {
+            "run_id": "20261123T052100961327Z-03",
+            "result": "PASS",
+            "model": "scripted_llm",
+            "answer_source": "llm",
+            "failing_layers": []
+          }
+        ]
+      },
+      "live": {
+        "runs": 0,
+        "passes": 0,
+        "fallback_count": 0,
+        "models": [],
+        "failing_layers": {},
+        "receipts": []
+      }
+    }
+  },
+  "totals": {
+    "scripted_llm": {
+      "runs": 30,
+      "passes": 30,
+      "fallback_count": 0,
+      "models": [
+        "scripted_llm"
+      ],
+      "failing_layers": {}
+    },
+    "live": {
+      "runs": 0,
+      "passes": 0,
+      "fallback_count": 0,
+      "models": [],
+      "failing_layers": {}
+    }
+  },
+  "live_target_per_test": 3
+}

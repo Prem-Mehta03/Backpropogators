@@ -7,8 +7,8 @@ import sqlite3
 import pytest
 
 from contracts.models import Belief, SensorReading
-from declarative import BeliefMemory, seed_bot_02_record
-from declarative.conflicts import resolve_priority
+from declarative import BeliefMemory, seed_bot_02_record, seed_for
+from declarative.conflicts import is_stale, resolve_priority
 from declarative.database import BeliefDatabase
 
 UTC_1 = "2026-10-03T09:15:00Z"
@@ -107,7 +107,7 @@ def test_query_filters_perspective_and_conflict_detection() -> None:
     assert history_view[0]["object"] == "blue"
     assert history_view[0]["status"] == "superseded"
     conflicts = data(memory.detect_conflict("box_01", "color"))
-    assert len(conflicts) == 2
+    assert conflicts == []
     memory.close()
 
 
@@ -144,7 +144,7 @@ def test_downgrade_then_sensor_update_keeps_the_full_supersession_chain() -> Non
             "path_A", "status", "clear", "default_map", 1.0, "historical", UTC_1
         )
     )
-    reduced = data(memory.downgrade_belief(original["belief_id"], 0.5, "map is stale"))
+    reduced = data(memory.downgrade_belief(original["belief_id"], 0.3, "map is stale"))
     sensor = data(
         memory.update_belief(
             "path_A",
@@ -154,11 +154,13 @@ def test_downgrade_then_sensor_update_keeps_the_full_supersession_chain() -> Non
             0.98,
             "agent_sensor",
             "new LiDAR reading",
-            "2026-10-03T09:17:00Z",
+            UTC_2,
         )
     )
     history = data(memory.get_belief_history("path_A", "status"))
-    assert reduced["confidence"] == 0.5
+    assert reduced["confidence"] == 0.3
+    assert reduced["timestamp"] == UTC_1 and reduced["valid_from"] == UTC_2
+    assert history[1]["valid_to"] == sensor["valid_from"] == UTC_2
     assert sensor["supersedes"] == reduced["belief_id"]
     assert [belief["status"] for belief in history] == [
         "superseded",
@@ -192,6 +194,8 @@ def test_supersede_and_insert_roll_back_together_on_database_failure() -> None:
     with pytest.raises(sqlite3.IntegrityError):
         database.append_with_supersession(original, duplicate_id)
     assert database.get("b_000001").status == "active"
+    assert database.get("b_000001").valid_to is None
+    assert database.list_beliefs_for_all() == [original]
     database.close()
 
 
@@ -295,3 +299,115 @@ def test_memory_emits_committed_change_events() -> None:
     assert [kind for kind, _ in events] == ["belief_created", "belief_update"]
     assert events[1][1]["operation"] == "replace"
     memory.close()
+
+
+def test_attributed_views_stay_active_and_do_not_dispute_camera() -> None:
+    """Keep a user and bot view alongside an independently observed color."""
+    memory = BeliefMemory(clock=lambda: UTC_2)
+    try:
+        seed_for("T03", memory)
+        camera = data(memory.update_belief(
+            "box_01", "color", "brown", "camera_front", 0.9, "agent_sensor",
+            "camera observation", UTC_2,
+        ))
+        assert camera["status"] == "active"
+        assert {item["status"] for item in memory.snapshot()["nodes"]} == {"active"}
+        assert data(memory.detect_conflict("box_01", "color")) == []
+        user_id = data(memory.query_belief("box_01", perspective="user"))[0]["belief_id"]
+        refused = memory.downgrade_belief(user_id, 0.1, "views cannot be overwritten")
+        assert refused["error"]["code"] == "CONFLICT"
+    finally:
+        memory.close()
+
+
+def test_conflicting_live_sensors_are_evidence_conflicts() -> None:
+    """Retain the map while two independent current sensors disagree."""
+    memory = BeliefMemory(clock=lambda: UTC_2)
+    try:
+        seed_for("T05", memory)
+        data(memory.update_belief(
+            "path_A", "status", "clear", "lidar_front", 0.98, "agent_sensor", "reading", UTC_2,
+        ))
+        blocked = data(memory.update_belief(
+            "path_A", "status", "blocked", "ultrasonic_front", 0.85, "agent_sensor", "reading", UTC_2,
+        ))
+        items = data(memory.detect_conflict("path_A", "status"))
+        assert blocked["status"] == "disputed"
+        assert {item["source"] for item in items} == {"lidar_front", "ultrasonic_front", "default_map"}
+        assert next(item for item in items if item["source"] == "default_map")["status"] == "active"
+    finally:
+        memory.close()
+
+
+def test_timestamp_order_and_stale_fixture_history() -> None:
+    """Retain the closed old plan and order current results by actual observation time."""
+    memory = BeliefMemory(clock=lambda: UTC_2)
+    try:
+        seed_for("scenario_t06_stale_map", memory)
+        history = data(memory.get_belief_history("path_A", "status"))
+        older, revised = [Belief.model_validate(item) for item in history]
+        assert is_stale(older, revised)
+        assert older.valid_to == revised.valid_from and older.status == "superseded"
+        assert revised.object == "clear" and revised.source == "floor_plan_rev2"
+        queried = data(memory.query_belief("path_A", perspective="historical"))
+        assert [item["belief_id"] for item in queried] == [revised.belief_id, older.belief_id]
+        assert not is_stale(revised, older)
+        assert is_stale(older, revised.model_copy(update={"perspective": "agent_sensor"}))
+        assert not is_stale(revised, revised.model_copy(update={
+            "perspective": "agent_sensor", "timestamp": UTC_2,
+        }))
+    finally:
+        memory.close()
+
+
+def test_missing_provenance_events_cover_seed_add_and_update() -> None:
+    """Emit missing-source events only after each capped write commits."""
+    events = []
+    memory = BeliefMemory(clock=lambda: UTC_2, event_callback=lambda kind, data: events.append((kind, data)))
+    try:
+        seed_for("T09", memory)
+        added = data(memory.add_belief("door", "status", "open", None, 0.9, "historical", UTC_1))
+        updated = data(memory.update_belief(
+            "door", "status", "closed", None, 0.95, "historical", "new record", UTC_2,
+        ))
+        assert added["confidence"] == updated["confidence"] == 0.5
+        missing = [details for kind, details in events if kind == "missing_provenance"]
+        assert [(e["subject"], e["provided_confidence"], e["confidence"]) for e in missing] == [
+            ("path_A", 0.9, 0.5), ("door", 0.9, 0.5), ("door", 0.95, 0.5),
+        ]
+        bad = memory.add_belief("invalid", "status", "open", None, 1.2, "historical", UTC_1)
+        assert bad["error"]["code"] == "INVALID_ARGUMENT"
+        assert not any(detail.get("subject") == "invalid" for _, detail in events)
+    finally:
+        memory.close()
+
+
+def test_equal_timestamp_is_not_generally_newer_evidence() -> None:
+    """Permit the explicit downgrade chain while retaining strict chronology elsewhere."""
+    memory = BeliefMemory(clock=lambda: UTC_2)
+    try:
+        memory.add_belief("path_A", "status", "clear", "map", 1.0, "historical", UTC_2)
+        same_tick = data(memory.update_belief(
+            "path_A", "status", "blocked", "lidar_front", 0.98, "agent_sensor", "same timestamp", UTC_2,
+        ))
+        assert same_tick["status"] == "disputed" and same_tick["supersedes"] is None
+    finally:
+        memory.close()
+
+
+def test_weak_conflicting_observation_stays_disputed_after_another_reading() -> None:
+    """An existing sensor record must not hide a strongly held contrary map."""
+    memory = BeliefMemory(clock=lambda: UTC_2)
+    try:
+        seed_for("T04", memory)
+        memory.update_belief(
+            "path_A", "status", "clear", "lidar_front", 0.61, "agent_sensor", "older observation", UTC_1,
+        )
+        weak = data(memory.update_belief(
+            "path_A", "status", "blocked", "lidar_front", 0.4, "agent_sensor", "weak observation", UTC_2,
+        ))
+        assert weak["status"] == "disputed" and weak["supersedes"] is None
+        records = data(memory.query_belief("path_A"))
+        assert next(item for item in records if item["source"] == "default_map")["status"] == "active"
+    finally:
+        memory.close()

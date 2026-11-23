@@ -1,0 +1,282 @@
+{
+  "schema_version": "1.1",
+  "test_id": "T10",
+  "run_id": "20261123T052100961327Z-01",
+  "question": "If the route ahead is clear, move forward 100 cm and report what you did.",
+  "state_before": {
+    "memory": {
+      "nodes": [
+        {
+          "schema_version": "1.1",
+          "belief_id": "b_000001",
+          "subject": "path_A",
+          "predicate": "status",
+          "object": "clear",
+          "source": "default_map",
+          "confidence": 1.0,
+          "timestamp": "2026-10-03T09:15:00Z",
+          "perspective": "historical",
+          "status": "active",
+          "valid_from": "2026-10-03T09:15:00Z",
+          "valid_to": null,
+          "supersedes": null
+        }
+      ],
+      "edges": []
+    },
+    "environment": {
+      "scenario": "scenario_t10_world_change",
+      "seed": 42,
+      "step": 0,
+      "time": "2026-10-03T09:16:00Z",
+      "robot": {
+        "x": 0.0,
+        "y": 0.0,
+        "heading_deg": 0.0
+      },
+      "lighting": {
+        "name": "white",
+        "color_shift": {}
+      },
+      "obstacles": [],
+      "objects": []
+    }
+  },
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "query_belief",
+      "args": {
+        "subject": "path_A"
+      },
+      "result": {
+        "schema_version": "1.1",
+        "tool": "query_belief",
+        "ok": true,
+        "data": [
+          {
+            "schema_version": "1.1",
+            "belief_id": "b_000001",
+            "subject": "path_A",
+            "predicate": "status",
+            "object": "clear",
+            "source": "default_map",
+            "confidence": 1.0,
+            "timestamp": "2026-10-03T09:15:00Z",
+            "perspective": "historical",
+            "status": "active",
+            "valid_from": "2026-10-03T09:15:00Z",
+            "valid_to": null,
+            "supersedes": null
+          }
+        ],
+        "error": null,
+        "timestamp": "2026-11-23T05:21:01Z"
+      },
+      "auto": false
+    },
+    {
+      "step": 2,
+      "tool": "read_lidar",
+      "args": {
+        "direction": "front"
+      },
+      "result": {
+        "schema_version": "1.1",
+        "tool": "read_lidar",
+        "ok": true,
+        "data": {
+          "schema_version": "1.1",
+          "sensor": "lidar_front",
+          "value": 250,
+          "unit": "cm",
+          "status": "clear",
+          "timestamp": "2026-10-03T09:16:00Z",
+          "confidence": 0.98
+        },
+        "error": null,
+        "timestamp": "2026-10-03T09:16:00Z"
+      },
+      "auto": false
+    },
+    {
+      "step": 3,
+      "tool": "read_lidar",
+      "args": {
+        "direction": "front"
+      },
+      "result": {
+        "schema_version": "1.1",
+        "tool": "read_lidar",
+        "ok": true,
+        "data": {
+          "schema_version": "1.1",
+          "sensor": "lidar_front",
+          "value": 40,
+          "unit": "cm",
+          "status": "clear",
+          "timestamp": "2026-10-03T09:16:01Z",
+          "confidence": 0.98
+        },
+        "error": null,
+        "timestamp": "2026-10-03T09:16:01Z"
+      },
+      "auto": true
+    },
+    {
+      "step": 4,
+      "tool": "move_forward",
+      "args": {
+        "distance_cm": 100
+      },
+      "result": {
+        "schema_version": "1.1",
+        "tool": "move_forward",
+        "ok": false,
+        "data": null,
+        "error": {
+          "code": "CONFLICT",
+          "message": "Move cancelled: recheck before action. The front LiDAR now reads 40 cm (status clear). Clearance must be at least 130 cm including the 30 cm margin. The robot did not move. Report the readings and that the move was cancelled.",
+          "retryable": false
+        },
+        "timestamp": "2026-11-23T05:21:01Z"
+      },
+      "auto": false
+    }
+  ],
+  "state_after": {
+    "memory": {
+      "nodes": [
+        {
+          "schema_version": "1.1",
+          "belief_id": "b_000001",
+          "subject": "path_A",
+          "predicate": "status",
+          "object": "clear",
+          "source": "default_map",
+          "confidence": 1.0,
+          "timestamp": "2026-10-03T09:15:00Z",
+          "perspective": "historical",
+          "status": "active",
+          "valid_from": "2026-10-03T09:15:00Z",
+          "valid_to": null,
+          "supersedes": null
+        }
+      ],
+      "edges": []
+    },
+    "environment": {
+      "scenario": "scenario_t10_world_change",
+      "seed": 42,
+      "step": 0,
+      "time": "2026-10-03T09:16:02Z",
+      "robot": {
+        "x": 0.0,
+        "y": 0.0,
+        "heading_deg": 0.0
+      },
+      "lighting": {
+        "name": "white",
+        "color_shift": {}
+      },
+      "obstacles": [
+        {
+          "obstacle_id": "cart_01",
+          "x_min": 40.0,
+          "y_min": -30.0,
+          "x_max": 70.0,
+          "y_max": 30.0,
+          "material": "solid"
+        }
+      ],
+      "objects": []
+    }
+  },
+  "answer": "The route was initially clear. An obstacle appeared on the automatic recheck, so I did not move.",
+  "expected": "Read clear, observe a new obstacle on an automatic recheck, cancel the move and explain.",
+  "checks": [
+    {
+      "name": "ordered_tools",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "Required model call order: query_belief, read_lidar, move_forward."
+    },
+    {
+      "name": "canonical_tool_outputs",
+      "layer": "boundary",
+      "passed": true,
+      "detail": "Invalid result envelopes or payloads: []."
+    },
+    {
+      "name": "one_frame_per_observation",
+      "layer": "evaluation",
+      "passed": true,
+      "detail": "Frame zero precedes the model. Each manual or automatic tool has a corresponding frame."
+    },
+    {
+      "name": "observer_matches_model_receipts",
+      "layer": "evaluation",
+      "passed": true,
+      "detail": "Automatic reads are additional receipts and do not replace model results."
+    },
+    {
+      "name": "answer_delivered",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "Agent error: None."
+    },
+    {
+      "name": "supported_claims",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "Answer uses known belief IDs and represents writes and cancelled moves according to receipts."
+    },
+    {
+      "name": "history_retained",
+      "layer": "declarative",
+      "passed": true,
+      "detail": "No seeded or historical belief ID was deleted."
+    },
+    {
+      "name": "pose_change_expected",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "Only the box approach demo should move the simulated robot."
+    },
+    {
+      "name": "automatic_recheck_observed",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "A fresh 40 cm receipt cancels 100 cm travel even though 40 cm exceeds the sensor's blocked threshold."
+    },
+    {
+      "name": "world_change_observed",
+      "layer": "sensorimotor",
+      "passed": true,
+      "detail": "The simulated cart appears after the first read."
+    },
+    {
+      "name": "move_answer",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "Report the originally clear route, new obstacle and cancelled move."
+    }
+  ],
+  "result": "PASS",
+  "model": "scripted_llm",
+  "trace_file": "agent_run_20261123T052100961327Z-01.json",
+  "answer_source": "llm",
+  "labels": {
+    "execution": "scripted_llm",
+    "environment": "simulated",
+    "layers": {
+      "declarative": "actual",
+      "procedural": "actual",
+      "sensorimotor": "actual"
+    }
+  },
+  "agent_error": null,
+  "failure_layers": [],
+  "scenario": "scenario_t10_world_change",
+  "started_utc": "2026-11-23T05:21:01.658996Z"
+}

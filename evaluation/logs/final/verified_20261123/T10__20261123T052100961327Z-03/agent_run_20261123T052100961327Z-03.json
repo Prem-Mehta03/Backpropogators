@@ -1,0 +1,848 @@
+{
+  "answer": "The route was initially clear. An obstacle appeared on the automatic recheck, so I did not move.",
+  "answer_normalized": false,
+  "answer_source": "llm",
+  "claim_nudges": 0,
+  "claim_refusals": [],
+  "error": null,
+  "evidence_nudges": 0,
+  "frames": [
+    {
+      "beliefs": [
+        {
+          "belief_id": "b_000001",
+          "confidence": 1.0,
+          "object": "clear",
+          "perspective": "historical",
+          "predicate": "status",
+          "schema_version": "1.1",
+          "source": "default_map",
+          "status": "active",
+          "subject": "path_A",
+          "supersedes": null,
+          "timestamp": "2026-10-03T09:15:00Z",
+          "valid_from": "2026-10-03T09:15:00Z",
+          "valid_to": null
+        }
+      ],
+      "sim_time": "2026-10-03T09:16:00Z",
+      "step": 0,
+      "tool": null,
+      "world": {
+        "bounds_cm": {
+          "x_max": 500,
+          "x_min": -100,
+          "y_max": 100,
+          "y_min": -100
+        },
+        "lighting": {
+          "color": "white"
+        },
+        "objects": [],
+        "obstacles": [],
+        "robot": {
+          "heading_deg": 0.0,
+          "radius_cm": 20,
+          "x": 0.0,
+          "y": 0.0
+        },
+        "scenario": "scenario_t10_world_change",
+        "sensors": {
+          "camera_front": null,
+          "lidar_front": null,
+          "position": null,
+          "ultrasonic_front": null
+        }
+      }
+    },
+    {
+      "beliefs": [
+        {
+          "belief_id": "b_000001",
+          "confidence": 1.0,
+          "object": "clear",
+          "perspective": "historical",
+          "predicate": "status",
+          "schema_version": "1.1",
+          "source": "default_map",
+          "status": "active",
+          "subject": "path_A",
+          "supersedes": null,
+          "timestamp": "2026-10-03T09:15:00Z",
+          "valid_from": "2026-10-03T09:15:00Z",
+          "valid_to": null
+        }
+      ],
+      "sim_time": "2026-10-03T09:16:00Z",
+      "step": 1,
+      "tool": {
+        "args": {
+          "subject": "path_A"
+        },
+        "auto": false,
+        "name": "query_belief",
+        "ok": true,
+        "result": {
+          "data": [
+            {
+              "belief_id": "b_000001",
+              "confidence": 1.0,
+              "object": "clear",
+              "perspective": "historical",
+              "predicate": "status",
+              "schema_version": "1.1",
+              "source": "default_map",
+              "status": "active",
+              "subject": "path_A",
+              "supersedes": null,
+              "timestamp": "2026-10-03T09:15:00Z",
+              "valid_from": "2026-10-03T09:15:00Z",
+              "valid_to": null
+            }
+          ],
+          "error": null,
+          "ok": true,
+          "schema_version": "1.1",
+          "timestamp": "2026-11-23T05:21:01Z",
+          "tool": "query_belief"
+        }
+      },
+      "world": {
+        "bounds_cm": {
+          "x_max": 500,
+          "x_min": -100,
+          "y_max": 100,
+          "y_min": -100
+        },
+        "lighting": {
+          "color": "white"
+        },
+        "objects": [],
+        "obstacles": [],
+        "robot": {
+          "heading_deg": 0.0,
+          "radius_cm": 20,
+          "x": 0.0,
+          "y": 0.0
+        },
+        "scenario": "scenario_t10_world_change",
+        "sensors": {
+          "camera_front": null,
+          "lidar_front": null,
+          "position": null,
+          "ultrasonic_front": null
+        }
+      }
+    },
+    {
+      "beliefs": [
+        {
+          "belief_id": "b_000001",
+          "confidence": 1.0,
+          "object": "clear",
+          "perspective": "historical",
+          "predicate": "status",
+          "schema_version": "1.1",
+          "source": "default_map",
+          "status": "active",
+          "subject": "path_A",
+          "supersedes": null,
+          "timestamp": "2026-10-03T09:15:00Z",
+          "valid_from": "2026-10-03T09:15:00Z",
+          "valid_to": null
+        }
+      ],
+      "sim_time": "2026-10-03T09:16:01Z",
+      "step": 2,
+      "tool": {
+        "args": {
+          "direction": "front"
+        },
+        "auto": false,
+        "name": "read_lidar",
+        "ok": true,
+        "result": {
+          "data": {
+            "confidence": 0.98,
+            "schema_version": "1.1",
+            "sensor": "lidar_front",
+            "status": "clear",
+            "timestamp": "2026-10-03T09:16:00Z",
+            "unit": "cm",
+            "value": 250
+          },
+          "error": null,
+          "ok": true,
+          "schema_version": "1.1",
+          "timestamp": "2026-10-03T09:16:00Z",
+          "tool": "read_lidar"
+        }
+      },
+      "world": {
+        "bounds_cm": {
+          "x_max": 500,
+          "x_min": -100,
+          "y_max": 130.0,
+          "y_min": -130.0
+        },
+        "lighting": {
+          "color": "white"
+        },
+        "objects": [],
+        "obstacles": [
+          {
+            "added_at_step": 1,
+            "id": "cart_01",
+            "material": "solid",
+            "x_max": 70.0,
+            "x_min": 40.0,
+            "y_max": 30.0,
+            "y_min": -30.0
+          }
+        ],
+        "robot": {
+          "heading_deg": 0.0,
+          "radius_cm": 20,
+          "x": 0.0,
+          "y": 0.0
+        },
+        "scenario": "scenario_t10_world_change",
+        "sensors": {
+          "camera_front": null,
+          "lidar_front": {
+            "confidence": 0.98,
+            "range_cm": 250.0,
+            "schema_version": "1.1",
+            "sensor": "lidar_front",
+            "status": "clear",
+            "timestamp": "2026-10-03T09:16:00Z",
+            "unit": "cm",
+            "value": 250
+          },
+          "position": null,
+          "ultrasonic_front": null
+        }
+      }
+    },
+    {
+      "beliefs": [
+        {
+          "belief_id": "b_000001",
+          "confidence": 1.0,
+          "object": "clear",
+          "perspective": "historical",
+          "predicate": "status",
+          "schema_version": "1.1",
+          "source": "default_map",
+          "status": "active",
+          "subject": "path_A",
+          "supersedes": null,
+          "timestamp": "2026-10-03T09:15:00Z",
+          "valid_from": "2026-10-03T09:15:00Z",
+          "valid_to": null
+        }
+      ],
+      "sim_time": "2026-10-03T09:16:02Z",
+      "step": 3,
+      "tool": {
+        "args": {
+          "direction": "front"
+        },
+        "auto": true,
+        "name": "read_lidar",
+        "ok": true,
+        "result": {
+          "data": {
+            "confidence": 0.98,
+            "schema_version": "1.1",
+            "sensor": "lidar_front",
+            "status": "clear",
+            "timestamp": "2026-10-03T09:16:01Z",
+            "unit": "cm",
+            "value": 40
+          },
+          "error": null,
+          "ok": true,
+          "schema_version": "1.1",
+          "timestamp": "2026-10-03T09:16:01Z",
+          "tool": "read_lidar"
+        }
+      },
+      "world": {
+        "bounds_cm": {
+          "x_max": 500,
+          "x_min": -100,
+          "y_max": 130.0,
+          "y_min": -130.0
+        },
+        "lighting": {
+          "color": "white"
+        },
+        "objects": [],
+        "obstacles": [
+          {
+            "added_at_step": 1,
+            "id": "cart_01",
+            "material": "solid",
+            "x_max": 70.0,
+            "x_min": 40.0,
+            "y_max": 30.0,
+            "y_min": -30.0
+          }
+        ],
+        "robot": {
+          "heading_deg": 0.0,
+          "radius_cm": 20,
+          "x": 0.0,
+          "y": 0.0
+        },
+        "scenario": "scenario_t10_world_change",
+        "sensors": {
+          "camera_front": null,
+          "lidar_front": {
+            "confidence": 0.98,
+            "range_cm": 250.0,
+            "schema_version": "1.1",
+            "sensor": "lidar_front",
+            "status": "clear",
+            "timestamp": "2026-10-03T09:16:01Z",
+            "unit": "cm",
+            "value": 40
+          },
+          "position": null,
+          "ultrasonic_front": null
+        }
+      }
+    },
+    {
+      "beliefs": [
+        {
+          "belief_id": "b_000001",
+          "confidence": 1.0,
+          "object": "clear",
+          "perspective": "historical",
+          "predicate": "status",
+          "schema_version": "1.1",
+          "source": "default_map",
+          "status": "active",
+          "subject": "path_A",
+          "supersedes": null,
+          "timestamp": "2026-10-03T09:15:00Z",
+          "valid_from": "2026-10-03T09:15:00Z",
+          "valid_to": null
+        }
+      ],
+      "sim_time": "2026-10-03T09:16:02Z",
+      "step": 4,
+      "tool": {
+        "args": {
+          "distance_cm": 100
+        },
+        "auto": false,
+        "name": "move_forward",
+        "ok": false,
+        "result": {
+          "data": null,
+          "error": {
+            "code": "CONFLICT",
+            "message": "Move cancelled: recheck before action. The front LiDAR now reads 40 cm (status clear). Clearance must be at least 130 cm including the 30 cm margin. The robot did not move. Report the readings and that the move was cancelled.",
+            "retryable": false
+          },
+          "ok": false,
+          "schema_version": "1.1",
+          "timestamp": "2026-11-23T05:21:01Z",
+          "tool": "move_forward"
+        }
+      },
+      "world": {
+        "bounds_cm": {
+          "x_max": 500,
+          "x_min": -100,
+          "y_max": 130.0,
+          "y_min": -130.0
+        },
+        "lighting": {
+          "color": "white"
+        },
+        "objects": [],
+        "obstacles": [
+          {
+            "added_at_step": 1,
+            "id": "cart_01",
+            "material": "solid",
+            "x_max": 70.0,
+            "x_min": 40.0,
+            "y_max": 30.0,
+            "y_min": -30.0
+          }
+        ],
+        "robot": {
+          "heading_deg": 0.0,
+          "radius_cm": 20,
+          "x": 0.0,
+          "y": 0.0
+        },
+        "scenario": "scenario_t10_world_change",
+        "sensors": {
+          "camera_front": null,
+          "lidar_front": {
+            "confidence": 0.98,
+            "range_cm": 250.0,
+            "schema_version": "1.1",
+            "sensor": "lidar_front",
+            "status": "clear",
+            "timestamp": "2026-10-03T09:16:01Z",
+            "unit": "cm",
+            "value": 40
+          },
+          "position": null,
+          "ultrasonic_front": null
+        }
+      }
+    }
+  ],
+  "labels": {
+    "environment": "simulated",
+    "execution": "scripted_llm",
+    "layers": {
+      "declarative": "actual",
+      "procedural": "actual",
+      "sensorimotor": "actual"
+    }
+  },
+  "memory_events": [
+    {
+      "details": {
+        "after": {
+          "belief_id": "b_000001",
+          "confidence": 1.0,
+          "object": "clear",
+          "perspective": "historical",
+          "predicate": "status",
+          "schema_version": "1.1",
+          "source": "default_map",
+          "status": "active",
+          "subject": "path_A",
+          "supersedes": null,
+          "timestamp": "2026-10-03T09:15:00Z",
+          "valid_from": "2026-10-03T09:15:00Z",
+          "valid_to": null
+        }
+      },
+      "event_id": "20261123T052100961327Z-03:2026-11-23T05:21:01.668195Z:belief_created",
+      "event_type": "belief_created",
+      "run_id": "20261123T052100961327Z-03",
+      "schema_version": "1.1",
+      "timestamp": "2026-11-23T05:21:01.668195Z"
+    }
+  ],
+  "messages": [
+    {
+      "content": "You are the reasoning agent of a robot. You have no senses and no memory of your own: you learn about the world only by calling tools, and you must never invent a sensor reading, a belief or an id.\n\nEvidence policy:\n1. Stored beliefs and live observations are different kinds of evidence. Beliefs come from\n   query_belief (memory). Observations come from sensor tools such as read_lidar and\n   read_camera. Never mix them up and never present one as the other. A sensor reading is\n   not a belief: do not count it among the beliefs. What you \"see\", \"register\" or \"observe\"\n   is what your own sensor returned in this run, never what a third party or the user said.\n2. Before answering any question about the state of the world, call query_belief for the\n   subject and the relevant sensor tool. The system will not accept an answer until you have\n   done both. If either still returns no data after the checks in rule 3, say plainly that\n   evidence is missing. Do not fill the gap with a guess.\n   For a route, try read_lidar and read_ultrasonic when the ultrasonic tool is available.\n3. Memory lookups:\n   - The subject must be an exact entity id (see the entity list below, if one is given).\n     Never use a description such as \"route\" or \"the box\" as a subject.\n   - On your first lookup leave out the optional predicate and perspective filters. Add a\n     filter only if you get too many results or the user asked for one specific viewpoint.\n     A wrong filter hides beliefs that exist.\n   - NOT_FOUND, or an ok reply with an empty list, means nothing matched. The id or a filter\n     may have been wrong. Before you conclude that memory has no evidence, retry once with an\n     id from the entity list and without filters. If that also finds nothing, then say that\n     evidence is missing.\n4. If a stored belief and a live reading disagree, say so. A live reading with confidence of\n   at least 0.6 outweighs an older stored belief about the same thing. Explain which one\n   you trust and why.\n5. A statement made by the user is the user's belief. It is not a verified fact.\n6. update_belief and downgrade_belief change memory. Use them only to record something you\n   have actually seen in a tool result. The system checks every call: a belief_id must come\n   from a memory lookup you made, a sensor update must name a sensor you actually read, and a\n   downgrade value is set by the system, not by you.\n7. When a stored belief with perspective historical (for example the default map) and a live\n   reading disagree and you trust the live reading, and the reading is strong (confidence at\n   least 0.6) and no other distance sensor contradicts it, do this, in order. If the reading\n   is weak, or two distance sensors disagree, do not downgrade the stored belief. Record\n   the actual sensor evidence separately, report the disputed result if present, and ask\n   for more evidence. If the reading\n   agrees with the stored belief, change nothing either: say the observation confirms it.\n   a. Call downgrade_belief on the stored belief. Use its belief_id from the query_belief\n      result, a new_confidence lower than its current one, and a short reason.\n   b. Call update_belief to record the live reading: the same subject and predicate as the\n      stored belief, object = what the sensor reported (for example blocked), source = the\n      name of the sensor you read (for example lidar_front), perspective = agent_sensor, and a\n      short reason. The system fills in the confidence from the sensor reading.\n   c. Then answer. Say that you downgraded the stored belief and updated memory only if both\n      calls returned ok. If a call failed, say which one failed and do not claim it worked.\n8. Beliefs with perspective user or third_party are someone's view, not a stored fact that a\n   sensor can overrule. If such views disagree with each other or with a live reading, do NOT\n   downgrade them and do not write to memory. Report every view (value, source, perspective,\n   confidence) and the live reading, say that they disagree, and end with: \"I have not changed\n   any belief. Tell me which one to treat as correct and I will record your answer as a\n   belief.\" The system refuses a downgrade of such a belief.\n9. If the person tells you which view is correct, or states a fact about the world (for\n   example that the way ahead is clear), record it with update_belief using\n   perspective user and source user. The system sets the confidence for a person's\n   statement. Still check it against your own sensor: it is never a verified fact.\n10. Before a move the system re-reads the LiDAR in the direction of travel and the ultrasonic\n   sensor when enabled. It cancels if either says blocked or reads less than the requested\n   distance plus a 30 cm margin. If a move is cancelled, say so, give the reading, say the robot did\n   not move, and do not retry the same distance. Never claim the robot moved unless the move\n   tool returned ok. If one memory write succeeded and the other failed, say which one failed.\n\nHow to answer in these situations (each one only when it applies; the system checks the facts):\nA. Stale belief. A belief with status superseded, or one dated well before another belief\n   about the same thing, is outdated. Say it is outdated and give its date. Rely on the\n   newest active belief and check it against the live reading.\nB. Missing source. If a belief's source is null, say its source is unknown and its certainty\n   was lowered. Say you did not rely on it alone: base the answer on the live reading.\nC. Disputed or conflicting evidence. If a belief is marked disputed, or two sensors disagree,\n   give each side with its value, source and confidence. Say the state is disputed, do not\n   call either side the fact, keep prior beliefs separate, and ask for more evidence, such as a recheck.\nD. Weak reading. A live reading with confidence below 0.6 cannot overrule a stored belief.\n   Give the reading and its confidence, say it is too weak to change memory, keep the stored\n   belief as the record, do not state either side as fact, and suggest reading again.\nE. Moves. Before you request a move, look at your latest reading: if it says blocked or shows\n   less room than the distance asked, do not request the move; say why. If the system cancels\n   a move, say what you had seen before, what the recheck found, and that the robot did not\n   move. If the person says the way is clear but your sensor says otherwise, say their\n   statement contradicts your reading, give the reading, and do not move.\nF. Three views. When asked what the person thinks, what you register and what stored history\n   says, give three lines and pick no winner: \"Person: <value> (source, confidence)\", \"Stored\n   record: <value> (source, perspective, confidence)\", \"My live reading: <value> (sensor,\n   confidence)\". Then say these are three different views and none is treated as the true\n   state. Give no reason for a difference (such as lighting) unless a tool returned it.\nG. Replaced belief. When a live reading replaces a stored belief, give both with their\n   timestamps and confidences.\nH. No data. If memory and the sensors return nothing for the subject, say evidence is\n   missing and name no value.\n\nAnswer format:\n- Start with a direct answer to the question. Answer the question that was asked: begin with\n  \"No\" or \"Yes\" only for a yes/no question; for a \"what\" question, begin with the answer itself.\n- Then name the stored evidence (what memory says, its source, confidence and time) and the\n  observed evidence (what the sensor reported, its value, unit, status, confidence and time).\n- When you found and resolved a conflict, the answer has this shape (use your own facts).\n  For a yes/no question: \"No, my stored belief says <X>, but my live <sensor> reading\n  indicates <Y> right now. I have downgraded the stored belief and updated my belief graph.\"\n  For any other question, begin with the answer itself and then write: \"My stored belief says\n  <X>, but my live <sensor> reading indicates <Y> right now. I have downgraded ...\" Never write\n  \"No,\" as the start of a sentence in the middle of an answer to a non-yes/no question.\n- State every disagreement. If stored beliefs disagree with each other, or with the live\n  reading, say so explicitly: list each stored belief (value, source, perspective,\n  confidence), say whether it agrees with the live reading, and say which one you trust and why.\n  Never write that no conflict was found or that no resolution was needed when beliefs differ.\n- Report your memory writes exactly: name each belief you downgraded and each belief you\n  recorded by its belief id, and name any stored belief you left unchanged. Claim only what\n  the tool results show; if you made no writes, say so. A downgrade returns a new belief id for\n  the lowered copy: name both the id you downgraded and the id the tool returned.\n- Every belief that update_belief or downgrade_belief returns has a status. If the status of the\n  belief you recorded is \"disputed\", memory is still marking it as contested. Say so, and do not\n  present it as settled: state the answer as what the live reading shows, and add that memory\n  lists this belief as disputed because it conflicts with other stored beliefs.\n  If you wrote a belief in this run, finish with one line that names it by the id the tool\n  returned, and its status, for example:\n  \"Memory status: <belief id> (brown, camera_front) is recorded as disputed, not settled.\"\n  Report the status as it stands after your last write: a belief you downgraded and then\n  replaced with a newer one is superseded, not active. Only the newest belief is active.\n  If you made no writes, do not write a Memory status line at all. Only ever name belief ids\n  that appear in tool results: an invented id gets your whole answer refused.\n  Do not call the answer final or certain while that status is disputed.\n- Write plain sentences or short lists. Keep stored evidence to the fields that matter (value,\n  source, perspective, confidence, time); do not recite every field.\n  Never paste raw tool output or JSON into the answer.\n- Copy numbers, ids and timestamps exactly as the tools returned them. Do not reformat them.\n  Write confidence as a decimal such as 0.98, never as a percentage.\n\nEntities in memory (use these exact ids as the subject of memory tools):\n- path_A: the route ahead\n- box_01: the box in the room\n",
+      "role": "system"
+    },
+    {
+      "content": "If the route ahead is clear, move forward 100 cm and report what you did.",
+      "role": "user"
+    },
+    {
+      "content": "",
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "function": {
+            "arguments": "{\"subject\": \"path_A\"}",
+            "name": "query_belief"
+          },
+          "id": "fixture_1",
+          "type": "function"
+        }
+      ]
+    },
+    {
+      "content": "{\"schema_version\": \"1.1\", \"tool\": \"query_belief\", \"ok\": true, \"data\": [{\"schema_version\": \"1.1\", \"belief_id\": \"b_000001\", \"subject\": \"path_A\", \"predicate\": \"status\", \"object\": \"clear\", \"source\": \"default_map\", \"confidence\": 1.0, \"timestamp\": \"2026-10-03T09:15:00Z\", \"perspective\": \"historical\", \"status\": \"active\", \"valid_from\": \"2026-10-03T09:15:00Z\", \"valid_to\": null, \"supersedes\": null}], \"error\": null, \"timestamp\": \"2026-11-23T05:21:01Z\"}",
+      "role": "tool",
+      "tool_call_id": "fixture_1"
+    },
+    {
+      "content": "",
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "function": {
+            "arguments": "{\"direction\": \"front\"}",
+            "name": "read_lidar"
+          },
+          "id": "fixture_2",
+          "type": "function"
+        }
+      ]
+    },
+    {
+      "content": "{\"schema_version\": \"1.1\", \"tool\": \"read_lidar\", \"ok\": true, \"data\": {\"schema_version\": \"1.1\", \"sensor\": \"lidar_front\", \"value\": 250, \"unit\": \"cm\", \"status\": \"clear\", \"timestamp\": \"2026-10-03T09:16:00Z\", \"confidence\": 0.98}, \"error\": null, \"timestamp\": \"2026-10-03T09:16:00Z\"}",
+      "role": "tool",
+      "tool_call_id": "fixture_2"
+    },
+    {
+      "content": "",
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "function": {
+            "arguments": "{\"distance_cm\": 100}",
+            "name": "move_forward"
+          },
+          "id": "fixture_3",
+          "type": "function"
+        }
+      ]
+    },
+    {
+      "content": "{\"schema_version\": \"1.1\", \"tool\": \"move_forward\", \"ok\": false, \"data\": null, \"error\": {\"code\": \"CONFLICT\", \"message\": \"Move cancelled: recheck before action. The front LiDAR now reads 40 cm (status clear). Clearance must be at least 130 cm including the 30 cm margin. The robot did not move. Report the readings and that the move was cancelled.\", \"retryable\": false}, \"timestamp\": \"2026-11-23T05:21:01Z\"}",
+      "role": "tool",
+      "tool_call_id": "fixture_3"
+    },
+    {
+      "content": "The route was initially clear. An obstacle appeared on the automatic recheck, so I did not move.",
+      "role": "assistant"
+    }
+  ],
+  "model": "scripted_llm",
+  "model_calls": 4,
+  "model_switched_from": null,
+  "observed_tools": [
+    {
+      "args": {
+        "subject": "path_A"
+      },
+      "auto": false,
+      "result": {
+        "data": [
+          {
+            "belief_id": "b_000001",
+            "confidence": 1.0,
+            "object": "clear",
+            "perspective": "historical",
+            "predicate": "status",
+            "schema_version": "1.1",
+            "source": "default_map",
+            "status": "active",
+            "subject": "path_A",
+            "supersedes": null,
+            "timestamp": "2026-10-03T09:15:00Z",
+            "valid_from": "2026-10-03T09:15:00Z",
+            "valid_to": null
+          }
+        ],
+        "error": null,
+        "ok": true,
+        "schema_version": "1.1",
+        "timestamp": "2026-11-23T05:21:01Z",
+        "tool": "query_belief"
+      },
+      "step": 1,
+      "tool": "query_belief"
+    },
+    {
+      "args": {
+        "direction": "front"
+      },
+      "auto": false,
+      "result": {
+        "data": {
+          "confidence": 0.98,
+          "schema_version": "1.1",
+          "sensor": "lidar_front",
+          "status": "clear",
+          "timestamp": "2026-10-03T09:16:00Z",
+          "unit": "cm",
+          "value": 250
+        },
+        "error": null,
+        "ok": true,
+        "schema_version": "1.1",
+        "timestamp": "2026-10-03T09:16:00Z",
+        "tool": "read_lidar"
+      },
+      "step": 2,
+      "tool": "read_lidar"
+    },
+    {
+      "args": {
+        "direction": "front"
+      },
+      "auto": true,
+      "result": {
+        "data": {
+          "confidence": 0.98,
+          "schema_version": "1.1",
+          "sensor": "lidar_front",
+          "status": "clear",
+          "timestamp": "2026-10-03T09:16:01Z",
+          "unit": "cm",
+          "value": 40
+        },
+        "error": null,
+        "ok": true,
+        "schema_version": "1.1",
+        "timestamp": "2026-10-03T09:16:01Z",
+        "tool": "read_lidar"
+      },
+      "step": 3,
+      "tool": "read_lidar"
+    },
+    {
+      "args": {
+        "distance_cm": 100
+      },
+      "auto": false,
+      "result": {
+        "data": null,
+        "error": {
+          "code": "CONFLICT",
+          "message": "Move cancelled: recheck before action. The front LiDAR now reads 40 cm (status clear). Clearance must be at least 130 cm including the 30 cm margin. The robot did not move. Report the readings and that the move was cancelled.",
+          "retryable": false
+        },
+        "ok": false,
+        "schema_version": "1.1",
+        "timestamp": "2026-11-23T05:21:01Z",
+        "tool": "move_forward"
+      },
+      "step": 4,
+      "tool": "move_forward"
+    }
+  ],
+  "prompt_version": "v6",
+  "question": "If the route ahead is clear, move forward 100 cm and report what you did.",
+  "run_id": "20261123T052100961327Z-03",
+  "scenario": "scenario_t10_world_change",
+  "seed": 42,
+  "state_after": {
+    "environment": {
+      "lighting": {
+        "color_shift": {},
+        "name": "white"
+      },
+      "objects": [],
+      "obstacles": [
+        {
+          "material": "solid",
+          "obstacle_id": "cart_01",
+          "x_max": 70.0,
+          "x_min": 40.0,
+          "y_max": 30.0,
+          "y_min": -30.0
+        }
+      ],
+      "robot": {
+        "heading_deg": 0.0,
+        "x": 0.0,
+        "y": 0.0
+      },
+      "scenario": "scenario_t10_world_change",
+      "seed": 42,
+      "step": 0,
+      "time": "2026-10-03T09:16:02Z"
+    },
+    "memory": {
+      "edges": [],
+      "nodes": [
+        {
+          "belief_id": "b_000001",
+          "confidence": 1.0,
+          "object": "clear",
+          "perspective": "historical",
+          "predicate": "status",
+          "schema_version": "1.1",
+          "source": "default_map",
+          "status": "active",
+          "subject": "path_A",
+          "supersedes": null,
+          "timestamp": "2026-10-03T09:15:00Z",
+          "valid_from": "2026-10-03T09:15:00Z",
+          "valid_to": null
+        }
+      ]
+    }
+  },
+  "state_before": {
+    "environment": {
+      "lighting": {
+        "color_shift": {},
+        "name": "white"
+      },
+      "objects": [],
+      "obstacles": [],
+      "robot": {
+        "heading_deg": 0.0,
+        "x": 0.0,
+        "y": 0.0
+      },
+      "scenario": "scenario_t10_world_change",
+      "seed": 42,
+      "step": 0,
+      "time": "2026-10-03T09:16:00Z"
+    },
+    "memory": {
+      "edges": [],
+      "nodes": [
+        {
+          "belief_id": "b_000001",
+          "confidence": 1.0,
+          "object": "clear",
+          "perspective": "historical",
+          "predicate": "status",
+          "schema_version": "1.1",
+          "source": "default_map",
+          "status": "active",
+          "subject": "path_A",
+          "supersedes": null,
+          "timestamp": "2026-10-03T09:15:00Z",
+          "valid_from": "2026-10-03T09:15:00Z",
+          "valid_to": null
+        }
+      ]
+    }
+  },
+  "test_id": "T10",
+  "tool_calls": [
+    {
+      "args": {
+        "subject": "path_A"
+      },
+      "result": {
+        "data": [
+          {
+            "belief_id": "b_000001",
+            "confidence": 1.0,
+            "object": "clear",
+            "perspective": "historical",
+            "predicate": "status",
+            "schema_version": "1.1",
+            "source": "default_map",
+            "status": "active",
+            "subject": "path_A",
+            "supersedes": null,
+            "timestamp": "2026-10-03T09:15:00Z",
+            "valid_from": "2026-10-03T09:15:00Z",
+            "valid_to": null
+          }
+        ],
+        "error": null,
+        "ok": true,
+        "schema_version": "1.1",
+        "timestamp": "2026-11-23T05:21:01Z",
+        "tool": "query_belief"
+      },
+      "step": 1,
+      "tool": "query_belief"
+    },
+    {
+      "args": {
+        "direction": "front"
+      },
+      "result": {
+        "data": {
+          "confidence": 0.98,
+          "schema_version": "1.1",
+          "sensor": "lidar_front",
+          "status": "clear",
+          "timestamp": "2026-10-03T09:16:00Z",
+          "unit": "cm",
+          "value": 250
+        },
+        "error": null,
+        "ok": true,
+        "schema_version": "1.1",
+        "timestamp": "2026-10-03T09:16:00Z",
+        "tool": "read_lidar"
+      },
+      "step": 2,
+      "tool": "read_lidar"
+    },
+    {
+      "args": {
+        "distance_cm": 100
+      },
+      "guard": {
+        "recheck": {
+          "direction": "front",
+          "lidar_result": {
+            "data": {
+              "confidence": 0.98,
+              "schema_version": "1.1",
+              "sensor": "lidar_front",
+              "status": "clear",
+              "timestamp": "2026-10-03T09:16:01Z",
+              "unit": "cm",
+              "value": 40
+            },
+            "error": null,
+            "ok": true,
+            "schema_version": "1.1",
+            "timestamp": "2026-10-03T09:16:01Z",
+            "tool": "read_lidar"
+          },
+          "margin_cm": 30,
+          "passed": false,
+          "reading_cm": 40,
+          "reads": [
+            {
+              "args": {
+                "direction": "front"
+              },
+              "auto": true,
+              "result": {
+                "data": {
+                  "confidence": 0.98,
+                  "schema_version": "1.1",
+                  "sensor": "lidar_front",
+                  "status": "clear",
+                  "timestamp": "2026-10-03T09:16:01Z",
+                  "unit": "cm",
+                  "value": 40
+                },
+                "error": null,
+                "ok": true,
+                "schema_version": "1.1",
+                "timestamp": "2026-10-03T09:16:01Z",
+                "tool": "read_lidar"
+              },
+              "tool": "read_lidar"
+            }
+          ],
+          "reason": "The front LiDAR now reads 40 cm (status clear). Clearance must be at least 130 cm including the 30 cm margin.",
+          "requested_cm": 100,
+          "required_cm": 130
+        }
+      },
+      "result": {
+        "data": null,
+        "error": {
+          "code": "CONFLICT",
+          "message": "Move cancelled: recheck before action. The front LiDAR now reads 40 cm (status clear). Clearance must be at least 130 cm including the 30 cm margin. The robot did not move. Report the readings and that the move was cancelled.",
+          "retryable": false
+        },
+        "ok": false,
+        "schema_version": "1.1",
+        "timestamp": "2026-11-23T05:21:01Z",
+        "tool": "move_forward"
+      },
+      "step": 3,
+      "tool": "move_forward"
+    }
+  ],
+  "tool_sources": {
+    "detect_conflict": "declarative.belief_graph.BeliefMemory.detect_conflict",
+    "downgrade_belief": "declarative.belief_graph.BeliefMemory.downgrade_belief",
+    "get_belief_history": "declarative.belief_graph.BeliefMemory.get_belief_history",
+    "get_position": "sensorimotor.sensors.Sensors.get_position",
+    "move_backward": "sensorimotor.actions.Actions.move_backward",
+    "move_forward": "sensorimotor.actions.Actions.move_forward",
+    "query_belief": "declarative.belief_graph.BeliefMemory.query_belief",
+    "read_camera": "sensorimotor.sensors.Sensors.read_camera",
+    "read_lidar": "sensorimotor.sensors.Sensors.read_lidar",
+    "turn": "sensorimotor.actions.Actions.turn",
+    "update_belief": "declarative.belief_graph.BeliefMemory.update_belief"
+  }
+}

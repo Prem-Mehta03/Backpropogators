@@ -20,6 +20,7 @@ from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
+from contracts.policy import MAX_CLAIM_REFUSALS, MAX_MODEL_CALLS
 from procedural.answer_text import normalize_answer_text
 from procedural.checklist import DEFAULT_REQUIRED_EVIDENCE, missing_evidence
 from procedural.claims import unbacked_write_claims
@@ -33,14 +34,20 @@ from procedural.prompts import (
 )
 from procedural.recheck import recheck_before_action
 from procedural.state import MEMORY_TOOLS, AgentState, new_agent_state
-from procedural.tools import TOOL_SCHEMAS, ToolFn, call_tool, error_result
+from procedural.tools import (
+    SPECS_BY_NAME,
+    TOOL_SCHEMAS,
+    ToolFn,
+    call_tool,
+    error_result,
+    registered_tool_schemas,
+    validate_arguments,
+)
 from procedural.update_guard import check_memory_call
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_MAX_STEPS = 10
-# How many times a refused answer is sent back to the model before the fallback summary is used.
-MAX_CLAIM_REFUSALS = 3
+DEFAULT_MAX_STEPS = MAX_MODEL_CALLS
 ANSWER_FROM_MODEL = "llm"
 ANSWER_FROM_FALLBACK = "fallback_summary"
 
@@ -67,14 +74,16 @@ class AgentResult:
         return self.error is None
 
 
-def next_step(state: AgentState, llm: LLMBackend) -> LLMResponse:
+def next_step(
+    state: AgentState, llm: LLMBackend, tool_schemas: list[dict[str, Any]] | None = None
+) -> LLMResponse:
     """Make one model call using the whole conversation so far.
 
     Inputs: the agent state and an LLM backend. Output: the model's reply.
     Raises LLMClientError (from the backend) if the API fails.
     """
     state.model_calls += 1
-    return llm.chat(state.messages, TOOL_SCHEMAS)
+    return llm.chat(state.messages, TOOL_SCHEMAS if tool_schemas is None else tool_schemas)
 
 
 # Called after every tool call, including calls the guard refused and the LiDAR read the
@@ -148,8 +157,21 @@ def execute_tool_call(
             f"Malformed arguments: {call.arguments_error}",
         )
         return ToolOutcome(envelope, call.arguments)
+    spec = SPECS_BY_NAME.get(call.name)
+    if spec is not None:
+        try:
+            validate_arguments(spec, call.arguments)
+        except ValueError as exc:
+            return ToolOutcome(
+                error_result(call.name, "INVALID_ARGUMENT", str(exc)), call.arguments
+            )
     decision = check_memory_call(
-        call.name, call.arguments, tool_log, known_subjects, question
+        call.name,
+        call.arguments,
+        tool_log,
+        known_subjects,
+        question,
+        requires_ultrasonic="read_ultrasonic" in registry,
     )
     if decision.error is not None:
         envelope = error_result(call.name, "INVALID_ARGUMENT", decision.error)
@@ -157,16 +179,14 @@ def execute_tool_call(
     guard: dict[str, Any] = {}
     if decision.overridden:
         guard["overridden"] = decision.overridden
-    check = recheck_before_action(call.name, decision.args, registry)
+
+    def notify_read(name: str, args: dict[str, Any], envelope: dict[str, Any]) -> None:
+        if notify is not None:
+            notify(name, args, envelope, True)
+
+    check = recheck_before_action(call.name, decision.args, registry, notify_read)
     if check is not None:
         guard["recheck"] = check.details
-        if notify is not None:
-            notify(
-                "read_lidar",
-                {"direction": check.details["direction"]},
-                check.details["lidar_result"],
-                True,
-            )
         if check.cancel is not None:
             envelope = error_result(call.name, "CONFLICT", check.cancel)
             return ToolOutcome(envelope, decision.args, guard)
@@ -256,7 +276,8 @@ def run_agent(
     blocked: tests 7 and 8 legitimately involve unknown entities).
     required_evidence is the checklist: each entry is a group of tool names, and at least one
     tool of every group must have been attempted before a final answer is accepted. The
-    default needs memory (query_belief) and a sensor. Pass () to switch the checklist off.
+    default needs memory (query_belief) and the registered range sensors for path queries,
+    or a sensor for other queries. Pass () to switch the checklist off.
     require_written_ids=True also refuses an answer that does not name every belief the run
     wrote (live runs switch this on; scripted test answers need not name ids).
     A premature answer is kept in the history, refused, and the model is told what is missing
@@ -264,7 +285,7 @@ def run_agent(
     most MAX_CLAIM_REFUSALS times (claim_nudges); then the answer is a summary built from the
     tool log, answer_source is "fallback_summary" and every refused text is in claim_refusals.
     on_step is an optional observer called after every tool call as (step, tool, args, result,
-    auto); auto is True for the LiDAR read the recheck makes before a move. The composition
+    auto); auto is True for automatic range reads before a move. The composition
     root uses it to record 3-D frames. Its exceptions are logged and never stop the run.
     Output: AgentResult.
     Error codes in result.error: STEP_LIMIT (no accepted final answer within max_steps model
@@ -278,9 +299,10 @@ def run_agent(
     )
     state = new_agent_state(question, prompt)
     notify = make_notifier(on_step)
+    tool_schemas = registered_tool_schemas(registry)
     while state.model_calls < max_steps:
         try:
-            reply = next_step(state, llm)
+            reply = next_step(state, llm, tool_schemas)
         except LLMClientError as exc:
             return _failure(state, "INTERNAL", f"LLM call failed: {exc}")
 
@@ -313,7 +335,7 @@ def run_agent(
             state.add_assistant_turn(
                 text, []
             )  # the history keeps what the model really said
-            missing = missing_evidence(state.tool_log, required_evidence)
+            missing = missing_evidence(state.tool_log, required_evidence, tuple(registry))
             if missing:
                 state.evidence_nudges += 1
                 logger.warning(
@@ -349,7 +371,7 @@ def run_agent(
         state.add_user_note(MISSING_REPLY_NOTE)
 
     message = f"No final answer after {max_steps} model calls"
-    missing = missing_evidence(state.tool_log, required_evidence)
+    missing = missing_evidence(state.tool_log, required_evidence, tuple(registry))
     if state.claim_refusals and not missing:
         return _fallback(
             state, f"model calls ran out after {state.claim_nudges} refusals"

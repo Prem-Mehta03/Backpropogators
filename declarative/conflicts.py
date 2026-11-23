@@ -6,6 +6,17 @@ from dataclasses import dataclass
 from typing import Literal
 
 from contracts.models import Belief, SensorReading
+from contracts.policy import (
+    LIVE_SENSOR_MIN,
+    MISSING_SOURCE_CAP,
+    STALE_AFTER_S,
+    STRONG_BELIEF_MIN,
+    WEAK_SENSOR_MAX,
+)
+from contracts.validators import timestamp_value
+
+
+EVIDENCE_PERSPECTIVES = frozenset({"agent_sensor", "historical"})
 
 
 @dataclass(frozen=True)
@@ -17,13 +28,21 @@ class PriorityDecision:
     confidence: float
 
 
+def is_stale(belief: Belief, newer: Belief) -> bool:
+    """Compare one belief with evidence for the same property using observation time."""
+    if (belief.subject, belief.predicate) != (newer.subject, newer.predicate):
+        return False
+    age = (timestamp_value(newer.timestamp) - timestamp_value(belief.timestamp)).total_seconds()
+    return age > STALE_AFTER_S or (age > 0 and belief.perspective == newer.perspective)
+
+
 def resolve_priority(
     existing: Belief | None,
     incoming: Belief | SensorReading,
     incoming_perspective: str | None = None,
     another_live_sensor_disagrees: bool = False,
 ) -> PriorityDecision:
-    """Apply the v1.0 evidence-priority rules without relying on prompt text.
+    """Apply the evidence-priority rules without relying on prompt text.
 
     Inputs: existing belief or None, incoming belief/sensor reading, optional
     perspective, and sensor-disagreement flag. Output: accept, replace, or dispute
@@ -34,12 +53,16 @@ def resolve_priority(
     )
     confidence = incoming.confidence
     if isinstance(incoming, Belief) and incoming.source is None:
-        confidence = min(confidence, 0.5)
+        confidence = min(confidence, MISSING_SOURCE_CAP)
+    if perspective not in EVIDENCE_PERSPECTIVES:
+        return PriorityDecision(
+            "accept", "attributed viewpoints coexist with evidence", confidence
+        )
     if another_live_sensor_disagrees:
         return PriorityDecision(
             "dispute", "live sensors disagree; request more evidence", confidence
         )
-    if existing is None:
+    if existing is None or existing.perspective not in EVIDENCE_PERSPECTIVES:
         return PriorityDecision(
             "accept", "no prior belief competes with this evidence", confidence
         )
@@ -47,21 +70,25 @@ def resolve_priority(
     is_live_sensor = (
         isinstance(incoming, SensorReading) or perspective == "agent_sensor"
     )
-    incoming_value = (
-        incoming.value if isinstance(incoming, SensorReading) else incoming.object
-    )
+    incoming_value = incoming.object if isinstance(incoming, Belief) else incoming.value
+    if isinstance(incoming, SensorReading) and incoming.unit == "cm" and existing.predicate == "status":
+        incoming_value = incoming.status
     values_disagree = incoming_value != existing.object
+    evidence_time = timestamp_value(incoming.timestamp)
+    existing_time = timestamp_value(existing.timestamp)
+    existing_start = timestamp_value(existing.valid_from)
     if values_disagree and is_live_sensor:
-        if confidence < 0.5 and existing.confidence >= 0.8:
+        if confidence < WEAK_SENSOR_MAX and existing.confidence >= STRONG_BELIEF_MIN:
             return PriorityDecision(
                 "dispute",
                 "low-confidence sensor cannot replace a strong belief",
                 confidence,
             )
         if (
-            confidence >= 0.6
+            confidence >= LIVE_SENSOR_MIN
             and existing.perspective == "historical"
-            and incoming.timestamp > existing.timestamp
+            and evidence_time > existing_time
+            and evidence_time >= existing_start
         ):
             return PriorityDecision(
                 "replace",
@@ -69,7 +96,7 @@ def resolve_priority(
                 confidence,
             )
     if perspective == existing.perspective:
-        if incoming.timestamp > existing.timestamp:
+        if evidence_time > existing_time and evidence_time >= existing_start:
             return PriorityDecision(
                 "replace",
                 "newer evidence from the same perspective takes priority",
@@ -79,10 +106,6 @@ def resolve_priority(
             "dispute",
             "same-perspective evidence is not newer than the stored belief",
             confidence,
-        )
-    if perspective == "user":
-        return PriorityDecision(
-            "accept", "user claims remain attributed to the user", confidence
         )
     if not values_disagree:
         return PriorityDecision(
@@ -102,7 +125,11 @@ def find_conflicts(beliefs: list[Belief]) -> list[Belief]:
     disputed beliefs, or an empty list when there is at most one distinct value.
     Errors: none for validated models.
     """
-    current = [belief for belief in beliefs if belief.status in ("active", "disputed")]
+    current = [
+        belief for belief in beliefs
+        if belief.status in ("active", "disputed")
+        and belief.perspective in EVIDENCE_PERSPECTIVES
+    ]
     values = {repr(belief.object) for belief in current}
     if len(values) <= 1:
         return []

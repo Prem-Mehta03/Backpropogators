@@ -50,7 +50,7 @@ class Sensorimotor:
         Names and argument names match Guidelines 4.5. Every function returns a
         validated ToolResult envelope dict and never raises.
         """
-        return {
+        registry = {
             "read_lidar": self.sensors.read_lidar,
             "read_camera": self.sensors.read_camera,
             "get_position": self.sensors.get_position,
@@ -58,6 +58,10 @@ class Sensorimotor:
             "move_backward": self.actions.move_backward,
             "turn": self.actions.turn,
         }
+        ultrasonic = self.env.scenario.ultrasonic
+        if ultrasonic is not None and ultrasonic.available:
+            registry["read_ultrasonic"] = self.sensors.read_ultrasonic
+        return registry
 
 
 def create_sensorimotor(

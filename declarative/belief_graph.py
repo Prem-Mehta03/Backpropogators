@@ -12,13 +12,32 @@ import networkx as nx
 from pydantic import ValidationError
 
 from contracts.models import Belief, BeliefValue
-from contracts.validators import error_result, success_result, utc_timestamp
+from contracts.policy import MISSING_SOURCE_CAP, STRONG_BELIEF_MIN, WEAK_SENSOR_MAX
+from contracts.validators import (
+    error_result,
+    success_result,
+    timestamp_value,
+    utc_timestamp,
+)
 from contracts.version import SCHEMA_VERSION
 
-from .conflicts import find_conflicts, resolve_priority
+from .conflicts import EVIDENCE_PERSPECTIVES, find_conflicts, resolve_priority
 from .database import BeliefDatabase
 
 logger = logging.getLogger(__name__)
+
+
+def _comparison_belief(current: list[Belief], proposed: Belief) -> Belief | None:
+    if proposed.perspective not in EVIDENCE_PERSPECTIVES:
+        return None
+    evidence = [item for item in reversed(current) if item.perspective in EVIDENCE_PERSPECTIVES]
+    conflicting = [item for item in evidence if item.object != proposed.object]
+    if proposed.perspective == "agent_sensor" and proposed.confidence < WEAK_SENSOR_MAX:
+        strong = next((item for item in conflicting if item.confidence >= STRONG_BELIEF_MIN), None)
+        if strong is not None:
+            return strong
+    same = next((item for item in evidence if item.perspective == proposed.perspective), None)
+    return same if same is not None else next(iter(conflicting), None)
 
 
 class BeliefMemory:
@@ -66,6 +85,24 @@ class BeliefMemory:
         except Exception:
             logger.exception("Unable to record declarative event %s", event_type)
 
+    def _report_provenance(self, belief: Belief, provided_confidence: float) -> None:
+        if belief.source is None:
+            self._emit_event(
+                "missing_provenance",
+                {
+                    "belief_id": belief.belief_id,
+                    "subject": belief.subject,
+                    "predicate": belief.predicate,
+                    "source": None,
+                    "provided_confidence": provided_confidence,
+                    "confidence": belief.confidence,
+                },
+            )
+
+    def now(self) -> str:
+        """Return the injected clock's timestamp for deterministic fixture setup."""
+        return self._clock()
+
     def _allocate_belief(self, **values: Any) -> Belief:
         """Build a validated belief using this store's ID sequence."""
         confidence = values.get("confidence")
@@ -73,8 +110,9 @@ class BeliefMemory:
             values.get("source") is None
             and isinstance(confidence, (int, float))
             and not isinstance(confidence, bool)
+            and 0.0 <= confidence <= 1.0
         ):
-            values["confidence"] = min(confidence, 0.5)
+            values["confidence"] = min(confidence, MISSING_SOURCE_CAP)
         timestamp = (
             values.get("timestamp")
             if values.get("timestamp") is not None
@@ -131,6 +169,7 @@ class BeliefMemory:
             self._emit_event(
                 "belief_created", {"after": belief.model_dump(mode="json")}
             )
+            self._report_provenance(belief, confidence)
             return success_result(
                 "add_belief", belief.model_dump(mode="json"), belief.timestamp
             )
@@ -147,7 +186,9 @@ class BeliefMemory:
 
         Inputs: required subject and optional predicate/perspective. Output: a list of
         current active/disputed Belief objects when perspective is omitted; a
-        perspective-specific query also includes superseded history. Error codes:
+        perspective-specific query also includes superseded history. Results are
+        newest first. An unfiltered missing subject returns NOT_FOUND, while
+        a filtered search with no matches returns an empty list. Other errors:
         INVALID_ARGUMENT or STORAGE_ERROR.
         """
         if not isinstance(subject, str) or not subject.strip():
@@ -177,8 +218,13 @@ class BeliefMemory:
             else:
                 items = self.database.list_beliefs(subject, predicate)
                 items = [item for item in items if item.perspective == perspective]
+            if not items and predicate is None and perspective is None:
+                return error_result(
+                    "query_belief", "NOT_FOUND", f"No current beliefs for {subject}",
+                    timestamp=self.now(),
+                )
             return success_result(
-                "query_belief", [item.model_dump(mode="json") for item in items]
+                "query_belief", [item.model_dump(mode="json") for item in reversed(items)]
             )
         except Exception as exc:  # noqa: BLE001
             return self._storage_error("query_belief", exc)
@@ -310,31 +356,7 @@ class BeliefMemory:
                 timestamp=now,
             )
             active = self.database.list_active(subject, predicate)
-            same_perspective = next(
-                (
-                    item
-                    for item in reversed(active)
-                    if item.perspective == proposed.perspective
-                ),
-                None,
-            )
-            historical_conflict = next(
-                (
-                    item
-                    for item in reversed(active)
-                    if proposed.perspective == "agent_sensor"
-                    and item.perspective == "historical"
-                    and item.object != proposed.object
-                ),
-                None,
-            )
-            any_conflict = next(
-                (item for item in reversed(active) if item.object != proposed.object),
-                None,
-            )
-            prior = same_perspective or historical_conflict
-            if prior is None and proposed.perspective != "user":
-                prior = any_conflict
+            prior = _comparison_belief(active, proposed)
             competing_live_sensor = any(
                 item.perspective == "agent_sensor"
                 and item.source != proposed.source
@@ -357,7 +379,7 @@ class BeliefMemory:
                 belief = proposed.model_copy(update={"supersedes": prior.belief_id})
                 self.database.append_with_supersession(prior, belief)
                 closed = prior.model_copy(
-                    update={"status": "superseded", "valid_to": now}
+                    update={"status": "superseded", "valid_to": belief.valid_from}
                 )
                 self._add_graph_node(closed)
             else:
@@ -375,6 +397,7 @@ class BeliefMemory:
                     "reason": reason,
                 },
             )
+            self._report_provenance(belief, confidence)
             logger.info(
                 "Belief update decision=%s subject=%s predicate=%s reason=%s",
                 decision.action,
@@ -430,6 +453,11 @@ class BeliefMemory:
                 return error_result(
                     "downgrade_belief", "NOT_FOUND", f"No belief with id {belief_id}"
                 )
+            if prior.perspective not in EVIDENCE_PERSPECTIVES or prior.status == "superseded":
+                return error_result(
+                    "downgrade_belief", "CONFLICT",
+                    "Only current evidence can be downgraded",
+                )
             if new_confidence > prior.confidence:
                 return error_result(
                     "downgrade_belief",
@@ -437,6 +465,11 @@ class BeliefMemory:
                     "new_confidence must not exceed current confidence",
                 )
             now = self._clock()
+            if timestamp_value(now) < timestamp_value(prior.valid_from):
+                return error_result(
+                    "downgrade_belief", "CONFLICT",
+                    "Downgrade clock is earlier than the belief's validity start",
+                )
             successor = self._allocate_belief(
                 subject=prior.subject,
                 predicate=prior.predicate,
@@ -444,7 +477,9 @@ class BeliefMemory:
                 source=prior.source,
                 confidence=new_confidence,
                 perspective=prior.perspective,
-                timestamp=now,
+                # Reducing certainty changes validity, not the time it was observed.
+                timestamp=prior.timestamp,
+                valid_from=now,
                 supersedes=prior.belief_id,
             )
             self.database.append_with_supersession(prior, successor)
@@ -459,6 +494,7 @@ class BeliefMemory:
                     "reason": reason,
                 },
             )
+            self._report_provenance(successor, new_confidence)
             return success_result(
                 "downgrade_belief", successor.model_dump(mode="json"), now
             )
@@ -468,10 +504,11 @@ class BeliefMemory:
             return self._storage_error("downgrade_belief", exc)
 
     def detect_conflict(self, subject: str, predicate: str) -> dict[str, Any]:
-        """Return active or disputed claims with different values.
+        """Return active or disputed evidence with different values.
 
         Inputs: subject and predicate. Output: conflicting Belief objects in a success
-        envelope, or an empty list when the claims agree. Error codes:
+        envelope, or an empty list when the evidence agrees. Attributed user
+        and third-party viewpoints stay separate. Error codes:
         INVALID_ARGUMENT or STORAGE_ERROR.
         """
         if (

@@ -1,111 +1,114 @@
-"""Recheck before action (decision D11): the code, not the model, re-reads the LiDAR before a move.
-
-The world can change between the moment the agent decided the route was clear and the moment it
-moves (test 10: a cart appears). So before every move_forward or move_backward, this module
-reads the LiDAR facing the direction of travel. If the reading is lower than the requested
-distance plus RECHECK_MARGIN_CM, or the reading cannot be trusted, the move is cancelled with a
-CONFLICT error and never reaches the sensorimotor layer. The model cannot skip or argue with
-this check, because it is not a prompt rule.
-"""
+"""Recheck the simulated direction of travel before dispatching a translation."""
 
 from __future__ import annotations
 
+import math
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+from contracts.models import SensorReading
+from contracts.policy import RECHECK_MARGIN_CM
 from procedural.tools import ToolFn, call_tool
 
-try:
-    from contracts.policy import RECHECK_MARGIN_CM
-except ImportError:  # pragma: no cover - until contract v1.1 is merged
-    RECHECK_MARGIN_CM = 30
-
-# moves that are rechecked, and the LiDAR direction that faces the direction of travel
 MOVE_DIRECTIONS = {"move_forward": "front", "move_backward": "back"}
 RECHECK_PHRASE = "recheck before action"
 
 
 @dataclass(frozen=True)
 class RecheckResult:
-    """Outcome of one recheck: what was compared, and a cancel message when the move is off.
+    """Details for the move's log entry, with a cancel reason when movement is refused."""
 
-    The automatic LiDAR read is not a separate tool-log entry (the log stays one entry per model
-    request); it is recorded in `details`, which the agent stores on the move's own log entry.
-    """
-
-    details: dict[
-        str, Any
-    ]  # what was read and compared; stored on the move's log entry
-    cancel: str | None = None  # message for the model when the move is cancelled
+    details: dict[str, Any]
+    cancel: str | None = None
 
 
-def _cancel_message(
-    direction: str, reading: dict[str, Any], need: float, d: float
-) -> str:
-    return (
-        f"Move cancelled: {RECHECK_PHRASE}. The {direction} LiDAR now reads "
-        f"{reading['value']} cm (status {reading['status']}), which is less than the {d:g} cm "
-        f"you asked for plus the {RECHECK_MARGIN_CM:g} cm safety margin ({need:g} cm). The "
-        "robot did not move. Report this reading and that the move was cancelled; do not claim "
-        "the robot moved. You may ask the person for a shorter distance."
-    )
+def _motion_distance(reading: SensorReading, tool: str, direction: str) -> float | None:
+    if tool == "read_ultrasonic":
+        expected = {"ultrasonic_front"}
+    else:
+        expected = {"lidar_front"} if direction == "front" else {"lidar_back", "lidar_rear"}
+    if (
+        reading.sensor not in expected
+        or reading.unit != "cm"
+        or reading.status not in {"clear", "blocked"}
+        or isinstance(reading.value, bool)
+        or not isinstance(reading.value, (int, float))
+        or reading.value < 0
+    ):
+        return None
+    return reading.value
 
 
 def recheck_before_action(
-    tool: str, arguments: dict[str, Any], registry: dict[str, ToolFn]
+    tool: str,
+    arguments: dict[str, Any],
+    registry: dict[str, ToolFn],
+    on_read: Callable[[str, dict[str, Any], dict[str, Any]], None] | None = None,
 ) -> RecheckResult | None:
-    """Read the LiDAR before a move and decide whether the move may run.
+    """Read each range sensor facing the move and fail closed on unsafe or missing data.
 
-    Inputs: the tool the model asked for, its arguments and the tool registry. Output: None for
-    any tool that is not a move (or a move with a malformed distance, which the normal argument
-    check reports); otherwise a RecheckResult. `cancel` is set when the move must not run.
+    Inputs: model tool and arguments, registry, optional observer after each read.
+    Returns no recheck for non-moves or malformed distances. Otherwise returns details and
+    an optional cancel message, which the caller wraps in a CONFLICT ToolResult.
+
+    An enabled front ultrasonic sensor can veto either direction conservatively. It
+    never substitutes for a rear LiDAR when moving backward.
     """
     direction = MOVE_DIRECTIONS.get(tool)
     distance = arguments.get("distance_cm")
-    if direction is None or isinstance(distance, bool):
+    if (
+        direction is None
+        or isinstance(distance, bool)
+        or not isinstance(distance, (int, float))
+    ):
         return None
-    if not isinstance(distance, (int, float)) or distance <= 0:
+    if distance <= 0 or (isinstance(distance, float) and not math.isfinite(distance)):
         return None
-    args = {"direction": direction}
-    envelope = call_tool("read_lidar", args, registry)
-    need = float(distance) + RECHECK_MARGIN_CM
+    need = distance + RECHECK_MARGIN_CM
+    checks: list[tuple[str, dict[str, Any]]] = [("read_lidar", {"direction": direction})]
+    if "read_ultrasonic" in registry:
+        checks.append(("read_ultrasonic", {}))
     details: dict[str, Any] = {
         "direction": direction,
         "requested_cm": distance,
         "margin_cm": RECHECK_MARGIN_CM,
         "required_cm": need,
-        "lidar_result": envelope,
+        "reads": [],
     }
-    if not envelope["ok"]:
-        message = envelope["error"]["message"]
-        details.update(passed=False, reason=f"recheck read failed: {message}")
-        return RecheckResult(
-            details,
-            f"Move cancelled: {RECHECK_PHRASE}. The {direction} LiDAR could not be read "
-            f"({message}), so the path cannot be confirmed clear. The robot did not move. "
-            "Report this and that the move was cancelled.",
-        )
-    reading = envelope["data"]
-    value = reading.get("value")
-    details["reading_cm"] = value
-    usable = isinstance(value, (int, float)) and reading.get("status") in (
-        "clear",
-        "blocked",
+    failures: list[str] = []
+    for name, args in checks:
+        envelope = call_tool(name, args, registry)
+        details["reads"].append({"tool": name, "args": args, "result": envelope, "auto": True})
+        if on_read is not None:
+            on_read(name, args, envelope)
+        is_lidar = name == "read_lidar"
+        details["lidar_result" if is_lidar else "ultrasonic_result"] = envelope
+        label = f"{direction} LiDAR" if is_lidar else "front ultrasonic sensor"
+        if not envelope["ok"]:
+            failures.append(f"The {label} could not be read ({envelope['error']['message']}).")
+            continue
+        try:
+            reading = SensorReading.model_validate(envelope["data"])
+        except ValueError:
+            failures.append(f"The {label} returned an unusable reading.")
+            continue
+        value = _motion_distance(reading, name, direction)
+        if is_lidar:
+            details["reading_cm"] = value
+        if value is None:
+            failures.append(f"The {label} returned an unusable reading (status {reading.status}).")
+        elif reading.status == "blocked" or value < need:
+            failures.append(
+                f"The {label} now reads {value} cm (status {reading.status}). "
+                f"Clearance must be at least {need} cm including the {RECHECK_MARGIN_CM} cm margin."
+            )
+    details["passed"] = not failures
+    if not failures:
+        return RecheckResult(details)
+    details["reason"] = " ".join(failures)
+    return RecheckResult(
+        details,
+        f"Move cancelled: {RECHECK_PHRASE}. {details['reason']} "
+        "The robot did not move. Report the readings and that the move was cancelled.",
     )
-    if not usable:
-        details.update(passed=False, reason="recheck reading is not usable")
-        return RecheckResult(
-            details,
-            f"Move cancelled: {RECHECK_PHRASE}. The {direction} LiDAR returned an unusable "
-            f"reading (status {reading.get('status')}). The robot did not move. Report this "
-            "and that the move was cancelled.",
-        )
-    if value < need:
-        details.update(
-            passed=False, reason="reading below requested distance plus margin"
-        )
-        return RecheckResult(
-            details, _cancel_message(direction, reading, need, float(distance))
-        )
-    details.update(passed=True)
-    return RecheckResult(details)

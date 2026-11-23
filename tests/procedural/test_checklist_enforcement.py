@@ -92,6 +92,25 @@ def test_answer_after_evidence_needs_no_nudge() -> None:
     assert run_agent(Q, llm, REGISTRY).evidence_nudges == 0
 
 
+def test_route_requires_each_registered_range_sensor_before_answering() -> None:
+    from contracts.validators import error_result
+
+    registry = {
+        **REGISTRY,
+        "read_ultrasonic": lambda: error_result("read_ultrasonic", "SENSOR_UNAVAILABLE", "No echo"),
+    }
+    llm = ScriptedLLM([
+        call("query_belief", {"subject": "path_A"}, "query"),
+        call("read_lidar", {}, "lidar"),
+        say("The route is blocked."),
+        call("read_ultrasonic", {}, "ultrasound"),
+        say("The LiDAR reports blocked and no ultrasonic reading was available."),
+    ])
+    out = run_agent(Q, llm, registry)
+    assert out.finished and out.evidence_nudges == 1
+    assert "read_ultrasonic" in llm.seen[3][-1]["content"]
+
+
 def test_not_found_lookup_still_satisfies_memory_requirement() -> None:
     llm = ScriptedLLM(
         [
@@ -135,7 +154,14 @@ def test_empty_required_evidence_disables_the_checklist() -> None:
 
 # ---- provenance guard as a pure function ------------------------------------------------------
 
-BELIEF = {"belief_id": "b_000123", "confidence": 1.0}
+BELIEF = {
+    "belief_id": "b_000123",
+    "confidence": 1.0,
+    "subject": "path_A",
+    "predicate": "status",
+    "object": "clear",
+    "perspective": "historical",
+}
 LIDAR = {
     "sensor": "lidar_front",
     "unit": "cm",
@@ -185,7 +211,7 @@ def test_downgrade_that_already_matches_the_rule_is_not_flagged() -> None:
 
 def test_downgrade_value_scales_with_the_old_confidence() -> None:
     log = [
-        entry("query_belief", data=[{"belief_id": "b_000009", "confidence": 0.8}]),
+        entry("query_belief", data=[{**BELIEF, "belief_id": "b_000009", "confidence": 0.8}]),
         entry("read_lidar", data=LIDAR),
     ]
     d = check_memory_call(
@@ -218,7 +244,7 @@ def test_user_and_third_party_views_are_never_downgraded() -> None:
 
 
 def test_a_historical_belief_can_still_be_downgraded() -> None:
-    belief = {"belief_id": "b_000001", "confidence": 1.0, "perspective": "historical"}
+    belief = {**BELIEF, "belief_id": "b_000001"}
     log = [entry("query_belief", data=[belief]), entry("read_lidar", data=LIDAR)]
     d = check_memory_call(
         "downgrade_belief", {"belief_id": "b_000001", "new_confidence": 0.1}, log
@@ -256,6 +282,12 @@ def test_matching_confidence_is_not_flagged() -> None:
         "update_belief", {**SENSOR_UPDATE, "confidence": 0.98}, LOG, KNOWN
     )
     assert d.error is None and d.overridden == {}
+
+
+def test_reading_cannot_be_reused_to_write_a_contradictory_value_or_subject() -> None:
+    for invented in ({**SENSOR_UPDATE, "object": "clear"}, {**SENSOR_UPDATE, "subject": "path_B"}):
+        refusal = check_memory_call("update_belief", invented, LOG, ("path_A", "path_B"))
+        assert refusal.error and "does not match" in refusal.error
 
 
 def test_other_perspectives_and_tools_pass_through() -> None:

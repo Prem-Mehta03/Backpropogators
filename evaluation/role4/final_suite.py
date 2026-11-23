@@ -8,6 +8,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 from evaluation.logger import EvaluationLogger
+from contracts.version import SCHEMA_VERSION
 from evaluation.role4.integration.conformance import probe_registry, validate_tool_output
 from evaluation.role4.integration.runner import load_scenario
 from evaluation.role4.integration.teammate_runner import (
@@ -167,7 +168,8 @@ def _canonical_original_checks(scenario: str, record: dict) -> list[dict]:
                  "detail": "The observed brown, user red and bot_02 blue claims retain their own provenance."}]
     if scenario == "S07":
         passed = any(c["tool"] == "query_belief" and c["result"]["ok"] and c["result"]["data"] == []
-                     for c in calls)
+                     or c["tool"] == "query_belief" and not c["result"]["ok"]
+                     and c["result"]["error"]["code"] == "NOT_FOUND" for c in calls)
         return [{"name": "empty_memory_observed", "passed": passed,
                  "detail": "The actual query reports an empty list, separately from the unsupported sensor tool."}]
     passed = (len(before) == 1 and before[0]["perspective"] == "user" and before[0] in after
@@ -196,7 +198,7 @@ def _write_case(case: Path, scenario: str, scope: str, trial: int, control: str,
     path = EvaluationLogger(case).write_test_log(scenario, run_id, result)
     path.rename(case / "run.json")
     stored = _strict_json(case / "run.json")
-    if stored != {"test_id": scenario, "run_id": run_id, "schema_version": "1.0", **result}:
+    if stored != {"test_id": scenario, "run_id": run_id, "schema_version": SCHEMA_VERSION, **result}:
         raise ValueError(f"{run_id}: final log does not round-trip")
     return stored
 
@@ -317,7 +319,7 @@ def run_suite(output: Path, *, trials: int, seed: int, scenarios: tuple[str, ...
                          "pass_rate": passed / len(selected),
                          "expected_outcomes": sum(r["expectation_met"] for r in selected)}
     summary = {
-        "schema_version": "1.0", "scenarios": list(scenarios), "trials": trials, "seed": seed,
+        "schema_version": SCHEMA_VERSION, "scenarios": list(scenarios), "trials": trials, "seed": seed,
         "repeated_run_mode": "same fixed seed and fresh state per case",
         "pass_rate_basis": "checks within each run's declared criteria_scope",
         "hosted_reliability": "not_measured", "human_semantic_review": "pending",

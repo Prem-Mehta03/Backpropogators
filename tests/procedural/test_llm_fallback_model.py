@@ -40,10 +40,11 @@ def _ok() -> SimpleNamespace:
 
 def _api(*outcomes: Any) -> SimpleNamespace:
     """Each outcome is an exception to raise or a reply to return, used in order."""
-    queue, calls = list(outcomes), []
+    queue, calls, temperatures = list(outcomes), [], []
 
     def create(**kwargs: Any) -> Any:
         calls.append(kwargs["model"])
+        temperatures.append(kwargs["temperature"])
         item = queue.pop(0)
         if isinstance(item, Exception):
             raise item
@@ -53,6 +54,7 @@ def _api(*outcomes: Any) -> SimpleNamespace:
         chat=SimpleNamespace(completions=SimpleNamespace(create=create))
     )
     api.calls = calls  # type: ignore[attr-defined]
+    api.temperatures = temperatures  # type: ignore[attr-defined]
     return api
 
 
@@ -121,6 +123,17 @@ def test_used_up_tool_call_retries_switch_to_the_fallback() -> None:
     client = _client(api)
     client.chat(MESSAGES)
     assert api.calls == [MAIN, MAIN, BACKUP] and client.switched_from == MAIN
+
+
+def test_temperature_zero_can_be_pinned_across_retries_and_model_switch() -> None:
+    api = _api(TOOL_FAIL, TOOL_FAIL, _ok())
+    client = LLMClient(
+        model=MAIN, fallback_model=BACKUP, client=api,
+        temperature=0.0, retry_temperature=0.0, tool_call_retries=1,
+    )
+    assert client.chat(MESSAGES).content == "pong"
+    assert api.calls == [MAIN, MAIN, BACKUP]
+    assert api.temperatures == [0.0, 0.0, 0.0]
 
 
 def test_there_is_only_one_switch() -> None:

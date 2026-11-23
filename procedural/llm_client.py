@@ -126,6 +126,7 @@ class LLMClient:
         rate_limit_retries: int = RATE_LIMIT_RETRIES,
         tool_call_retries: int = TOOL_CALL_RETRIES,
         sleep: Callable[[float], None] = time.sleep,
+        retry_temperature: float = RETRY_TEMPERATURE,
     ) -> None:
         self.model = model or os.getenv("LLM_MODEL", DEFAULT_MODEL)
         # LLM_FALLBACK_MODEL (D10): used for the rest of the run only if the main model cannot
@@ -142,6 +143,7 @@ class LLMClient:
         self.max_tokens = max_tokens
         self.rate_limit_retries = rate_limit_retries
         self.tool_call_retries = tool_call_retries
+        self.retry_temperature = retry_temperature
         self._sleep = sleep
         if client is not None:  # injected (tests)
             self._client = client
@@ -216,8 +218,7 @@ class LLMClient:
 
         - HTTP 429: wait as the server asks, then retry (up to rate_limit_retries times).
         - HTTP 400 tool_use_failed: the model produced a malformed tool call; retry up to
-          tool_call_retries times with a slightly higher temperature so it does not repeat
-          the same slip.
+            tool_call_retries times. The caller can retain temperature zero for measured runs.
         """
         rate_attempts = 0
         tool_attempts = 0
@@ -258,7 +259,7 @@ class LLMClient:
                     )
                     kwargs = {
                         **kwargs,
-                        "temperature": max(kwargs["temperature"], RETRY_TEMPERATURE),
+                        "temperature": max(kwargs["temperature"], self.retry_temperature),
                     }
                     continue
                 if is_rate_limit_error(exc) or is_tool_call_generation_error(exc):

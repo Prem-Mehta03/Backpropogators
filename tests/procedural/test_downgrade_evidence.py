@@ -193,13 +193,14 @@ def test_a_reading_that_contradicts_the_belief_allows_the_downgrade() -> None:
     assert d.error is None  # belief says clear, LiDAR says blocked
 
 
-def test_beliefs_that_are_not_a_status_are_not_compared() -> None:
+def test_range_reading_does_not_support_downgrading_an_unrelated_property() -> None:
     belief = {**BELIEF, "predicate": "colour", "object": "brown"}
     entries = [
         entry("query_belief", data=[belief]),
         entry("read_lidar", data=lidar(0.98, "clear", 250)),
     ]
-    assert check_memory_call("downgrade_belief", DOWNGRADE, entries).error is None
+    refusal = check_memory_call("downgrade_belief", DOWNGRADE, entries).error
+    assert refusal and "do not observe this belief" in refusal
 
 
 def test_real_scenario_a_order_is_accepted() -> None:

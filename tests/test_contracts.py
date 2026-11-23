@@ -7,6 +7,7 @@ from pydantic import ValidationError
 
 from contracts.models import Belief, SensorReading, ToolResult
 from contracts.validators import error_result, success_result
+from contracts.version import SCHEMA_VERSION
 
 UTC = "2026-10-03T09:15:00Z"
 
@@ -32,9 +33,11 @@ def belief_payload(**overrides: object) -> dict[str, object]:
     return payload
 
 
-def test_belief_accepts_contract_v1_payload() -> None:
-    """Accept a fully populated version 1.0 belief."""
-    assert Belief.model_validate(belief_payload()).belief_id == "b_000123"
+@pytest.mark.parametrize("schema_version", ["1.0", "1.1"])
+def test_belief_accepts_contract_v1_payload(schema_version: str) -> None:
+    """Keep saved v1.0 records valid alongside current records."""
+    item = Belief.model_validate(belief_payload(schema_version=schema_version))
+    assert item.belief_id == "b_000123" and item.schema_version == schema_version
 
 
 @pytest.mark.parametrize(
@@ -46,6 +49,7 @@ def test_belief_accepts_contract_v1_payload() -> None:
         {"timestamp": "2026-10-03T09:15:00+00:00"},
         {"perspective": "unknown"},
         {"confidence": "0.8"},
+        {"schema_version": "1.2"},
     ],
 )
 def test_belief_rejects_contract_violations(override: dict[str, object]) -> None:
@@ -74,6 +78,18 @@ def test_tool_result_success_and_error_envelopes_validate() -> None:
     error = error_result("query_belief", "NOT_FOUND", "No matching belief")
     assert ToolResult.model_validate(ok).ok is True
     assert ToolResult.model_validate(error).error.code == "NOT_FOUND"
+    assert SCHEMA_VERSION == ok["schema_version"] == error["schema_version"] == "1.1"
+    assert ToolResult.model_validate({**ok, "schema_version": "1.0"}).ok is True
+
+
+def test_v11_ultrasonic_reading_uses_existing_sensor_shape() -> None:
+    """Validate the new sensor without requiring a new or renamed reading field."""
+    reading = SensorReading(
+        schema_version="1.1", sensor="ultrasonic_front", value=15, unit="cm",
+        status="blocked", timestamp=UTC, confidence=0.85,
+    )
+    receipt = success_result("read_ultrasonic", reading.model_dump(mode="json"), UTC)
+    assert SensorReading.model_validate(ToolResult.model_validate(receipt).data) == reading
 
 
 def test_tool_result_rejects_inconsistent_failure_shape() -> None:

@@ -41,11 +41,13 @@ def test_real_layers_exercise_fault_guards_without_hiding_results(tmp_path, cont
         assert rejected["rejected_before_dispatch"] and rejected["guard"]["refused"]
 
 
-def test_unsupported_value_is_detected_as_teammate_guard_gap(tmp_path):
+def test_contradictory_sensor_value_is_rejected_before_write(tmp_path):
     record = run_teammate_case("S01", tmp_path / "unsupported", "unsupported_update")
-    assert record["expectation_met"] and not record["evaluation"]["passed"]
-    assert record["evaluation"]["failure_reasons"] == ["update_matches_returned_evidence"]
-    assert any(b["perspective"] == "agent_sensor" and b["object"] == "clear" for b in record["state_after"]["memory"]["nodes"])
+    assert record["expectation_met"] and record["evaluation"]["passed"]
+    write = next(d for d in record["dispatch_outcomes"] if d["tool"] == "update_belief")
+    assert write["rejected_before_dispatch"]
+    assert write["agent_result"]["error"]["code"] == "INVALID_ARGUMENT"
+    assert record["state_after"]["memory"] == record["state_before"]["memory"]
 
 
 def test_recheck_cancels_a_move_toward_a_blocked_path(tmp_path):

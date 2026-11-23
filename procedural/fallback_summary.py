@@ -11,7 +11,8 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any
 
-from procedural.claims import MOVE_TOOLS, effective_statuses
+from contracts.sensor_evidence import reading_claim
+from procedural.claims import MOVE_TOOLS, effective_statuses, failed_writes
 from procedural.update_guard import sensor_readings
 
 MEMORY_READ_TOOLS = (
@@ -74,19 +75,6 @@ def _describe_reading(r: dict[str, Any]) -> str:
     )
 
 
-def _observed_claim(reading: dict[str, Any]) -> tuple[str, str, str] | None:
-    """(subject, predicate, value) a sensor reading speaks to, or None for e.g. position."""
-    value = reading.get("value")
-    if isinstance(value, dict) and "color" in value:
-        return str(value.get("object_id")), "color", str(value["color"])
-    if isinstance(value, (int, float)) and reading.get("status") in (
-        "clear",
-        "blocked",
-    ):
-        return "path_A", "status", str(reading["status"])
-    return None
-
-
 def _disagreements(
     beliefs: list[dict[str, Any]], readings: dict[str, dict[str, Any]]
 ) -> list[str]:
@@ -98,7 +86,7 @@ def _disagreements(
                 (f"{b['belief_id']} ({b['perspective']})", str(b["object"]))
             )
     for name, reading in sorted(readings.items()):
-        observed = _observed_claim(reading)
+        observed = reading_claim(reading)
         if observed is not None:
             subject, predicate, value = observed
             if any(  # memory already holds this very reading as a belief: list it once
@@ -146,12 +134,15 @@ def _actions(tool_log: list[dict[str, Any]]) -> list[str]:
         distance = entry["args"].get("distance_cm")
         result = entry["result"]
         if result["ok"]:
-            lines.append(f"- {entry['tool']} {distance} cm: ran (the robot moved).")
-        else:
+            lines.append(f"- {entry['tool']} requested {distance} cm. Action result: {_reading_value(result['data'])}.")
+        elif entry.get("guard", {}).get("recheck", {}).get("passed") is False:
             lines.append(
                 f"- {entry['tool']} {distance} cm: cancelled, the robot did not move "
                 f"({result['error']['message']})"
             )
+        else:
+            lines.append(f"- {entry['tool']} requested {distance} cm. The tool reported an error: "
+                         f"{result['error']['message']}")
     return lines
 
 
@@ -172,18 +163,27 @@ def build_fallback_summary(question: str, tool_log: list[dict[str, Any]]) -> str
     writes = _writes(tool_log)
     if writes:
         lines += writes
+        if failed_writes(tool_log):
+            lines.append("Memory was only partly updated. The results above show which write succeeded and which failed.")
     else:
         lines.append("- none: I made no memory writes in this run.")
     actions = _actions(tool_log)
     if actions:
         lines += ["", "Moves in this run:"] + actions
-    if not beliefs and not readings:
+    usable_readings = [reading for reading in readings.values() if reading_claim(reading) is not None]
+    if not beliefs and not usable_readings:
         lines += ["", "Evidence is missing: memory and the sensors returned nothing."]
     else:
+        if not beliefs:
+            lines += ["", "No stored belief was returned. This summary uses the observations that were available."]
+        if not usable_readings:
+            lines += ["", "No usable sensor reading verified the stored evidence."]
         conflicts = _disagreements(beliefs, readings)
         if conflicts:
             lines += ["", "Sources that disagree:"] + conflicts
-        else:
+        elif beliefs and usable_readings:
             lines += ["", "No disagreement between the sources above."]
+    if any(b["source"] is None for b in beliefs):
+        lines += ["", "At least one stored source is unknown. That claim cannot verify the world on its own."]
     lines += ["", CLOSING]
     return "\n".join(lines)

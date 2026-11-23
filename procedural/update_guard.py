@@ -13,7 +13,8 @@ this run, before they reach the memory layer:
   entity id, named in the question, or returned by an earlier memory or sensor result), so a
   mistyped id such as box_1 cannot create a stray belief.
 - update_belief with perspective agent_sensor: the source must be a sensor that was read
-  successfully in this run, and the confidence is taken from that reading, not from the model.
+  successfully in this run. The requested fact must match that reading, and its confidence
+  comes directly from the sensor.
 Everything else passes through to the normal argument validation unchanged. This module holds
 no conflict-priority rules; those belong to declarative/conflicts.py.
 """
@@ -24,24 +25,11 @@ from collections.abc import Collection
 from dataclasses import dataclass, field
 from typing import Any
 
+from contracts.policy import DOWNGRADE_FACTOR, LIVE_SENSOR_MIN, USER_STATEMENT_CONF
+from contracts.sensor_evidence import CAMERA_SENSOR, FRONT_RANGE_SENSORS, reading_claim
 from procedural.state import MEMORY_TOOLS
 
 SENSOR_READ_TOOLS = ("read_lidar", "read_ultrasonic", "read_camera", "get_position")
-
-# Evidence thresholds come from the shared policy module (contracts/policy.py, Vyom's file) so
-# that this guard and declarative/conflicts.py can never use different numbers. The fallback
-# values are the same numbers and only apply until that module is merged; delete the
-# except branch after the merge (a test checks both agree).
-try:
-    from contracts.policy import (
-        DOWNGRADE_FACTOR,
-        LIVE_SENSOR_MIN,
-        USER_STATEMENT_CONF,
-    )
-except ImportError:  # pragma: no cover - until contract v1.1 is merged
-    DOWNGRADE_FACTOR = 0.3
-    LIVE_SENSOR_MIN = 0.6
-    USER_STATEMENT_CONF = 0.9
 
 # A downgraded belief keeps FACTOR times its old confidence (rounded to 2 decimals). Why 0.3:
 # - below 0.5: Guidelines section 5 calls a reading under 0.5 "weak", so a downgraded belief
@@ -98,16 +86,20 @@ def known_belief_confidences(tool_log: list[dict[str, Any]]) -> dict[str, float]
 
 
 def sensor_readings(tool_log: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
-    """Sensor name -> most recent successful reading in this run."""
+    """Return the latest successful reading per sensor, including action rechecks."""
     readings: dict[str, dict[str, Any]] = {}
     for entry in tool_log:
-        result = entry["result"]
-        if (
-            entry["tool"] in SENSOR_READ_TOOLS
-            and result["ok"]
-            and isinstance(result["data"], dict)
-        ):
-            readings[result["data"]["sensor"]] = result["data"]
+        automatic = entry.get("guard", {}).get("recheck", {}).get("reads", ())
+        for observation in (*automatic, entry):
+            result = observation["result"]
+            data = result["data"]
+            if (
+                observation["tool"] in SENSOR_READ_TOOLS
+                and result["ok"]
+                and isinstance(data, dict)
+                and isinstance(data.get("sensor"), str)
+            ):
+                readings[data["sensor"]] = data
     return readings
 
 
@@ -132,12 +124,12 @@ def distance_readings(tool_log: list[dict[str, Any]]) -> dict[str, dict[str, Any
     return {
         name: reading
         for name, reading in sensor_readings(tool_log).items()
-        if reading.get("unit") == "cm" and name.endswith("_front")
+        if name in FRONT_RANGE_SENSORS and reading_claim(reading) is not None
     }
 
 
 def _check_downgrade_evidence(
-    args: dict[str, Any], tool_log: list[dict[str, Any]]
+    args: dict[str, Any], tool_log: list[dict[str, Any]], requires_ultrasonic: bool
 ) -> GuardDecision | None:
     """Refuse a downgrade the live evidence does not justify; None when it is justified.
 
@@ -155,6 +147,11 @@ def _check_downgrade_evidence(
             "Do not downgrade yet: no distance sensor has been read in this run, so nothing "
             "has been observed that contradicts the belief. Read the sensor first (read_lidar), "
             "compare it with the stored belief, and only downgrade if they disagree.",
+        )
+    if requires_ultrasonic and not FRONT_RANGE_SENSORS <= readings.keys():
+        return GuardDecision(
+            args,
+            "Read both enabled front distance sensors before downgrading a path belief.",
         )
     best = max(r["confidence"] for r in readings.values())
     if best < LIVE_SENSOR_MIN:
@@ -176,9 +173,11 @@ def _check_downgrade_evidence(
             "evidence.",
         )
     belief = known_beliefs(tool_log).get(args.get("belief_id"), {})
-    if belief.get("predicate") == "status" and set(statuses.values()) == {
-        belief.get("object")
-    }:
+    if (belief.get("subject"), belief.get("predicate")) != ("path_A", "status"):
+        return GuardDecision(
+            args, "The forward distance readings do not observe this belief's subject and predicate."
+        )
+    if set(statuses.values()) == {belief.get("object")}:
         return GuardDecision(
             args,
             f"Do not downgrade: the live reading agrees with the stored belief "
@@ -230,7 +229,7 @@ def _check_subject(
 
 
 def _check_downgrade(
-    args: dict[str, Any], tool_log: list[dict[str, Any]]
+    args: dict[str, Any], tool_log: list[dict[str, Any]], requires_ultrasonic: bool
 ) -> GuardDecision:
     belief_id, new_confidence = args.get("belief_id"), args.get("new_confidence")
     if not isinstance(belief_id, str) or not isinstance(new_confidence, (int, float)):
@@ -251,7 +250,7 @@ def _check_downgrade(
             "stored fact a sensor can overrule. Do not downgrade it. Report every view and the "
             "live reading, change nothing, and ask the person which one to treat as correct.",
         )
-    refusal = _check_downgrade_evidence(args, tool_log)
+    refusal = _check_downgrade_evidence(args, tool_log, requires_ultrasonic)
     if refusal is not None:
         return refusal
     if new_confidence >= known[belief_id]:
@@ -293,8 +292,10 @@ def _check_sensor_update(
     args: dict[str, Any], tool_log: list[dict[str, Any]]
 ) -> GuardDecision:
     source = args.get("source")
+    if "source" not in args:
+        return GuardDecision(args)  # validates as a missing argument at the wrapper
     if not isinstance(source, str):
-        return GuardDecision(args)  # malformed: normal validation reports it
+        return GuardDecision(args, "An agent_sensor belief needs the name of its observed sensor.")
     readings = sensor_readings(tool_log)
     if source not in readings:
         return GuardDecision(
@@ -303,7 +304,16 @@ def _check_sensor_update(
             f"(sensors read so far: {sorted(readings)}). Read the sensor first and use its name "
             "as the source. You cannot record an observation you have not made.",
         )
-    confidence = readings[source]["confidence"]
+    reading = readings[source]
+    expected = reading_claim(reading)
+    requested = (args.get("subject"), args.get("predicate"), args.get("object"))
+    if expected is None or expected != requested:
+        return GuardDecision(
+            args,
+            f"The requested sensor claim does not match the latest usable {source!r} reading. "
+            "Use the subject, predicate and value that the reading actually supports.",
+        )
+    confidence = reading["confidence"]
     if args.get("confidence") == confidence:
         return GuardDecision(args)
     return GuardDecision(
@@ -320,6 +330,8 @@ def check_memory_call(
     tool_log: list[dict[str, Any]],
     known_subjects: Collection[str] = (),
     question: str = "",
+    *,
+    requires_ultrasonic: bool = False,
 ) -> GuardDecision:
     """Check one model-requested call against this run's history.
 
@@ -329,13 +341,19 @@ def check_memory_call(
     `overridden` lists argument values the code replaced with values taken from evidence.
     """
     if name == "downgrade_belief":
-        return _check_downgrade(args, tool_log)
+        return _check_downgrade(args, tool_log, requires_ultrasonic)
     if name == "update_belief":
         refusal = _check_subject(args, tool_log, known_subjects, question)
         if refusal is not None:
             return refusal
-        if args.get("perspective") == "agent_sensor":
+        perspective, source = args.get("perspective"), args.get("source")
+        reserved_sensors = FRONT_RANGE_SENSORS | {CAMERA_SENSOR} | sensor_readings(tool_log).keys()
+        if isinstance(source, str) and source in reserved_sensors and perspective != "agent_sensor":
+            return GuardDecision(args, "An observation from a robot sensor needs the agent_sensor perspective.")
+        if source == "user" and perspective != "user":
+            return GuardDecision(args, "A statement from the user must retain the user perspective.")
+        if perspective == "agent_sensor":
             return _check_sensor_update(args, tool_log)
-        if args.get("perspective") == "user" and args.get("source") == "user":
+        if perspective == "user" and source == "user":
             return _check_user_input(args)
     return GuardDecision(args)

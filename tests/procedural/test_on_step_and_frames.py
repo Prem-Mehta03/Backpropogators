@@ -186,7 +186,8 @@ def test_frames_have_the_appendix_b_shape_and_survive_json() -> None:
     recorder = _recorded()
     frame = recorder.frames[2]
     assert set(frame) == {"step", "sim_time", "tool", "world", "beliefs"}
-    assert set(frame["tool"]) == {"name", "args", "ok", "auto"}
+    assert set(frame["tool"]) == {"name", "args", "ok", "auto", "result"}
+    assert frame["tool"]["result"]["data"]["value"] == 12
     assert {"bounds_cm", "robot", "obstacles", "objects", "lighting", "sensors"} <= set(
         frame["world"]
     )
@@ -196,7 +197,7 @@ def test_frames_have_the_appendix_b_shape_and_survive_json() -> None:
 
 def test_sensor_entry_appears_after_the_sensor_is_read() -> None:
     recorder = _recorded()
-    assert "lidar_front" not in recorder.frames[1]["world"]["sensors"]
+    assert recorder.frames[1]["world"]["sensors"].get("lidar_front") is None
     reading = recorder.frames[2]["world"]["sensors"]["lidar_front"]
     assert reading["value"] == 12 and reading["status"] == "blocked"
 

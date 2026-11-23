@@ -6,8 +6,8 @@ like evaluation/runner.py).
 - Memory tools: Vyom's BeliefMemory (declarative/belief_graph.py) is created once per run and
   its methods are the five memory tools. Its methods already return ToolResult envelopes.
 - Sensor and action tools: Asvin's simulated world (sensorimotor.create_sensorimotor) is created
-  once per run and its tool_registry() supplies the six sensor and action tools. If it is
-  missing, or does not provide a tool, the test fake in tests/procedural/fakes fills in.
+  once per run and its tool_registry() supplies the sensor and action tools. For the original
+  tools, a test fake fills in missing implementations. Optional ultrasonic is never faked.
 
 The sources are logged so you can see which implementation is in use.
 """
@@ -40,6 +40,7 @@ SENSOR_TOOLS: tuple[str, ...] = (
     "move_backward",
     "turn",
 )
+OPTIONAL_SENSOR_TOOLS = ("read_ultrasonic",)
 SENSORIMOTOR_MODULE = "sensorimotor"
 SENSORIMOTOR_SOURCE = "sensorimotor.Sensorimotor"
 DEFAULT_SCENARIO = "scenario_a"
@@ -154,12 +155,12 @@ def build_tool_registry(
             )
         if world is not None:
             provided = world.tool_registry()
-            for name in SENSOR_TOOLS:
+            for name in SENSOR_TOOLS + OPTIONAL_SENSOR_TOOLS:
                 if name in provided:
                     registry[name] = provided[name]
                     sources[name] = SENSORIMOTOR_SOURCE
     for spec in TOOL_SPECS:
-        if spec.name in registry:
+        if spec.name in registry or spec.name in OPTIONAL_SENSOR_TOOLS:
             continue
         fake = FAKE_MEMORY_MODULE if spec.name in MEMORY_TOOLS else FAKE_SENSOR_MODULE
         fn = _load(fake, spec.name)

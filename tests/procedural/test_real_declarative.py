@@ -53,11 +53,10 @@ def test_demo_beliefs_are_older_than_the_live_sensor_reading() -> None:
             assert belief["timestamp"] == "2026-10-03T09:15:00Z"
 
 
-def test_unknown_subject_gives_an_empty_ok_reply_not_a_crash() -> None:
-    # Vyom's query_belief answers ok with no beliefs (not NOT_FOUND) when nothing matches.
+def test_unknown_subject_gives_a_typed_not_found_reply() -> None:
     registry, _, _ = _registry()
     out = call_tool("query_belief", {"subject": "box_99"}, registry)
-    assert out["ok"] is True and not out["data"]
+    assert out["ok"] is False and out["error"]["code"] == "NOT_FOUND"
 
 
 def test_box_01_has_user_and_third_party_beliefs() -> None:
@@ -95,7 +94,7 @@ def test_unseeded_memory_is_empty() -> None:
         memory=build_memory(seed=False), real_sensors=False
     )
     out = call_tool("query_belief", {"subject": "path_A"}, registry)
-    assert out["ok"] is True and not out["data"]
+    assert out["ok"] is False and out["error"]["code"] == "NOT_FOUND"
 
 
 def test_scenario_a_end_to_end_against_real_memory() -> None:

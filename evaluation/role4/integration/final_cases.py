@@ -34,7 +34,7 @@ CASE_SCOPE = {
     "S05": (
         "Can I trust that path_A is clear when the front sensors disagree?",
         "Keep both readings and beliefs, report the conflict and leave pose unchanged.",
-        "Real front LiDAR plus a contract-valid synthetic second front LiDAR on the same path. "
+        "Real front LiDAR plus a contract-valid synthetic ultrasonic receipt on the same path. "
         "The teammate camera reports color and cannot produce the reference path-status claim.",
     ),
     "S06": (
@@ -57,16 +57,11 @@ CASE_SCOPE = {
 }
 KNOWN_FAILURES = {
     ("S09", "valid"): ("agent_delivered_scripted_answer",),
-    ("S10", "stale_action"): (
-        "rechecked_after_world_change",
-        "current_sensor_belief_retained",
-        "no_motion_on_changed_route",
-    ),
 }
 STALE_AFTER_SECONDS = 3600
 INITIAL_MAP_TIME = "2026-10-03T09:15:00Z"
 S05_REAL_SOURCE = "sensorimotor.Sensorimotor"
-S05_FIXTURE_SOURCE = "role4.synthetic_secondary_front_lidar"
+S05_FIXTURE_SOURCE = "role4.synthetic_secondary_front_ultrasonic"
 
 
 def _route_args() -> dict[str, str]:
@@ -91,7 +86,7 @@ def _plan(
         return [query, lidar, _scripted_update, conflict,
                 "The map and weak LiDAR disagree. A stronger observation is needed."]
     if case == "S05":
-        return [query, lidar, _scripted_update, lidar, _scripted_update, conflict,
+        return [query, lidar, _scripted_update, ("read_ultrasonic", {}), _scripted_update, conflict,
                 "The two front readings conflict. I need more evidence before moving."]
     if case == "S06":
         return [query, history, lidar, _scripted_update, history,
@@ -108,7 +103,8 @@ def _plan(
         return ("move_forward", {"distance_cm": 20}) if control == "stale_action" else lidar
 
     if control == "stale_action":
-        return [query, lidar, signal_and_continue, "The old reading said the path was clear."]
+        return [query, lidar, signal_and_continue,
+                "The first reading was clear, but the recheck cancelled the move. I did not move."]
     return [query, lidar, signal_and_continue, _scripted_update,
             "The path was clear at first. The refreshed LiDAR reading is blocked, so I will stay put."]
 
@@ -170,8 +166,9 @@ def _evaluate(record: dict[str, Any], events: list[Any]) -> EvaluationResult:
           bool(outputs) and all(_payload_valid(o["tool"], o["raw"]) for o in outputs)
           and all(_payload_valid(c["tool"], c["result"]) for c in calls),
           "boundary", "Every returned envelope and successful tool payload validates.")
-    check("looked_up_memory", bool(received("query_belief")), "procedural",
-          "The agent queried its memory, including an empty result when appropriate.")
+    check("looked_up_memory", any(c["tool"] == "query_belief" and (
+          c["result"]["ok"] or c["result"]["error"]["code"] == "NOT_FOUND") for c in calls), "procedural",
+          "The agent queried memory, including a typed no-match result when appropriate.")
     check("agent_delivered_scripted_answer",
           not agent["error"] and model_text and agent["answer"] == model_text[-1],
           "procedural", "The agent delivered its scripted answer. Human semantics remain pending.")
@@ -184,14 +181,15 @@ def _evaluate(record: dict[str, Any], events: list[Any]) -> EvaluationResult:
               and updates[0]["confidence"] == 0.25 and updates[0]["status"] == "disputed",
               "declarative", "Weak conflicting evidence was added as disputed without replacing the map.")
     elif sid == "S05":
-        check("same_path_disagreement_observed", len(readings) == 2
-              and [r["status"] for r in readings] == ["blocked", "clear"]
-              and [o["source"] for o in outputs if o["tool"] == "read_lidar"]
+        pair = readings + received("read_ultrasonic")
+        check("same_path_disagreement_observed", len(pair) == 2
+              and [r["status"] for r in pair] == ["blocked", "clear"]
+              and [o["source"] for o in outputs if o["tool"] in {"read_lidar", "read_ultrasonic"}]
               == [S05_REAL_SOURCE, S05_FIXTURE_SOURCE], "sensorimotor",
               "The real and explicitly synthetic same-path sensors returned opposing statuses.")
         conflicts = received("detect_conflict")
         check("both_sources_retained", len(updates) == 2
-              and {u["source"] for u in updates} == {"lidar_front", "lidar_secondary"}
+              and {u["source"] for u in updates} == {"lidar_front", "ultrasonic_front"}
               and any(u["status"] == "disputed" for u in updates)
               and len(conflicts) == 1 and all(u in after and u in conflicts[0] for u in updates),
               "declarative", "The store retains both source-specific beliefs and returns the conflict.")
@@ -222,6 +220,11 @@ def _evaluate(record: dict[str, Any], events: list[Any]) -> EvaluationResult:
                       and c["result"]["error"]["code"] == "INVALID_ARGUMENT" for c in calls),
               "procedural", "The unknown battery request was rejected without fabricating evidence.")
     elif sid == "S10":
+        stale_action = record["control"] == "stale_action"
+        if stale_action:
+            readings += [r["result"]["data"] for c in calls
+                         for r in (c.get("guard") or {}).get("recheck", {}).get("reads", [])
+                         if r["tool"] == "read_lidar" and r["auto"] and r["result"]["ok"]]
         lidar_positions = [i for i, e in enumerate(events) if e.event_type == "teammate_boundary_return"
                            and e.payload["tool"] == "read_lidar"]
         change_positions = [i for i, e in enumerate(events) if e.event_type == "role4_world_change"]
@@ -235,10 +238,15 @@ def _evaluate(record: dict[str, Any], events: list[Any]) -> EvaluationResult:
               and [r["status"] for r in readings] == ["clear", "blocked"]
               and readings[0]["timestamp"] < readings[1]["timestamp"], "procedural",
               "A distinct post-change LiDAR read is needed before relying on the route status.")
-        check("current_sensor_belief_retained", len(readings) == 2 and len(updates) == 1
-              and updates[0] in after and updates[0]["object"] == "blocked"
-              and updates[0]["timestamp"] == readings[-1]["timestamp"], "procedural",
-              "The current belief comes from the second observation and uses its timestamp.")
+        if stale_action:
+            check("stale_move_cancelled", any(c["tool"] == "move_forward" and not c["result"]["ok"]
+                  and c["result"]["error"]["code"] == "CONFLICT" for c in calls), "procedural",
+                  "The automatic reread cancels the stale movement request.")
+        else:
+            check("current_sensor_belief_retained", len(readings) == 2 and len(updates) == 1
+                  and updates[0] in after and updates[0]["object"] == "blocked"
+                  and updates[0]["timestamp"] == readings[-1]["timestamp"], "procedural",
+                  "The current belief comes from the second observation and uses its timestamp.")
         check("no_motion_on_changed_route", not moved, "procedural",
               "The simulated robot must not move along the changed route on old evidence.")
     if sid != "S10":
@@ -251,15 +259,16 @@ def _evaluate(record: dict[str, Any], events: list[Any]) -> EvaluationResult:
 def _dispatch_outcomes(record: dict[str, Any], events: list[Any]) -> list[dict[str, Any]]:
     requests = [call for e in events if e.event_type == "scripted_model_response"
                 for call in e.payload["calls"]]
-    dispatches = {e.payload["call_id"]: e.payload for e in events
+    dispatches = {(e.payload["call_id"], e.payload["tool"]): e.payload for e in events
                   if e.event_type == "teammate_boundary_call"}
-    returns = {e.payload["call_id"]: e.payload for e in events
+    returns = {(e.payload["call_id"], e.payload["tool"]): e.payload for e in events
                if e.event_type == "teammate_boundary_return"}
     outcomes = []
     for request, call in zip(requests, record["agent"]["tool_calls"]):
         call_id = request["call_id"]
-        start = dispatches.get(call_id)
-        finish = returns.get(call_id)
+        key = (call_id, request["name"])
+        start = dispatches.get(key)
+        finish = returns.get(key)
         pose_changed = bool(start and finish and start["state_before"]["environment"]["robot"]
                             != finish["state_after"]["environment"]["robot"])
         outcomes.append({
@@ -348,34 +357,28 @@ def run_final_case(
         registry, sources = build_tool_registry(use_real=True, memory=memory, sensorimotor=world)
         require_real_tools(registry, sources, memory, world)
         if scenario_id == "S05":
-            sources["read_lidar"] = f"{S05_REAL_SOURCE} + {S05_FIXTURE_SOURCE}"
+            def synthetic_ultrasonic() -> dict:
+                timestamp = world.env.now_iso()
+                reading = SensorReading(schema_version=SCHEMA_VERSION, sensor="ultrasonic_front",
+                                        value=150, unit="cm", status="clear",
+                                        timestamp=timestamp, confidence=0.8)
+                return success_result("read_ultrasonic", reading.model_dump(mode="json"), timestamp)
+            registry["read_ultrasonic"] = synthetic_ultrasonic
+            sources["read_ultrasonic"] = S05_FIXTURE_SOURCE
         before = snapshot()
         emit("teammate_run_start", {"run_id": run_id, "question": question, "expected": expected,
                                    "labels": labels, "tool_sources": sources, "seed_receipt": seed_result,
                                    "state_before": before})
         plan = _plan(scenario_id, control, change_world)
         script = OfflineScript(plan, emit)
-        lidar_reads = 0
 
         def instrument(name: str, fn: Callable[..., Any]) -> Callable[..., Any]:
             def invoke(**kwargs: Any) -> dict[str, Any]:
-                nonlocal lidar_reads
                 call_id = script.current_calls[0]["call_id"]
                 source = sources[name]
-                if name == "read_lidar":
-                    lidar_reads += 1
-                    source = (S05_FIXTURE_SOURCE if scenario_id == "S05" and lidar_reads == 2
-                              else S05_REAL_SOURCE)
                 emit("teammate_boundary_call", {"call_id": call_id, "tool": name, "arguments": kwargs,
                                                 "source": source, "state_before": snapshot()})
-                if source == S05_FIXTURE_SOURCE:
-                    timestamp = world.env.now_iso()
-                    reading = SensorReading(schema_version=SCHEMA_VERSION, sensor="lidar_secondary",
-                                            value=150, unit="cm", status="clear",
-                                            timestamp=timestamp, confidence=0.8)
-                    raw = success_result(name, reading.model_dump(mode="json"), timestamp)
-                else:
-                    raw = fn(**kwargs)
+                raw = fn(**kwargs)
                 emit("teammate_boundary_return", {"call_id": call_id, "tool": name, "raw": raw,
                                                  "canonical_envelope_valid": is_valid_contract(ToolResult, raw),
                                                  "source": source, "state_after": snapshot()})

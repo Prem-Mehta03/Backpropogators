@@ -7,6 +7,7 @@ import types
 
 import pytest
 
+from procedural.tools import registered_tool_schemas
 from scripts.tool_wiring import SENSORIMOTOR_SOURCE, build_tool_registry
 
 
@@ -17,6 +18,24 @@ def test_stubs_only_registry_has_all_eleven_tools() -> None:
         "tests.procedural.fakes.declarative_fake",
         "tests.procedural.fakes.sensorimotor_fake",
     }
+    assert "read_ultrasonic" not in {
+        schema["function"]["name"] for schema in registered_tool_schemas(registry)
+    }
+
+
+def test_ultrasonic_is_only_advertised_when_the_world_registers_it() -> None:
+    def read_ultrasonic() -> dict:
+        return {}
+
+    class World:
+        def tool_registry(self) -> dict:
+            return {"read_ultrasonic": read_ultrasonic}
+
+    registry, sources = build_tool_registry(sensorimotor=World())
+    assert len(registry) == 12 and registry["read_ultrasonic"] is read_ultrasonic
+    assert sources["read_ultrasonic"] == SENSORIMOTOR_SOURCE
+    offered = {schema["function"]["name"] for schema in registered_tool_schemas(registry)}
+    assert offered == set(registry)
 
 
 def test_real_sensorimotor_world_is_preferred_when_it_provides_the_tool() -> None:
