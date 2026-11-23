@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from procedural.prompts import (
     ANSWER_FORMAT,
     EVIDENCE_POLICY,
@@ -87,3 +89,49 @@ def test_policy_hands_view_disagreements_to_a_person_and_records_their_answer() 
 
 def test_policy_says_the_downgrade_value_is_set_by_the_system() -> None:
     assert "a\n   downgrade value is set by the system" in EVIDENCE_POLICY
+
+
+# ---- v6: how to answer in the situations the ten tests cover ------------------------------------
+from procedural.prompts import PROMPT_VERSION, SITUATIONS
+
+
+def test_prompt_version_is_v6_and_the_prompt_includes_the_situations() -> None:
+    assert PROMPT_VERSION == "v6"
+    assert SITUATIONS in SYSTEM_PROMPT
+    assert SYSTEM_PROMPT.index(EVIDENCE_POLICY) < SYSTEM_PROMPT.index(SITUATIONS)
+    assert SYSTEM_PROMPT.index(SITUATIONS) < SYSTEM_PROMPT.index(ANSWER_FORMAT)
+
+
+def test_prompt_stays_within_the_token_budget() -> None:
+    # Groq's daily token cap is shared by many calls per run, so the prompt must stay compact
+    assert len(SYSTEM_PROMPT.split()) < 1900
+
+
+def test_each_situation_is_covered() -> None:
+    for letter in "ABCDEFGH":
+        assert f"\n{letter}. " in SITUATIONS
+    assert "outdated" in SITUATIONS  # T06 stale
+    assert "source is unknown" in SITUATIONS  # T09 missing provenance
+    assert "do not\n   call either side the fact" in SITUATIONS  # T04, T05 disputed
+    assert "below 0.6" in SITUATIONS and "reading again" in SITUATIONS  # T04 weak
+    assert "robot did not\n   move" in SITUATIONS  # T08, T10 moves
+    assert "evidence is\n   missing and name no value" in SITUATIONS  # T07
+
+
+def test_three_view_format_names_the_three_lines_and_forbids_inventing_a_reason() -> (
+    None
+):
+    for line in ("Person:", "Stored\n   record:", "My live reading:"):
+        assert line in SITUATIONS
+    assert "none is treated as the true\n   state" in SITUATIONS
+    assert "Give no reason for a difference" in SITUATIONS
+
+
+def test_situations_hard_code_no_scenario_entities() -> None:
+    for word in ("path_A", "box_01", "bot_02", "lidar_front", "brown", "red"):
+        assert re.search(rf"\b{word}\b", SITUATIONS) is None
+
+
+def test_a_persons_statement_about_the_world_is_recorded_but_never_verified() -> None:
+    assert "states a fact about the world" in EVIDENCE_POLICY
+    assert "never a verified fact" in EVIDENCE_POLICY

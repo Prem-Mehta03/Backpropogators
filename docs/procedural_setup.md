@@ -23,6 +23,13 @@ section 7 names an 8B model.
 
 Hosted tiers have rate limits. Tests with the scripted fake LLM use no quota at all.
 
+**Fallback model (optional).** Free tiers also have a daily token cap. Set `LLM_FALLBACK_MODEL`
+in `.env` to another tool-calling model from `python -m scripts.list_available_models`. The
+client then switches to it for the rest of the run, once, only if the main model's daily limit
+is reached or its retries are used up. Without it, a daily limit stops the run at once with a
+clear message instead of waiting. The run log records `model` (the one that finished) and
+`model_switched_from` (the main model, or null).
+
 No other key is needed. The sensor stub, memory stub and tests run offline.
 
 ## 2. Install and run

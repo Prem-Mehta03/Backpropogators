@@ -22,8 +22,15 @@ from dotenv import load_dotenv
 
 from procedural.agent import DEFAULT_MAX_STEPS, run_agent
 from procedural.llm_client import LLMClient, LLMClientError
+from procedural.prompts import PROMPT_VERSION
 from procedural.state import subjects_outside
-from scripts.tool_wiring import DEFAULT_SCENARIO, build_tool_registry
+from scripts.frame_recorder import FrameRecorder
+from scripts.tool_wiring import (
+    DEFAULT_SCENARIO,
+    build_memory,
+    build_sensorimotor,
+    build_tool_registry,
+)
 
 # Entity ids that exist in memory, with a plain description so the model can map the words in a
 # question ("route") to the right id (path_A). This stands in for the scenario config; replace
@@ -58,10 +65,19 @@ def main(argv: list[str] | None = None) -> int:
 
     logging.basicConfig(level=logging.INFO)
     load_dotenv()
+    recorder = None
     try:
+        memory = None if args.stubs_only else build_memory()
+        world = None if args.stubs_only else build_sensorimotor(args.scenario)
         registry, sources = build_tool_registry(
-            use_real=not args.stubs_only, scenario=args.scenario
+            use_real=not args.stubs_only,
+            memory=memory,
+            sensorimotor=world,
+            scenario=args.scenario,
         )
+        if memory is not None and world is not None:
+            recorder = FrameRecorder(world.env, memory)  # 3-D frames, one per tool call
+            recorder.capture_initial()
     except RuntimeError as exc:
         print(f"FAILED: {exc}")
         return 1
@@ -79,6 +95,7 @@ def main(argv: list[str] | None = None) -> int:
         max_steps=args.max_steps,
         known_subjects=subjects,
         require_written_ids=True,  # live runs: the answer must name every belief it wrote
+        on_step=recorder.on_step if recorder else None,
     )
     unknown = subjects_outside(result.tool_calls, DEFAULT_SUBJECTS)
 
@@ -86,6 +103,7 @@ def main(argv: list[str] | None = None) -> int:
     log = {
         "run_id": now.strftime("%Y-%m-%dT%H:%M:%SZ") + "-1",
         "model": llm.model,
+        "model_switched_from": llm.switched_from,
         "question": result.question,
         "scenario": None if args.stubs_only else args.scenario,
         "tool_sources": sources,
@@ -97,9 +115,11 @@ def main(argv: list[str] | None = None) -> int:
         "claim_nudges": result.claim_nudges,
         "claim_refusals": result.claim_refusals,
         "answer_source": result.answer_source,
+        "prompt_version": PROMPT_VERSION,
         "answer": result.answer,
         "answer_normalized": result.answer_normalized,
         "error": result.error,
+        "frames": recorder.frames if recorder else [],
     }
     log_dir = Path(args.log_dir)
     log_dir.mkdir(parents=True, exist_ok=True)

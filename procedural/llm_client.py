@@ -78,6 +78,21 @@ def is_tool_call_generation_error(exc: Exception) -> bool:
     return getattr(exc, "status_code", None) == 400 and "tool_use_failed" in str(exc)
 
 
+def is_daily_limit_error(exc: Exception) -> bool:
+    """True for a 429 that says the DAILY quota is used up (tokens or requests per day).
+
+    Waiting a few seconds cannot help with this one, so the client does not retry it: it
+    switches to the fallback model if one is configured, otherwise it stops with a clear message.
+    """
+    return is_rate_limit_error(exc) and bool(
+        re.search(
+            r"per day|tokens per day|requests per day|\bTPD\b|\bRPD\b",
+            str(exc),
+            re.IGNORECASE,
+        )
+    )
+
+
 def rate_limit_wait_seconds(exc: Exception, attempt: int) -> float:
     """How long to wait before retrying a 429.
 
@@ -106,12 +121,23 @@ class LLMClient:
         temperature: float = 0.0,
         max_tokens: int = 1024,  # gpt-oss spends tokens on hidden reasoning first
         timeout: float = 30.0,
+        fallback_model: str | None = None,
         client: Any = None,
         rate_limit_retries: int = RATE_LIMIT_RETRIES,
         tool_call_retries: int = TOOL_CALL_RETRIES,
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         self.model = model or os.getenv("LLM_MODEL", DEFAULT_MODEL)
+        # LLM_FALLBACK_MODEL (D10): used for the rest of the run only if the main model cannot
+        # answer (retries used up, or the daily limit is reached). Empty means no fallback.
+        self.fallback_model = (
+            fallback_model
+            if fallback_model is not None
+            else os.getenv("LLM_FALLBACK_MODEL", "")
+        ) or None
+        self.switched_from: str | None = (
+            None  # the main model, once the switch happened
+        )
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.rate_limit_retries = rate_limit_retries
@@ -166,6 +192,25 @@ class LLMClient:
             finish_reason=choice.finish_reason,
         )
 
+    def _switch_to_fallback(
+        self, kwargs: dict[str, Any], reason: str
+    ) -> dict[str, Any] | None:
+        """Change to the fallback model for the rest of this client's life; None if impossible.
+
+        Only one switch happens: once on the fallback model there is nothing further to try.
+        Returns the request arguments with the new model name.
+        """
+        if self.fallback_model is None or self.switched_from is not None:
+            return None
+        logger.warning(
+            "Switching from %s to fallback model %s (%s)",
+            self.model,
+            self.fallback_model,
+            reason,
+        )
+        self.switched_from, self.model = self.model, self.fallback_model
+        return {**kwargs, "model": self.model}
+
     def _create_with_rate_limit_retries(self, kwargs: dict[str, Any]) -> Any:
         """Call the API with two kinds of retry. Raise LLMClientError on any other failure.
 
@@ -180,6 +225,15 @@ class LLMClient:
             try:
                 return self._client.chat.completions.create(**kwargs)
             except Exception as exc:  # transport/API errors
+                if is_daily_limit_error(exc):
+                    switched = self._switch_to_fallback(kwargs, "daily limit reached")
+                    if switched is None:
+                        raise LLMClientError(
+                            f"Daily limit reached for model {self.model} and no "
+                            f"LLM_FALLBACK_MODEL is set: {exc}"
+                        ) from exc
+                    kwargs, rate_attempts, tool_attempts = switched, 0, 0
+                    continue
                 if is_rate_limit_error(exc) and rate_attempts < self.rate_limit_retries:
                     wait = rate_limit_wait_seconds(exc, rate_attempts)
                     logger.warning(
@@ -207,6 +261,11 @@ class LLMClient:
                         "temperature": max(kwargs["temperature"], RETRY_TEMPERATURE),
                     }
                     continue
+                if is_rate_limit_error(exc) or is_tool_call_generation_error(exc):
+                    switched = self._switch_to_fallback(kwargs, "retries used up")
+                    if switched is not None:
+                        kwargs, rate_attempts, tool_attempts = switched, 0, 0
+                        continue
                 logger.error("LLM request failed: %s", exc)
                 hint = ""
                 if "model_not_found" in str(exc):

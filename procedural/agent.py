@@ -14,8 +14,9 @@ Two rules are enforced here in code, not left to the prompt (Guidelines 2 and 5)
 
 from __future__ import annotations
 
+import copy
 import logging
-from collections.abc import Collection, Mapping, Sequence
+from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -76,6 +77,41 @@ def next_step(state: AgentState, llm: LLMBackend) -> LLMResponse:
     return llm.chat(state.messages, TOOL_SCHEMAS)
 
 
+# Called after every tool call, including calls the guard refused and the LiDAR read the
+# recheck makes before a move (auto=True): (step, tool, args, result, auto). `step` counts these
+# events from 1. It carries tool data only; the procedural layer never sees the environment.
+StepCallback = Callable[[int, str, dict[str, Any], dict[str, Any], bool], None]
+Notifier = Callable[[str, dict[str, Any], dict[str, Any], bool], None]
+
+
+def make_notifier(on_step: StepCallback | None) -> Notifier:
+    """Wrap the optional on_step callback: number the events, hand over copies, never raise.
+
+    An observer (the 3-D view, a frame recorder) must not be able to break a run, so an
+    exception in the callback is logged and the run carries on.
+    """
+    counter = {"events": 0}
+
+    def notify(
+        tool: str, args: dict[str, Any], result: dict[str, Any], auto: bool
+    ) -> None:
+        counter["events"] += 1
+        if on_step is None:
+            return
+        try:
+            on_step(
+                counter["events"],
+                tool,
+                copy.deepcopy(args),
+                copy.deepcopy(result),
+                auto,
+            )
+        except Exception:  # the observer must never stop the agent
+            logger.exception("on_step callback failed; the run continues")
+
+    return notify
+
+
 @dataclass
 class ToolOutcome:
     """Result of executing one tool call: what the model sees and what actually ran."""
@@ -94,8 +130,12 @@ def execute_tool_call(
     tool_log: list[dict[str, Any]],
     known_subjects: Collection[str] = (),
     question: str = "",
+    notify: Notifier | None = None,
 ) -> ToolOutcome:
     """Run one model-requested tool call and return its ToolResult envelope.
+
+    `notify`, when given, is told about the recheck's LiDAR read at the moment it happens
+    (before the move runs), so an observer sees the world as the recheck saw it.
 
     Malformed arguments become an INVALID_ARGUMENT envelope the model can read and fix. The
     provenance guard may refuse a memory write (INVALID_ARGUMENT with the reason) or replace
@@ -120,6 +160,13 @@ def execute_tool_call(
     check = recheck_before_action(call.name, decision.args, registry)
     if check is not None:
         guard["recheck"] = check.details
+        if notify is not None:
+            notify(
+                "read_lidar",
+                {"direction": check.details["direction"]},
+                check.details["lidar_result"],
+                True,
+            )
         if check.cancel is not None:
             envelope = error_result(call.name, "CONFLICT", check.cancel)
             return ToolOutcome(envelope, decision.args, guard)
@@ -197,6 +244,7 @@ def run_agent(
     known_subjects: Mapping[str, str] | None = None,
     required_evidence: Sequence[tuple[str, ...]] = DEFAULT_REQUIRED_EVIDENCE,
     require_written_ids: bool = False,
+    on_step: StepCallback | None = None,
 ) -> AgentResult:
     """Answer a question by letting the model call tools, with a hard step limit.
 
@@ -215,6 +263,9 @@ def run_agent(
     (counted in AgentResult.evidence_nudges). An answer the claim check refuses is sent back at
     most MAX_CLAIM_REFUSALS times (claim_nudges); then the answer is a summary built from the
     tool log, answer_source is "fallback_summary" and every refused text is in claim_refusals.
+    on_step is an optional observer called after every tool call as (step, tool, args, result,
+    auto); auto is True for the LiDAR read the recheck makes before a move. The composition
+    root uses it to record 3-D frames. Its exceptions are logged and never stop the run.
     Output: AgentResult.
     Error codes in result.error: STEP_LIMIT (no accepted final answer within max_steps model
     calls; the message names any missing evidence), INTERNAL (the LLM API failed). Tool-level
@@ -226,6 +277,7 @@ def run_agent(
         else build_system_prompt(known_subjects)
     )
     state = new_agent_state(question, prompt)
+    notify = make_notifier(on_step)
     while state.model_calls < max_steps:
         try:
             reply = next_step(state, llm)
@@ -236,7 +288,12 @@ def run_agent(
             state.add_assistant_turn(reply.content, reply.tool_calls)
             for call in reply.tool_calls:
                 outcome = execute_tool_call(
-                    call, registry, state.tool_log, known_subjects or (), question
+                    call,
+                    registry,
+                    state.tool_log,
+                    known_subjects or (),
+                    question,
+                    notify,
                 )
                 logger.info(
                     "model_call=%d tool=%s ok=%s",
@@ -247,6 +304,7 @@ def run_agent(
                 state.add_tool_result(
                     call, outcome.envelope, outcome.args, outcome.guard
                 )
+                notify(call.name, outcome.args, outcome.envelope, False)
                 _warn_if_unknown_subject(call, known_subjects)
             continue
 
