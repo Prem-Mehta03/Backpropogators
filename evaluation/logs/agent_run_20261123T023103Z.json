@@ -1,0 +1,171 @@
+{
+  "run_id": "2026-11-23T02:31:03Z-1",
+  "model": "openai/gpt-oss-20b",
+  "question": "Is your route clear? Justify your response by inspecting your internal system layers.",
+  "scenario": "scenario_a",
+  "tool_sources": {
+    "query_belief": "declarative.belief_graph.BeliefMemory",
+    "get_belief_history": "declarative.belief_graph.BeliefMemory",
+    "update_belief": "declarative.belief_graph.BeliefMemory",
+    "downgrade_belief": "declarative.belief_graph.BeliefMemory",
+    "detect_conflict": "declarative.belief_graph.BeliefMemory",
+    "read_lidar": "sensorimotor.Sensorimotor",
+    "read_camera": "sensorimotor.Sensorimotor",
+    "get_position": "sensorimotor.Sensorimotor",
+    "move_forward": "sensorimotor.Sensorimotor",
+    "move_backward": "sensorimotor.Sensorimotor",
+    "turn": "sensorimotor.Sensorimotor"
+  },
+  "known_subjects": {
+    "path_A": "the path ahead of the robot (the route the robot would take)",
+    "box_01": "the box the user is asking about",
+    "robot": "this robot itself"
+  },
+  "unknown_subjects_used": [],
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "query_belief",
+      "args": {
+        "subject": "path_A"
+      },
+      "result": {
+        "schema_version": "1.0",
+        "tool": "query_belief",
+        "ok": true,
+        "data": [
+          {
+            "schema_version": "1.0",
+            "belief_id": "b_000001",
+            "subject": "path_A",
+            "predicate": "status",
+            "object": "clear",
+            "source": "default_map",
+            "confidence": 1.0,
+            "timestamp": "2026-10-03T09:15:00Z",
+            "perspective": "historical",
+            "status": "active",
+            "valid_from": "2026-10-03T09:15:00Z",
+            "valid_to": null,
+            "supersedes": null
+          }
+        ],
+        "error": null,
+        "timestamp": "2026-11-23T02:30:10Z"
+      }
+    },
+    {
+      "step": 2,
+      "tool": "read_lidar",
+      "args": {
+        "direction": "front"
+      },
+      "result": {
+        "schema_version": "1.0",
+        "tool": "read_lidar",
+        "ok": true,
+        "data": {
+          "schema_version": "1.0",
+          "sensor": "lidar_front",
+          "value": 12,
+          "unit": "cm",
+          "status": "blocked",
+          "timestamp": "2026-10-03T09:16:00Z",
+          "confidence": 0.98
+        },
+        "error": null,
+        "timestamp": "2026-10-03T09:16:00Z"
+      }
+    },
+    {
+      "step": 3,
+      "tool": "downgrade_belief",
+      "args": {
+        "belief_id": "b_000001",
+        "new_confidence": 0.3,
+        "reason": "Live lidar indicates blocked"
+      },
+      "result": {
+        "schema_version": "1.0",
+        "tool": "downgrade_belief",
+        "ok": true,
+        "data": {
+          "schema_version": "1.0",
+          "belief_id": "b_000004",
+          "subject": "path_A",
+          "predicate": "status",
+          "object": "clear",
+          "source": "default_map",
+          "confidence": 0.3,
+          "timestamp": "2026-11-23T02:30:22Z",
+          "perspective": "historical",
+          "status": "active",
+          "valid_from": "2026-11-23T02:30:22Z",
+          "valid_to": null,
+          "supersedes": "b_000001"
+        },
+        "error": null,
+        "timestamp": "2026-11-23T02:30:22Z"
+      },
+      "guard": {
+        "overridden": {
+          "new_confidence": {
+            "model_value": 0.5,
+            "used": 0.3
+          }
+        }
+      }
+    },
+    {
+      "step": 4,
+      "tool": "update_belief",
+      "args": {
+        "confidence": 0.98,
+        "object": "blocked",
+        "perspective": "agent_sensor",
+        "predicate": "status",
+        "reason": "Live lidar indicates blocked",
+        "source": "lidar_front",
+        "subject": "path_A"
+      },
+      "result": {
+        "schema_version": "1.0",
+        "tool": "update_belief",
+        "ok": true,
+        "data": {
+          "schema_version": "1.0",
+          "belief_id": "b_000005",
+          "subject": "path_A",
+          "predicate": "status",
+          "object": "blocked",
+          "source": "lidar_front",
+          "confidence": 0.98,
+          "timestamp": "2026-11-23T02:30:24Z",
+          "perspective": "agent_sensor",
+          "status": "active",
+          "valid_from": "2026-11-23T02:30:24Z",
+          "valid_to": null,
+          "supersedes": "b_000004"
+        },
+        "error": null,
+        "timestamp": "2026-11-23T02:30:24Z"
+      }
+    }
+  ],
+  "model_calls": 6,
+  "evidence_nudges": 0,
+  "claim_nudges": 1,
+  "claim_refusals": [
+    {
+      "attempt": 1,
+      "text": "No, my route is not clear.  \nMy stored belief says the path is clear (status: clear, source: default_map, confidence 1.0, perspective: historical).  \nMy live lidar reading indicates the path is blocked (status: blocked, confidence 0.98).  \nI have downgraded the stored belief and updated my belief graph.  \nMemory status: b_000005 (lidar_front) is recorded as active.",
+      "problems": [
+        "you wrote belief(s) b_000004 but your answer does not name them; name every belief you downgraded or recorded"
+      ]
+    }
+  ],
+  "answer_source": "llm",
+  "answer": "No, my route is not clear.  \nMy stored belief says the path is clear (status: clear, source: default_map, confidence 1.0, perspective: historical).  \nMy live lidar reading indicates the path is blocked (status: blocked, confidence 0.98).  \nI downgraded belief b_000001 to b_000004 and recorded a new belief b_000005.  \nMemory status: b_000005 (lidar_front) is recorded as active.",
+  "answer_normalized": true,
+  "error": null
+}

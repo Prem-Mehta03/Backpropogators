@@ -8,7 +8,8 @@ Two rules are enforced here in code, not left to the prompt (Guidelines 2 and 5)
 - the evidence checklist: a final answer is refused until memory and a sensor were consulted;
 - the provenance guard: memory writes must be backed by evidence gathered in this run;
 - the claim check: an answer may not claim a memory write the tool log does not show, and
-  must name every belief the run really wrote.
+  must name every belief the run really wrote. The model gets MAX_CLAIM_REFUSALS retries; after
+  that the answer is a plain summary built from the tool log (answer_source "fallback_summary").
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ from typing import Any
 from procedural.answer_text import normalize_answer_text
 from procedural.checklist import DEFAULT_REQUIRED_EVIDENCE, missing_evidence
 from procedural.claims import unbacked_write_claims
+from procedural.fallback_summary import build_fallback_summary
 from procedural.llm_client import LLMBackend, LLMClientError, LLMResponse, ToolCall
 from procedural.prompts import (
     MISSING_REPLY_NOTE,
@@ -35,6 +37,10 @@ from procedural.update_guard import check_memory_call
 logger = logging.getLogger(__name__)
 
 DEFAULT_MAX_STEPS = 10
+# How many times a refused answer is sent back to the model before the fallback summary is used.
+MAX_CLAIM_REFUSALS = 3
+ANSWER_FROM_MODEL = "llm"
+ANSWER_FROM_FALLBACK = "fallback_summary"
 
 
 @dataclass
@@ -50,6 +56,8 @@ class AgentResult:
     answer_normalized: bool = False
     evidence_nudges: int = 0
     claim_nudges: int = 0
+    answer_source: str = ANSWER_FROM_MODEL
+    claim_refusals: list[dict[str, Any]] = field(default_factory=list)
 
     @property
     def finished(self) -> bool:
@@ -112,11 +120,13 @@ def build_response(
     answer: str,
     error: dict[str, Any] | None = None,
     answer_normalized: bool = False,
+    answer_source: str = ANSWER_FROM_MODEL,
 ) -> AgentResult:
     """Package the state into an AgentResult.
 
     Inputs: state, final answer text ("" on failure), optional error dict from error_result,
-    and whether the answer text was changed by normalize_answer_text.
+    whether the answer text was changed by normalize_answer_text, and where the answer came
+    from ("llm", or "fallback_summary" when it was built from the tool log).
     """
     return AgentResult(
         question=state.question,
@@ -128,7 +138,16 @@ def build_response(
         answer_normalized=answer_normalized,
         evidence_nudges=state.evidence_nudges,
         claim_nudges=state.claim_nudges,
+        answer_source=answer_source,
+        claim_refusals=state.claim_refusals,
     )
+
+
+def _fallback(state: AgentState, reason: str) -> AgentResult:
+    """End the run with a summary built from the tool log instead of the model's answer."""
+    logger.warning("Using the fallback summary: %s", reason)
+    summary = build_fallback_summary(state.question, state.tool_log)
+    return build_response(state, summary, answer_source=ANSWER_FROM_FALLBACK)
 
 
 def _failure(state: AgentState, code: str, message: str) -> AgentResult:
@@ -181,7 +200,10 @@ def run_agent(
     require_written_ids=True also refuses an answer that does not name every belief the run
     wrote (live runs switch this on; scripted test answers need not name ids).
     A premature answer is kept in the history, refused, and the model is told what is missing
-    (counted in AgentResult.evidence_nudges). Output: AgentResult.
+    (counted in AgentResult.evidence_nudges). An answer the claim check refuses is sent back at
+    most MAX_CLAIM_REFUSALS times (claim_nudges); then the answer is a summary built from the
+    tool log, answer_source is "fallback_summary" and every refused text is in claim_refusals.
+    Output: AgentResult.
     Error codes in result.error: STEP_LIMIT (no accepted final answer within max_steps model
     calls; the message names any missing evidence), INTERNAL (the LLM API failed). Tool-level
     errors are not run errors: the model sees them and may recover.
@@ -231,6 +253,19 @@ def run_agent(
                 continue
             unbacked = unbacked_write_claims(text, state.tool_log, require_written_ids)
             if unbacked:
+                state.claim_refusals.append(
+                    {
+                        "attempt": len(state.claim_refusals) + 1,
+                        "text": text,
+                        "problems": unbacked,
+                    }
+                )
+                if state.claim_nudges >= MAX_CLAIM_REFUSALS:
+                    return _fallback(
+                        state,
+                        f"answer still refused after {MAX_CLAIM_REFUSALS} retries: "
+                        + "; ".join(unbacked),
+                    )
                 state.claim_nudges += 1
                 logger.warning(
                     "Answer refused, unbacked claims: %s", "; ".join(unbacked)
@@ -245,6 +280,10 @@ def run_agent(
 
     message = f"No final answer after {max_steps} model calls"
     missing = missing_evidence(state.tool_log, required_evidence)
+    if state.claim_refusals and not missing:
+        return _fallback(
+            state, f"model calls ran out after {state.claim_nudges} refusals"
+        )
     if missing:
         message += f"; required evidence never gathered: {_missing_note(missing)}"
     return _failure(state, "STEP_LIMIT", message)

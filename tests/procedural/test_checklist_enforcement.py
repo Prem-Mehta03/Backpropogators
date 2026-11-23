@@ -136,7 +136,13 @@ def test_empty_required_evidence_disables_the_checklist() -> None:
 # ---- provenance guard as a pure function ------------------------------------------------------
 
 BELIEF = {"belief_id": "b_000123", "confidence": 1.0}
-LIDAR = {"sensor": "lidar_front", "confidence": 0.98, "value": 12, "status": "blocked"}
+LIDAR = {
+    "sensor": "lidar_front",
+    "unit": "cm",
+    "confidence": 0.98,
+    "value": 12,
+    "status": "blocked",
+}
 KNOWN = ("path_A",)
 LOG = [entry("query_belief", data=[BELIEF]), entry("read_lidar", data=LIDAR)]
 SENSOR_UPDATE = {
@@ -178,7 +184,10 @@ def test_downgrade_that_already_matches_the_rule_is_not_flagged() -> None:
 
 
 def test_downgrade_value_scales_with_the_old_confidence() -> None:
-    log = [entry("query_belief", data=[{"belief_id": "b_000009", "confidence": 0.8}])]
+    log = [
+        entry("query_belief", data=[{"belief_id": "b_000009", "confidence": 0.8}]),
+        entry("read_lidar", data=LIDAR),
+    ]
     d = check_memory_call(
         "downgrade_belief", {"belief_id": "b_000009", "new_confidence": 0.1}, log
     )
@@ -210,7 +219,7 @@ def test_user_and_third_party_views_are_never_downgraded() -> None:
 
 def test_a_historical_belief_can_still_be_downgraded() -> None:
     belief = {"belief_id": "b_000001", "confidence": 1.0, "perspective": "historical"}
-    log = [entry("query_belief", data=[belief])]
+    log = [entry("query_belief", data=[belief]), entry("read_lidar", data=LIDAR)]
     d = check_memory_call(
         "downgrade_belief", {"belief_id": "b_000001", "new_confidence": 0.1}, log
     )

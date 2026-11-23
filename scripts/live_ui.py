@@ -264,6 +264,8 @@ class LiveSession:
             "model_calls": result.model_calls,
             "evidence_nudges": result.evidence_nudges,
             "claim_nudges": result.claim_nudges,
+            "claim_refusals": plain(result.claim_refusals),
+            "answer_source": result.answer_source,
             "answer_normalized": result.answer_normalized,
         }
         emit(final)

@@ -95,6 +95,8 @@ def main(argv: list[str] | None = None) -> int:
         "model_calls": result.model_calls,
         "evidence_nudges": result.evidence_nudges,
         "claim_nudges": result.claim_nudges,
+        "claim_refusals": result.claim_refusals,
+        "answer_source": result.answer_source,
         "answer": result.answer,
         "answer_normalized": result.answer_normalized,
         "error": result.error,
@@ -108,6 +110,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"model calls: {result.model_calls}")
     print(f"evidence nudges: {result.evidence_nudges}")
     print(f"claim nudges: {result.claim_nudges}")
+    print(f"answer source: {result.answer_source}")
     print(f"unknown subjects used: {unknown}")
     print(f"error: {result.error}")
     print(f"answer:\n{result.answer}")

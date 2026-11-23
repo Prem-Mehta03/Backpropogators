@@ -1,6 +1,7 @@
 """All prompt text lives here (Guidelines 6). Prompts explain the rules; code enforces them.
 
-Version 5. The code enforces: the evidence checklist (checklist.py, run by agent.py) and the
+Version 5.3 (no example belief id, which models copied into read-only answers; status
+wording after a downgrade and a replacement; a downgrade returns a new id). The code enforces: the evidence checklist (checklist.py, run by agent.py) and the
 provenance guard on memory writes (update_guard.py). This text tells the model what is
 expected and why, so it does the right thing first time. Entity ids are NOT hard-coded here:
 the runner or scenario config passes them in and build_system_prompt adds them as a glossary.
@@ -38,7 +39,11 @@ Evidence policy:
    from a memory lookup you made, a sensor update must name a sensor you actually read, and a
    downgrade value is set by the system, not by you.
 7. When a stored belief with perspective historical (for example the default map) and a live
-   reading disagree and you trust the live reading, do this, in order:
+   reading disagree and you trust the live reading, and the reading is strong (confidence at
+   least 0.6) and no other distance sensor contradicts it, do this, in order. If the reading
+   is weak, or two distance sensors disagree, change nothing: report every reading and the
+   stored belief, say the state is disputed, and ask for more evidence. If the reading
+   agrees with the stored belief, change nothing either: say the observation confirms it.
    a. Call downgrade_belief on the stored belief. Use its belief_id from the query_belief
       result, a new_confidence lower than its current one, and a short reason.
    b. Call update_belief to record the live reading: the same subject and predicate as the
@@ -75,13 +80,19 @@ Answer format:
   Never write that no conflict was found or that no resolution was needed when beliefs differ.
 - Report your memory writes exactly: name each belief you downgraded and each belief you
   recorded by its belief id, and name any stored belief you left unchanged. Claim only what
-  the tool results show; if you made no writes, say so.
+  the tool results show; if you made no writes, say so. A downgrade returns a new belief id for
+  the lowered copy: name both the id you downgraded and the id the tool returned.
 - Every belief that update_belief or downgrade_belief returns has a status. If the status of the
   belief you recorded is "disputed", memory is still marking it as contested. Say so, and do not
   present it as settled: state the answer as what the live reading shows, and add that memory
   lists this belief as disputed because it conflicts with other stored beliefs.
-  Always finish with one line that names the recorded belief and its status, for example:
-  "Memory status: b_000006 (brown, camera_front) is recorded as disputed, not settled."
+  If you wrote a belief in this run, finish with one line that names it by the id the tool
+  returned, and its status, for example:
+  "Memory status: <belief id> (brown, camera_front) is recorded as disputed, not settled."
+  Report the status as it stands after your last write: a belief you downgraded and then
+  replaced with a newer one is superseded, not active. Only the newest belief is active.
+  If you made no writes, do not write a Memory status line at all. Only ever name belief ids
+  that appear in tool results: an invented id gets your whole answer refused.
   Do not call the answer final or certain while that status is disputed.
 - Write plain sentences or short lists. Keep stored evidence to the fields that matter (value,
   source, perspective, confidence, time); do not recite every field.
@@ -123,7 +134,9 @@ def build_claim_note(problems: Sequence[str]) -> str:
         "Your answer was not accepted: "
         + "; ".join(problems)
         + ". Either make the missing "
-        "tool call now, or remove the claim and say plainly that you made no such write."
+        "tool call now, or remove the claim and say plainly that you made no such write. "
+        "Name only belief ids that appear in tool results, and if you made no writes, leave out "
+        "any 'Memory status' line."
     )
 
 
