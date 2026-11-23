@@ -24,13 +24,17 @@ def _fake_api(raw: Any = None, error: Exception | None = None) -> SimpleNamespac
             raise error
         return raw
 
-    api = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
+    api = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=create))
+    )
     api.calls = calls  # type: ignore[attr-defined]
     return api
 
 
 def _tool_call(name: str, args: str) -> SimpleNamespace:
-    return SimpleNamespace(id="call_1", function=SimpleNamespace(name=name, arguments=args))
+    return SimpleNamespace(
+        id="call_1", function=SimpleNamespace(name=name, arguments=args)
+    )
 
 
 def test_plain_reply_is_returned_without_tools_in_request() -> None:
@@ -42,17 +46,25 @@ def test_plain_reply_is_returned_without_tools_in_request() -> None:
 
 def test_temperature_zero_and_tool_call_parsed() -> None:
     api = _fake_api(_raw(None, [_tool_call("read_lidar", '{"direction": "front"}')]))
-    resp = LLMClient(client=api).chat([{"role": "user", "content": "x"}], tools=[{"t": 1}])
+    resp = LLMClient(client=api).chat(
+        [{"role": "user", "content": "x"}], tools=[{"t": 1}]
+    )
     assert api.calls[0]["temperature"] == 0.0
     assert api.calls[0]["tool_choice"] == "auto"
     call = resp.tool_calls[0]
-    assert (call.id, call.name, call.arguments) == ("call_1", "read_lidar", {"direction": "front"})
+    assert (call.id, call.name, call.arguments) == (
+        "call_1",
+        "read_lidar",
+        {"direction": "front"},
+    )
     assert call.arguments_error is None
 
 
 def test_tool_choice_none_is_passed_through() -> None:
     api = _fake_api(_raw("done"))
-    LLMClient(client=api).chat([{"role": "user", "content": "x"}], [{"t": 1}], tool_choice="none")
+    LLMClient(client=api).chat(
+        [{"role": "user", "content": "x"}], [{"t": 1}], tool_choice="none"
+    )
     assert api.calls[0]["tool_choice"] == "none"
 
 
@@ -67,7 +79,10 @@ def test_malformed_arguments_are_kept_not_raised(bad: str) -> None:
 def test_empty_arguments_mean_no_arguments() -> None:
     api = _fake_api(_raw(None, [_tool_call("read_lidar", "")]))
     resp = LLMClient(client=api).chat([{"role": "user", "content": "x"}])
-    assert resp.tool_calls[0].arguments == {} and resp.tool_calls[0].arguments_error is None
+    assert (
+        resp.tool_calls[0].arguments == {}
+        and resp.tool_calls[0].arguments_error is None
+    )
 
 
 def test_api_failure_becomes_llm_client_error() -> None:

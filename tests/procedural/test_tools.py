@@ -25,8 +25,24 @@ CONTRACT = {
     "query_belief": ({"subject", "predicate", "perspective"}, {"subject"}),
     "get_belief_history": ({"subject", "predicate"}, {"subject"}),
     "update_belief": (
-        {"subject", "predicate", "object", "source", "confidence", "perspective", "reason"},
-        {"subject", "predicate", "object", "source", "confidence", "perspective", "reason"},
+        {
+            "subject",
+            "predicate",
+            "object",
+            "source",
+            "confidence",
+            "perspective",
+            "reason",
+        },
+        {
+            "subject",
+            "predicate",
+            "object",
+            "source",
+            "confidence",
+            "perspective",
+            "reason",
+        },
     ),
     "downgrade_belief": (
         {"belief_id", "new_confidence", "reason"},
@@ -53,7 +69,11 @@ VALID_ARGS: dict[str, dict[str, Any]] = {
         "perspective": "agent_sensor",
         "reason": "live reading",
     },
-    "downgrade_belief": {"belief_id": "b_000123", "new_confidence": 0.3, "reason": "conflict"},
+    "downgrade_belief": {
+        "belief_id": "b_000123",
+        "new_confidence": 0.3,
+        "reason": "conflict",
+    },
     "detect_conflict": {"subject": "path_A", "predicate": "status"},
     "read_lidar": {},
     "read_camera": {"target": "box_01"},
@@ -89,12 +109,19 @@ def test_valid_call_reaches_the_stub_and_returns_a_valid_envelope(name: str) -> 
 
 
 def test_stub_data_conforms_to_the_contract_models() -> None:
-    for name in ("query_belief", "get_belief_history", "update_belief", "downgrade_belief"):
+    for name in (
+        "query_belief",
+        "get_belief_history",
+        "update_belief",
+        "downgrade_belief",
+    ):
         data = call_tool(name, VALID_ARGS[name], REGISTRY)["data"]
         for item in data if isinstance(data, list) else [data]:
             Belief.model_validate(item)
     for name in ("read_lidar", "read_camera", "get_position", "move_forward", "turn"):
-        SensorReading.model_validate(call_tool(name, VALID_ARGS[name], REGISTRY)["data"])
+        SensorReading.model_validate(
+            call_tool(name, VALID_ARGS[name], REGISTRY)["data"]
+        )
 
 
 @pytest.mark.parametrize(
@@ -105,7 +132,11 @@ def test_stub_data_conforms_to_the_contract_models() -> None:
         ("query_belief", {"subject": 5}, "type string"),
         ("query_belief", {"subject": "  "}, "must not be empty"),
         ("query_belief", {"subject": "a", "perspective": "narrator"}, "one of"),
-        ("downgrade_belief", {"belief_id": "123", "new_confidence": 0.1, "reason": "r"}, "pattern"),
+        (
+            "downgrade_belief",
+            {"belief_id": "123", "new_confidence": 0.1, "reason": "r"},
+            "pattern",
+        ),
         (
             "downgrade_belief",
             {"belief_id": "b_000123", "new_confidence": 1.5, "reason": "r"},
@@ -162,21 +193,32 @@ def test_unknown_tool_is_invalid_argument() -> None:
 
 def test_known_tool_that_is_not_connected_is_internal() -> None:
     out = call_tool("read_lidar", {}, {})
-    assert out["error"]["code"] == "INTERNAL" and "not connected" in out["error"]["message"]
+    assert (
+        out["error"]["code"] == "INTERNAL"
+        and "not connected" in out["error"]["message"]
+    )
 
 
 def test_error_envelope_from_the_layer_passes_through_unchanged() -> None:
     out = call_tool("query_belief", {"subject": "nothing_here"}, REGISTRY)
-    assert out["ok"] is False and out["error"]["code"] == "NOT_FOUND" and out["data"] is None
+    assert (
+        out["ok"] is False
+        and out["error"]["code"] == "NOT_FOUND"
+        and out["data"] is None
+    )
 
 
 def test_exceptions_and_invalid_envelopes_become_internal() -> None:
     def boom(**_: Any) -> dict[str, Any]:
         raise RuntimeError("x")
 
-    assert call_tool("read_lidar", {}, {"read_lidar": boom})["error"]["code"] == "INTERNAL"
     assert (
-        call_tool("read_lidar", {}, {"read_lidar": lambda **_: {"nope": 1}})["error"]["code"]
+        call_tool("read_lidar", {}, {"read_lidar": boom})["error"]["code"] == "INTERNAL"
+    )
+    assert (
+        call_tool("read_lidar", {}, {"read_lidar": lambda **_: {"nope": 1}})["error"][
+            "code"
+        ]
         == "INTERNAL"
     )
 
@@ -184,7 +226,9 @@ def test_exceptions_and_invalid_envelopes_become_internal() -> None:
 def test_envelope_naming_a_different_tool_is_internal() -> None:
     wrong = {"read_lidar": lambda **_: REGISTRY["get_position"]()}
     out = call_tool("read_lidar", {}, wrong)
-    assert out["error"]["code"] == "INTERNAL" and "get_position" in out["error"]["message"]
+    assert (
+        out["error"]["code"] == "INTERNAL" and "get_position" in out["error"]["message"]
+    )
 
 
 def test_error_result_is_a_valid_envelope_and_rejects_unknown_codes() -> None:
@@ -199,17 +243,26 @@ def _properties(name: str) -> dict[str, Any]:
     return schema["function"]["parameters"]["properties"]
 
 
-def test_query_belief_descriptions_steer_the_model_away_from_the_route_mistake() -> None:
+def test_query_belief_descriptions_steer_the_model_away_from_the_route_mistake() -> (
+    None
+):
     props = _properties("query_belief")
     assert "Exact entity id" in props["subject"]["description"]
     assert "never a description" in props["subject"]["description"]
     for optional in ("predicate", "perspective"):
         assert "Leave it out" in props[optional]["description"]
         assert "hides beliefs that exist" in props[optional]["description"]
-    description = next(x for x in TOOL_SCHEMAS if x["function"]["name"] == "query_belief")
+    description = next(
+        x for x in TOOL_SCHEMAS if x["function"]["name"] == "query_belief"
+    )
     assert "NOT_FOUND" in description["function"]["description"]
 
 
 def test_every_memory_tool_asks_for_an_exact_entity_id() -> None:
-    for name in ("query_belief", "get_belief_history", "update_belief", "detect_conflict"):
+    for name in (
+        "query_belief",
+        "get_belief_history",
+        "update_belief",
+        "detect_conflict",
+    ):
         assert "Exact entity id" in _properties(name)["subject"]["description"], name

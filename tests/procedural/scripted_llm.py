@@ -34,7 +34,9 @@ class ScriptedLLM:
         return item
 
 
-def call(name: str, args: dict[str, Any] | None = None, call_id: str = "call_1") -> LLMResponse:
+def call(
+    name: str, args: dict[str, Any] | None = None, call_id: str = "call_1"
+) -> LLMResponse:
     """A scripted reply asking for one tool."""
     return LLMResponse(None, [ToolCall(call_id, name, args or {})])
 

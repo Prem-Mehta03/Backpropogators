@@ -27,19 +27,26 @@ def test_real_sensorimotor_world_is_preferred_when_it_provides_the_tool() -> Non
             return {"read_lidar": marker}
 
     registry, sources = build_tool_registry(sensorimotor=World())
-    assert registry["read_lidar"] is marker and sources["read_lidar"] == SENSORIMOTOR_SOURCE
+    assert (
+        registry["read_lidar"] is marker
+        and sources["read_lidar"] == SENSORIMOTOR_SOURCE
+    )
     # tools the world does not provide are filled in by the fake, and logged as such
     assert sources["read_camera"] == "tests.procedural.fakes.sensorimotor_fake"
 
 
-def test_missing_sensorimotor_factory_falls_back_to_fakes(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_missing_sensorimotor_factory_falls_back_to_fakes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setitem(sys.modules, "sensorimotor", types.ModuleType("sensorimotor"))
     _, sources = build_tool_registry()
     for name in ("read_lidar", "read_camera", "get_position", "move_forward", "turn"):
         assert sources[name].startswith("tests.procedural.fakes")
 
 
-def test_bad_scenario_raises_runtime_error_with_the_name(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_bad_scenario_raises_runtime_error_with_the_name(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     def boom(scenario: str, seed: int | None = None) -> None:
         raise ValueError("no such scenario")
 

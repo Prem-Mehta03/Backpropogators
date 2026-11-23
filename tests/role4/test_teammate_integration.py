@@ -48,13 +48,17 @@ def test_unsupported_value_is_detected_as_teammate_guard_gap(tmp_path):
     assert any(b["perspective"] == "agent_sensor" and b["object"] == "clear" for b in record["state_after"]["memory"]["nodes"])
 
 
-def test_blocked_reading_does_not_itself_prevent_actual_movement(tmp_path):
+def test_recheck_cancels_a_move_toward_a_blocked_path(tmp_path):
+    """P6 closed the old gap: a blocked path no longer lets the model move the robot."""
     record = run_teammate_case("S08", tmp_path / "movement", "movement_attempt")
-    assert record["expectation_met"] and not record["evaluation"]["passed"]
+    assert record["expectation_met"] and record["evaluation"]["passed"]
     movement = next(d for d in record["dispatch_outcomes"] if d["tool"] == "move_forward")
-    assert movement["dispatched"] and not movement["rejected_before_dispatch"] and movement["movement_observed"]
+    assert movement["rejected_before_dispatch"] and not movement["dispatched"] and not movement["movement_observed"]
     assert movement["requested_arguments"]["distance_cm"] == 20
-    assert record["state_after"]["environment"]["robot"]["x"] == 11
+    assert movement["agent_result"]["error"]["code"] == "CONFLICT"
+    assert "recheck before action" in movement["agent_result"]["error"]["message"]
+    assert movement["guard"]["recheck"]["passed"] is False
+    assert record["state_before"]["environment"]["robot"] == record["state_after"]["environment"]["robot"]
 
 
 def test_canonical_mapping_preserves_validity_and_rejects_reference_fields(tmp_path):
@@ -117,6 +121,7 @@ def test_fresh_runs_are_isolated_and_outputs_never_overwrite(tmp_path):
     first = run_teammate_case("S08", tmp_path / "first", "movement_attempt")
     second = run_teammate_case("S08", tmp_path / "second")
     assert first["state_before"] == second["state_before"]
-    assert first["state_after"]["environment"]["robot"] != second["state_after"]["environment"]["robot"]
+    assert first["state_after"]["environment"]["robot"] == second["state_after"]["environment"]["robot"]
+    assert first["agent"]["tool_calls"][-1]["guard"]["recheck"]["passed"] is False  # only the first run tried to move
     with pytest.raises(FileExistsError):
         run_teammate_case("S08", tmp_path / "second")
