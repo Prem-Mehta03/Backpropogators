@@ -253,6 +253,10 @@
         beam.rotation.z = Math.PI / 2;
         beam.position.set(length / 2, 0.3, 0);
         this.cast.add(beam);
+        const lidarLabel = observationLabel(`lidar: ${reading.value} cm (${reading.status})`);
+        lidarLabel.position.set(Math.max(length, 0.5), 0.62, 0);
+        lidarLabel.scale.multiplyScalar(0.7);
+        this.cast.add(lidarLabel);
         if (reading.status === "blocked") {
           const hit = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 12),
             new THREE.MeshBasicMaterial({color: 0xff3857, transparent: true}));
@@ -265,12 +269,27 @@
           const fan = cone(cm(reading.value), heading(7.5), 0x6fe89d, 0.63);
           fan.position.y = 0.35;
           this.cast.add(fan);
+          const stop = cm(reading.value);
+          const hit = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 12),
+            new THREE.MeshBasicMaterial({color: 0x6fe89d, transparent: true}));
+          hit.position.set(stop, 0.35, 0);
+          this.cast.add(hit);
+          const label = observationLabel(`ultrasonic: ${reading.value} cm (${reading.status})`);
+          label.position.set(Math.max(stop, 0.5), 0.85, 0);
+          label.scale.multiplyScalar(0.7);
+          this.cast.add(label);
         }
       } else if (tool.name === "read_camera" && sensors.camera_front) {
         const reading = sensors.camera_front;
         const fan = cone(cm(reading.range_cm || 300), heading((reading.fov_deg || 60) / 2),
           reading.value?.color ? 0x7c93ff : 0x999faf, 0.3);
         this.cast.add(fan);
+        if (!reading.value?.color) {
+          const empty = observationLabel("camera: nothing in view");
+          empty.position.set(1.5, 0.55, 0);
+          empty.scale.multiplyScalar(0.7);
+          this.cast.add(empty);
+        }
         const found = world.objects.find(item => item.object_id === reading.value?.object_id && reading.value?.color);
         if (found) {
           const size = cm(found.size_cm || 30) + 0.04;
