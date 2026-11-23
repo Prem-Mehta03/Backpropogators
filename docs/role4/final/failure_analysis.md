@@ -1,5 +1,7 @@
 # Failure Analysis
 
+The examples and expected failure outputs below describe the 20 November PR #3 baseline. On the current final stretch, the contradictory write and unsafe or stale movement attempts are passing regression checks for a refused action. See the [current review notes](../../final_stretch/prem_pr4_review.md) before comparing or reporting older outcomes.
+
 Start at the first boundary where actual evidence differs from the scenario rule. A malformed memory envelope belongs with the declarative layer. A wrong reading or action receipt belongs with the sensorimotor layer. Skipping a required call, dispatching an unauthorized action or using a genuine reading to justify an unsupported update belongs with the procedural layer. Investigate a difference between the raw recorded result and the harness verdict in Role 4 before assigning it elsewhere. When the intended rule is unclear, record the owner decision separately from the measured behavior.
 
 | Finding | Reproduction and first observed divergence | Layer and follow-up |

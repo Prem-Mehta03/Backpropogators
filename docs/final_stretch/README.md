@@ -6,32 +6,42 @@ work. The earlier Role 4 reference suite and its dated results remain a
 record of the prior milestone. T01–T10 in `evaluation/runner.py` use the
 newer requirements.
 
+The 23 November capture is pinned to `04d6f63`. It measured 575 offline
+tests and 179 subtests, and its T01–T10 results were 30/30 scripted passes
+with zero fallback answers. The 405-test count and 45/50 raw verdicts in
+PR #3 refer to the 20 November baseline. That raw total includes five
+unsupported-temperature diagnostics. The corresponding behavior score was
+40/50 planned cases and 40/45 eligible attempts. See [the review follow-up](prem_pr4_review.md)
+and [the measurement breakdown](../role4/final/README.md).
+
+- [Pinned acceptance results](https://github.com/Prem-Mehta03/Backpropogators/blob/04d6f63c4ee17bcdf870fff302721e91ef9c0218/evaluation/results/results_table.md)
+- [Pinned individual logs and replay traces](https://github.com/Prem-Mehta03/Backpropogators/tree/04d6f63c4ee17bcdf870fff302721e91ef9c0218/evaluation/logs/final/verified_20261123)
+- [PDF report build instructions](report_source.md)
+
 ## Offline suite and playback
 
-Use Python 3.10 or later with the repository requirements available. From
-the repository root:
+Use Python 3.10 or later in a project environment with the repository
+requirements available. From the repository root:
 
-```powershell
+```sh
 python -B scripts/run_role4_offline_checks.py --suite full
 python -B -m evaluation.runner --fake --repeats 3 --output-dir evaluation/logs/final/rehearsal
 python -B -m evaluation.summarize --logs evaluation/logs/final/rehearsal --output-dir evaluation/logs/final/rehearsal-results
 python -B -m evaluation.runner --fake --tests B_APPROACH --output-dir evaluation/logs/final/demo
 ```
 
-On the review machine, both runner commands accept
-`--dependency-path ../.venv/Lib/site-packages` to use the existing NetworkX
-installation. Use the installed Miniconda Python binary if the Windows
-`python` alias points to the Store shim. The offline test launcher explicitly
-excludes the live agent test.
+Use `python` from your activated project environment. On Windows, if that
+command opens the Store, use the environment's `Scripts/python.exe` directly.
+An existing split dependency setup can use `--dependency-path <site-packages>`.
+The offline test launcher excludes the live agent test and guards against
+network calls.
 
 Each test directory has a Guidelines log and an `agent_run_*.json` trace.
 The trace retains the model's requested tools, automatic calls, actual
-envelopes and one frame per tool plus frame zero. To replay a saved trace:
+envelopes and one frame per tool plus frame zero. To replay the pinned T10 trace:
 
-```powershell
-$trace = Get-ChildItem evaluation/logs/final/verified_20261123 -Recurse -Filter 'agent_run_*.json' |
-    Where-Object { $_.Directory.Name -like 'T10__*' } | Select-Object -First 1
-python -B scripts/live_ui.py --replay $trace.FullName --port 8765
+```sh
+python -B scripts/live_ui.py --replay evaluation/logs/final/verified_20261123/T10__20261123T052100961327Z-01/agent_run_20261123T052100961327Z-01.json --port 8765
 ```
 
 Open `http://127.0.0.1:8765` after starting the server. For the four
@@ -47,19 +57,45 @@ using the four traces, the actual `evaluation/results/summary.json`, Pillow,
 and Blender with H.264 support. See its `--help` for input and output paths.
 Use the [narration outline](video_narration.md) for the team voice-over.
 
-The review run passed 575 offline tests and 179 subtests with two pre-existing
-collection warnings. The earlier reference demos and integration controls also
-ran successfully. All four saved traces load through the replay parser, and
+The captured run had two pre-existing collection warnings. The earlier
+reference demos and integration controls also ran successfully. All four
+saved traces load through the replay parser, and
 the browser viewer's JavaScript passes a syntax check. Interactive viewer
 rendering remains to be checked on a browser. The captioned video was rendered
 separately from the same frame data.
+
+## Fixture choices
+
+The release-facing Scenario A is T01. It loads `default_map` at 1.00, records
+the 12 cm blocked observation, then explicitly downgrades and updates. The
+pinned trace shows the 1.00 map retained in history, its 0.30 successor retained
+in history, and an active 0.98 `lidar_front` belief linking back to that successor.
+[T01 trace](https://github.com/Prem-Mehta03/Backpropogators/blob/04d6f63c4ee17bcdf870fff302721e91ef9c0218/evaluation/logs/final/verified_20261123/T01__20261123T052100961327Z-01/agent_run_20261123T052100961327Z-01.json)
+
+The canonical S01 regression uses the same seed and tool sequence. Its
+reference counterpart preserves the earlier fixture for comparison.
+
+Scenario B uses `box_01` and keeps these values in separate active beliefs:
+
+| Value | Source | Perspective | Confidence |
+| --- | --- | --- | ---: |
+| red | `user` | `user` | 0.90 |
+| blue | `bot_02` | `third_party` | 0.80 |
+| brown | `camera_front` | `agent_sensor` | 0.90 |
+
+The camera value is the apparent color produced by the yellow-light simulator
+fixture. The third-party report stays attributed to its source. The separately
+recorded B-approach demo adds movement and a second camera read.
+[T03 trace](https://github.com/Prem-Mehta03/Backpropogators/blob/04d6f63c4ee17bcdf870fff302721e91ef9c0218/evaluation/logs/final/verified_20261123/T03__20261123T052100961327Z-01/agent_run_20261123T052100961327Z-01.json)
 
 ## Hosted evidence and release
 
 Scripted results and hosted results are different measurement groups. The
 recorded results table shows 3/3 scripted passes per test and zero recorded
-comparable live trials. Once the team authorizes use of its own provisioned
-keys, each owner can run their assigned cases against the same candidate:
+comparable live trials. The review environment has no configured hosted
+model credentials or compatible OpenAI SDK. With those dependencies in
+place, each authorized owner can run their assigned cases against the same
+candidate:
 
 ```powershell
 python -B -m evaluation.runner --live --tests T09,T10 --repeats 3 --output-dir evaluation/logs/final/yash-live
@@ -77,10 +113,9 @@ its API quotas.
 
 The two memory writes are separate tool operations. Each has its own
 transaction. The agent must disclose when just one succeeds. These
-rehearsals cover a simulator and scripted model at fixed seed. They do not
-measure hosted reliability.
+rehearsals measure the simulator and scripted model at a fixed seed.
 
-For final submission, capture the cross-review decisions, verify the
-remote main commit, and attach the real live results. The flash, release
-candidate and final tags are team release decisions. The PDF marks the
-release link pending until the team selects the reviewed commit.
+The PDF sections are drafts for Prem, Vyom and Asvin to check against their
+layer code and the published traces. Their approval, team cross-review,
+hosted evidence and release tags are pending. Record those decisions before
+linking a tagged release in the PDF. See the [review checklist](../role4/final/review_packet.md).

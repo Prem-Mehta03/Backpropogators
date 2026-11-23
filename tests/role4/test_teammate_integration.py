@@ -76,6 +76,45 @@ def test_canonical_mapping_preserves_validity_and_rejects_reference_fields(tmp_p
         canonical_timestamp("2026-10-06T09:00:00")
 
 
+def test_s01_matches_the_demo_seed_and_two_write_chain(tmp_path):
+    record = run_teammate_case("S01", tmp_path / "demo")
+    old, = record["state_before"]["memory"]["nodes"]
+    assert (old["object"], old["source"], old["confidence"]) == ("clear", "default_map", 1.0)
+    calls = record["agent"]["tool_calls"]
+    assert [c["tool"] for c in calls[:4]] == [
+        "query_belief", "read_lidar", "downgrade_belief", "update_belief"
+    ]
+    assert calls[1]["result"]["data"]["value"] == 12
+    initial, lowered, active = record["state_after"]["memory"]["nodes"]
+    assert initial["belief_id"] == old["belief_id"] == lowered["supersedes"]
+    assert initial["valid_to"] == lowered["valid_from"]
+    assert lowered["confidence"] == 0.3 and lowered["status"] == "superseded"
+    assert lowered["valid_to"] == active["valid_from"] and active["supersedes"] == lowered["belief_id"]
+    assert (active["status"], active["source"], active["object"], active["confidence"]) == (
+        "active", "lidar_front", "blocked", 0.98
+    )
+    assert all(token in record["agent"]["answer"] for token in (
+        old["source"], active["source"], lowered["belief_id"], active["belief_id"]
+    ))
+
+
+def test_trace_verifier_requires_actual_automatic_read_boundaries(tmp_path):
+    folder = tmp_path / "movement"
+    record = run_teammate_case("S08", folder, "movement_attempt")
+    events = read_events(folder / "trace.jsonl")
+    move = next(d for d in record["dispatch_outcomes"] if d["tool"] == "move_forward")
+    automatic = [e for e in events if e.event_type in {"teammate_boundary_call", "teammate_boundary_return"}
+                 and (e.payload["call_id"], e.payload["tool"]) == (move["call_id"], "read_lidar")]
+    assert len(automatic) == 2
+    assert trace_consistent(record, events)
+    assert not trace_consistent(record, [event for event in events if event not in automatic])
+    altered = deepcopy(events)
+    recheck_result = next(e for e in altered if e.event_type == "teammate_boundary_return"
+                          and (e.payload["call_id"], e.payload["tool"]) == (move["call_id"], "read_lidar"))
+    recheck_result.payload["raw"]["data"]["value"] = 100
+    assert not trace_consistent(record, altered)
+
+
 def test_artifact_tampering_breaks_delivery_consistency(tmp_path):
     folder = tmp_path / "trace"
     record = run_teammate_case("S01", folder)

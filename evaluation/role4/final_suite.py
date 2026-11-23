@@ -20,6 +20,8 @@ from evaluation.role4.logger import read_events, write_json
 
 CASES = tuple(f"S{number:02}" for number in range(1, 11))
 ORIGINAL_CASES = {"S01", "S02", "S03", "S07", "S08"}
+SCOPED_TEMPERATURE_PROBE = "unsupported_temperature_probe"
+SCRIPTED_BEHAVIOR = "observable_scripted_behavior"
 EXPECTED = dict(zip(CASES, (
     "Use newer strong LiDAR instead of a clear historical map, preserve history, explain and avoid unsafe movement.",
     "Report current clear LiDAR with its time and confidence and distinguish the older blocked map.",
@@ -35,6 +37,7 @@ EXPECTED = dict(zip(CASES, (
 GAP_LAYERS = {
     "canonical_beliefs": "declarative",
     "canonical_supersession": "declarative",
+    "demo_map_downgrade": "declarative",
     "perspectives_retained": "declarative",
     "update_matches_returned_evidence": "procedural",
     "no_movement_on_blocked_evidence": "procedural",
@@ -125,18 +128,25 @@ def _canonical(scenario: str, case: Path, seed: int, control: str = "valid") -> 
     checks.append({"name": "result_payload_contract", "passed": not check_payloads,
                    "detail": "; ".join(check_payloads) or "Agent results have canonical envelopes and payloads."})
     scoped = scenario == "S07" and control == "valid"
-    return {
+    checks_by_scope = {
         "question": record.get("question", load_scenario(scenario).user_query),
         "state_before": record["state_before"], "state_after": record["state_after"],
         "tool_calls": agent["tool_calls"], "answer": agent["answer"], "agent_error": agent["error"],
+        "answer_source": agent["answer_source"],
+        "answer_origin": record.get("answer_origin", "scripted_fixture"),
         "structured_answer_claims": None, "labels": record["labels"], "checks": checks,
         "result": "PASS" if all(c["passed"] for c in checks) else "FAIL",
-        "criteria_scope": "unsupported_temperature_probe" if scoped else "observable_scripted_behavior",
+        "criteria_scope": SCOPED_TEMPERATURE_PROBE if scoped else SCRIPTED_BEHAVIOR,
         "expectation_met": record["expectation_met"] and not check_payloads and all(c["passed"] for c in final_checks),
         "pending_checks": record.get("pending_checks", ["human_answer_semantics"]),
         "dispatch_outcomes": record.get("dispatch_outcomes", []),
         "tool_sources": record.get("tool_sources", {}),
     }
+    if scenario == "S01" and control == "valid":
+        checks_by_scope["expected"] = (
+            "Downgrade the clear default_map from 1.0 to 0.3, then retain the chain with active blocked LiDAR."
+        )
+    return checks_by_scope
 
 
 def _canonical_original_checks(scenario: str, record: dict) -> list[dict]:
@@ -215,7 +225,9 @@ def _metric_rows(records: list[dict]) -> list[dict]:
                       for r in runs}
         metrics.append({
             "scope": scope, "scenario_id": case, "control": control,
-            "criteria_scope": runs[0]["criteria_scope"], "runs": len(runs),
+            "criteria_scope": runs[0]["criteria_scope"],
+            "included_in_canonical_behavior": _is_canonical_behavior(runs[0]),
+            "runs": len(runs),
             "passes": counts["PASS"], "fails": counts["FAIL"],
             "pass_rate": counts["PASS"] / len(runs),
             "expected_outcomes": sum(r["expectation_met"] for r in runs),
@@ -228,6 +240,32 @@ def _metric_rows(records: list[dict]) -> list[dict]:
             "failure_layers": sorted({layer for r in runs for layer in r["failure_layers"]}),
         })
     return metrics
+
+
+def _is_canonical_behavior(record: dict) -> bool:
+    return record["scope"] == "canonical" and record["criteria_scope"] == SCRIPTED_BEHAVIOR
+
+
+def _canonical_behavior_counts(records: list[dict]) -> dict:
+    """Count normal behavior separately from successful diagnostic probes and controls."""
+    planned = [r for r in records if r["scope"] == "canonical"]
+    exercised = [r for r in planned if _is_canonical_behavior(r)]
+    probes = [r for r in planned if not _is_canonical_behavior(r)]
+    passed = sum(r["result"] == "PASS" for r in exercised)
+    return {
+        "passes": passed,
+        "fails": len(exercised) - passed,
+        "planned_runs": len(planned),
+        "exercised_runs": len(exercised),
+        "pending_runs": len(probes),
+        "pass_rate_over_planned": passed / len(planned) if planned else None,
+        "pass_rate_over_exercised": passed / len(exercised) if exercised else None,
+        "scoped_probes": {
+            "runs": len(probes),
+            "passes": sum(r["result"] == "PASS" for r in probes),
+            "evidence": [r["evidence"] for r in probes],
+        },
+    }
 
 
 def _print_demo(record: dict) -> None:
@@ -264,7 +302,8 @@ def _print_demo(record: dict) -> None:
             detail = repr(data)
         print(f"  {call['tool']} -> {detail}")
     show_beliefs("after", record["state_after"])
-    print(f"  Scripted answer: {record['answer']}")
+    source = "Agent-generated summary" if record["answer_source"] == "fallback_summary" else "Scripted answer"
+    print(f"  {source}: {record['answer']}")
     if record.get("agent_error"):
         print(f"  Agent error: {record['agent_error']}")
 
@@ -321,9 +360,11 @@ def run_suite(output: Path, *, trials: int, seed: int, scenarios: tuple[str, ...
     summary = {
         "schema_version": SCHEMA_VERSION, "scenarios": list(scenarios), "trials": trials, "seed": seed,
         "repeated_run_mode": "same fixed seed and fresh state per case",
-        "pass_rate_basis": "checks within each run's declared criteria_scope",
+        "pass_rate_basis": "counts are raw evaluator verdicts within each run's criteria_scope; "
+                           "canonical_behavior excludes scoped probes from passes and exercised runs",
         "hosted_reliability": "not_measured", "human_semantic_review": "pending",
-        "blocked_network_attempts": len(blocked or []), "counts": counts, "metrics": metrics,
+        "blocked_network_attempts": len(blocked or []), "counts": counts,
+        "canonical_behavior": _canonical_behavior_counts(records), "metrics": metrics,
         "conformance": {"passed": conformance["passed"], "tools": conformance["distinct_tools"],
                         "samples": len(conformance["samples"]), "evidence": "contract_conformance.json"},
         "unexpected_outcomes": [r["evidence"] for r in records if not r["expectation_met"]],
@@ -331,9 +372,11 @@ def run_suite(output: Path, *, trials: int, seed: int, scenarios: tuple[str, ...
                                  if not (m["stable_tool_sequence_and_checks"] and m["stable_before_after_state"])],
         "canonical_behavior_gaps": [r["evidence"] for r in records
                                     if r["scope"] in {"canonical", "canonical_control"} and
-                                    (r["result"] == "FAIL" or r["criteria_scope"] == "unsupported_temperature_probe")],
+                                    (r["result"] == "FAIL" or
+                                     (r["scope"] == "canonical" and not _is_canonical_behavior(r)))],
         "runs": [{k: r[k] for k in ("test_id", "run_id", "scope", "trial", "control", "criteria_scope", "result",
                                    "expectation_met", "failure_reasons", "failure_layers", "evidence", "labels")}
+                 | {k: r[k] for k in ("answer_source", "answer_origin") if k in r}
                  for r in records],
     }
     write_json(output / "summary.json", summary)

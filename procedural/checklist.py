@@ -11,7 +11,10 @@ rejected for bad arguments, or one that failed inside our own wrapper, does not 
 from __future__ import annotations
 
 from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import Any
+
+from contracts.models import Belief, SensorReading
 
 SENSOR_TOOLS = ("read_lidar", "read_camera", "get_position")
 DISTANCE_TOOLS = ("read_lidar", "read_ultrasonic")
@@ -24,6 +27,96 @@ DEFAULT_REQUIRED_EVIDENCE: tuple[tuple[str, ...], ...] = (
 
 # Error codes a layer returns when it looked and found nothing: still an attempt at evidence.
 EVIDENCE_ATTEMPT_CODES = ("NOT_FOUND", "SENSOR_UNAVAILABLE", "STORAGE_ERROR")
+
+
+@dataclass(frozen=True)
+class EvidenceCapability:
+    """The property and sensor that the caller has selected for a scoped question."""
+
+    subject: str
+    predicate: str
+    tool: str
+    label: str
+    arguments: tuple[tuple[str, str], ...] = ()
+
+    def __post_init__(self) -> None:
+        if not (self.tool.startswith("read_") or self.tool == "get_position"):
+            raise ValueError("An evidence capability must name a read-only sensor tool")
+
+    def permits(self, tool: str, args: dict[str, Any]) -> bool:
+        """Check that the proposed read is for the caller-selected capability."""
+        if tool == "query_belief":
+            return (
+                args.get("subject") == self.subject
+                and args.get("predicate") in (None, self.predicate)
+                and args.get("perspective") is None
+            )
+        return tool == self.tool and args == dict(self.arguments)
+
+
+def capability_evidence(
+    tool_log: list[dict[str, Any]], capability: EvidenceCapability, registered: Sequence[str]
+) -> tuple[list[str], str | None]:
+    """Report scoped evidence still needed, or furnish a value-free abstention when justified."""
+    beliefs = []
+    queried = False
+    for entry in tool_log:
+        args, result = entry["args"], entry["result"]
+        if entry["tool"] != "query_belief" or not capability.permits(entry["tool"], args):
+            continue
+        if not result["ok"]:
+            queried |= result["error"]["code"] == "NOT_FOUND"
+            continue
+        if isinstance(result["data"], list):
+            try:
+                matches = [Belief.model_validate(row) for row in result["data"]]
+            except ValueError:
+                continue
+            if any(
+                b.subject != capability.subject
+                or (args.get("predicate") is not None and b.predicate != capability.predicate)
+                for b in matches
+            ):
+                continue
+            queried = True
+            beliefs.extend(b for b in matches
+                           if (b.subject, b.predicate) == (capability.subject, capability.predicate))
+    if not queried:
+        return [f"query_belief for {capability.subject}/{capability.predicate}"], None
+
+    if capability.tool not in registered:
+        explanation = "No matching sensor is connected."
+    else:
+        unavailable = False
+        for entry in tool_log:
+            if entry["tool"] != capability.tool or not capability.permits(entry["tool"], entry["args"]):
+                continue
+            result = entry["result"]
+            if not result["ok"]:
+                unavailable |= result["error"]["code"] in ("NOT_FOUND", "SENSOR_UNAVAILABLE")
+                continue
+            try:
+                reading = SensorReading.model_validate(result["data"])
+            except ValueError:
+                continue
+            if reading.status in ("clear", "blocked"):
+                return [], None
+            unavailable |= reading.status == "unknown"
+        if not unavailable:
+            return [capability.tool], None
+        explanation = "The matching sensor returned no usable evidence."
+
+    if any(entry["tool"] in {"update_belief", "downgrade_belief", "move_forward", "move_backward", "turn"}
+           for entry in tool_log):
+        # A short abstention must not conceal a write or action, including a rejected request.
+        return [f"{capability.tool} evidence after a write or action request"], None
+    if any(b.source is None for b in beliefs):
+        memory = "The matching stored claim has no recorded source."
+    elif beliefs:
+        memory = "The matching stored evidence alone does not verify this."
+    else:
+        memory = "Memory returned no matching claim."
+    return [], f"I cannot verify the {capability.label}. {explanation} {memory}"
 
 
 def evidence_attempted(entry: dict[str, Any]) -> bool:

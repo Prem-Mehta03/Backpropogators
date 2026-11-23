@@ -1,4 +1,4 @@
-"""Verify canonical final fixtures and the evidence for their known defects."""
+"""Verify canonical final fixtures and regression evidence for earlier defects."""
 
 import json
 
@@ -28,12 +28,16 @@ def test_final_case_outcomes_and_evidence(scenario, tmp_path):
         "json_jsonl_files_parsed": 4,
     }
     states = result["state_after"]["memory"]["nodes"]
+    assert result["evaluation"]["passed"] and agent["answer"]
+    assert agent["error"] is None
 
     if scenario == "S09":
-        assert result["evaluation"]["failure_reasons"] == ["agent_delivered_scripted_answer"]
         assert result["labels"]["per_layer_backend"]["sensorimotor"] == "not_exercised"
-        assert result["failure_layers"] == {"agent_delivered_scripted_answer": "procedural"}
-        assert agent["error"]["code"] == "STEP_LIMIT"
+        assert result["failure_layers"] == {}
+        assert agent["answer_source"] == "fallback_summary"
+        assert result["answer_origin"] == "agent_generated"
+        assert "no recorded source" in agent["answer"]
+        assert "80" not in agent["answer"]
         query, battery = agent["tool_calls"]
         source = query["result"]["data"][0]
         assert source["source"] is None and source["confidence"] == 0.5
@@ -41,9 +45,6 @@ def test_final_case_outcomes_and_evidence(scenario, tmp_path):
         assert battery["tool"] == "read_battery"
         assert battery["result"]["error"]["code"] == "INVALID_ARGUMENT"
         assert result["dispatch_outcomes"][-1]["rejected_before_dispatch"]
-    else:
-        assert result["evaluation"]["passed"] and agent["answer"]
-        assert agent["error"] is None
 
     if scenario == "S04":
         assert {(b["object"], b["confidence"], b["status"]) for b in states} == {

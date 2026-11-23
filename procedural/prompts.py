@@ -17,6 +17,16 @@ from collections.abc import Mapping, Sequence
 
 PROMPT_VERSION = "v6"  # recorded in every run log so a result can be tied to its prompt
 
+ABSTENTION_SIGNAL = "I cannot verify this with the available evidence."
+
+
+def build_capability_abstention_note() -> str:
+    """Explain how to request a value-free response after a scoped sensor cannot help."""
+    return (
+        "The requested property lacks usable sensor evidence. To end this run, reply "
+        f"with only this sentence: {ABSTENTION_SIGNAL}"
+    )
+
 EVIDENCE_POLICY = """\
 Evidence policy:
 1. Stored beliefs and live observations are different kinds of evidence. Beliefs come from

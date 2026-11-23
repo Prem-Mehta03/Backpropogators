@@ -1,0 +1,290 @@
+{
+  "base_revision": "04d6f63c4ee17bcdf870fff302721e91ef9c0218",
+  "review": "https://github.com/Prem-Mehta03/Backpropogators/pull/3#issuecomment-7104507053",
+  "offline_discovery": {
+    "passed": 593,
+    "warnings": 2,
+    "subtests_passed": 179,
+    "blocked_network_attempts": 0
+  },
+  "pr3_plus_pr4_baseline": {
+    "revision": "f3b37b00ee8e7bec4b27acfcfc0b36a8e68453a0",
+    "passed": 539,
+    "failed": 2,
+    "skipped": 1,
+    "s10_cli_artifact_verification_error": true
+  },
+  "legacy_s_suite": {
+    "trials": 5,
+    "seed": 42,
+    "counts": {
+      "canonical": {
+        "expected_outcomes": 50,
+        "fails": 0,
+        "pass_rate": 1.0,
+        "passes": 50,
+        "runs": 50
+      },
+      "canonical_control": {
+        "expected_outcomes": 15,
+        "fails": 0,
+        "pass_rate": 1.0,
+        "passes": 15,
+        "runs": 15
+      },
+      "reference": {
+        "expected_outcomes": 50,
+        "fails": 0,
+        "pass_rate": 1.0,
+        "passes": 50,
+        "runs": 50
+      },
+      "reference_control": {
+        "expected_outcomes": 10,
+        "fails": 10,
+        "pass_rate": 0.0,
+        "passes": 0,
+        "runs": 10
+      }
+    },
+    "canonical_behavior": {
+      "exercised_runs": 45,
+      "fails": 0,
+      "pass_rate_over_exercised": 1.0,
+      "pass_rate_over_planned": 0.9,
+      "passes": 45,
+      "pending_runs": 5,
+      "planned_runs": 50,
+      "scoped_probes": {
+        "evidence": [
+          "trial_01/canonical/S07/run.json",
+          "trial_02/canonical/S07/run.json",
+          "trial_03/canonical/S07/run.json",
+          "trial_04/canonical/S07/run.json",
+          "trial_05/canonical/S07/run.json"
+        ],
+        "passes": 5,
+        "runs": 5
+      }
+    },
+    "canonical_behavior_gaps": [
+      "trial_01/canonical/S07/run.json",
+      "trial_02/canonical/S07/run.json",
+      "trial_03/canonical/S07/run.json",
+      "trial_04/canonical/S07/run.json",
+      "trial_05/canonical/S07/run.json"
+    ],
+    "conformance": {
+      "evidence": "contract_conformance.json",
+      "passed": true,
+      "samples": 14,
+      "tools": 11
+    },
+    "unexpected_outcomes": [],
+    "unstable_case_groups": []
+  },
+  "strict_exit": 2,
+  "strict_reason": "Five unsupported-temperature diagnostic runs. No canonical behavior control failed.",
+  "v1_1_acceptance": {
+    "scripted_llm": {
+      "runs": 30,
+      "passes": 30,
+      "fallback_count": 0,
+      "models": [
+        "scripted_llm"
+      ],
+      "failing_layers": {}
+    },
+    "live": {
+      "runs": 0,
+      "passes": 0,
+      "fallback_count": 0,
+      "models": [],
+      "failing_layers": {}
+    }
+  },
+  "sample_receipts": {
+    "S01": {
+      "before": [
+        {
+          "belief_id": "b_000001",
+          "source": "default_map",
+          "object": "clear",
+          "confidence": 1.0,
+          "perspective": "historical",
+          "status": "active",
+          "supersedes": null
+        }
+      ],
+      "after": [
+        {
+          "belief_id": "b_000001",
+          "source": "default_map",
+          "object": "clear",
+          "confidence": 1.0,
+          "perspective": "historical",
+          "status": "superseded",
+          "supersedes": null
+        },
+        {
+          "belief_id": "b_000002",
+          "source": "default_map",
+          "object": "clear",
+          "confidence": 0.3,
+          "perspective": "historical",
+          "status": "superseded",
+          "supersedes": "b_000001"
+        },
+        {
+          "belief_id": "b_000003",
+          "source": "lidar_front",
+          "object": "blocked",
+          "confidence": 0.98,
+          "perspective": "agent_sensor",
+          "status": "active",
+          "supersedes": "b_000002"
+        }
+      ],
+      "calls": [
+        "query_belief",
+        "read_lidar",
+        "downgrade_belief",
+        "update_belief",
+        "get_belief_history"
+      ]
+    },
+    "S03": {
+      "after": [
+        {
+          "belief_id": "b_000001",
+          "source": "user",
+          "object": "red",
+          "confidence": 0.9,
+          "perspective": "user",
+          "status": "active",
+          "supersedes": null
+        },
+        {
+          "belief_id": "b_000002",
+          "source": "bot_02",
+          "object": "blue",
+          "confidence": 0.8,
+          "perspective": "third_party",
+          "status": "active",
+          "supersedes": null
+        },
+        {
+          "belief_id": "b_000003",
+          "source": "camera_front",
+          "object": "brown",
+          "confidence": 0.9,
+          "perspective": "agent_sensor",
+          "status": "active",
+          "supersedes": null
+        }
+      ]
+    },
+    "S09": {
+      "answer": "I cannot verify the battery level. No matching sensor is connected. The matching stored claim has no recorded source.",
+      "answer_source": "fallback_summary",
+      "model_mode": "scripted_llm",
+      "states_equal": true,
+      "after": [
+        {
+          "belief_id": "b_000001",
+          "source": null,
+          "object": 80,
+          "confidence": 0.5,
+          "perspective": "historical",
+          "status": "active",
+          "supersedes": null
+        }
+      ]
+    },
+    "S08_movement_attempt": {
+      "dispatched": false,
+      "rejection": "CONFLICT",
+      "requested_cm": 20,
+      "automatic_reads": [
+        {
+          "tool": "read_lidar",
+          "args": {
+            "direction": "front"
+          },
+          "result": {
+            "schema_version": "1.1",
+            "tool": "read_lidar",
+            "ok": true,
+            "data": {
+              "schema_version": "1.1",
+              "sensor": "lidar_front",
+              "value": 12,
+              "unit": "cm",
+              "status": "blocked",
+              "timestamp": "2026-10-03T09:16:00Z",
+              "confidence": 0.98
+            },
+            "error": null,
+            "timestamp": "2026-10-03T09:16:00Z"
+          },
+          "auto": true
+        }
+      ],
+      "pose_before": {
+        "x": 0.0,
+        "y": 0.0,
+        "heading_deg": 0.0
+      },
+      "pose_after": {
+        "x": 0.0,
+        "y": 0.0,
+        "heading_deg": 0.0
+      }
+    },
+    "S10_stale_action": {
+      "dispatched": false,
+      "rejection": "CONFLICT",
+      "requested_cm": 20,
+      "automatic_reads": [
+        {
+          "tool": "read_lidar",
+          "args": {
+            "direction": "front"
+          },
+          "result": {
+            "schema_version": "1.1",
+            "tool": "read_lidar",
+            "ok": true,
+            "data": {
+              "schema_version": "1.1",
+              "sensor": "lidar_front",
+              "value": 12,
+              "unit": "cm",
+              "status": "blocked",
+              "timestamp": "2026-10-03T09:16:01Z",
+              "confidence": 0.98
+            },
+            "error": null,
+            "timestamp": "2026-10-03T09:16:01Z"
+          },
+          "auto": true
+        }
+      ],
+      "pose_before": {
+        "x": 0.0,
+        "y": 0.0,
+        "heading_deg": 0.0
+      },
+      "pose_after": {
+        "x": 0.0,
+        "y": 0.0,
+        "heading_deg": 0.0
+      }
+    }
+  },
+  "hosted_runs": {
+    "count": 0,
+    "reason": "No provisioned credential or OpenAI client SDK in the available test checkout."
+  },
+  "peer_approval": "pending"
+}

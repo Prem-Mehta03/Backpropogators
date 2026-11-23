@@ -1,5 +1,7 @@
 # I Agent Architecture Verification Report
 
+This archived report describes the 20 November v1.0 evaluation at `412afc4` (PR #3). Its fixture choices, measured failures and test counts are historical. The [final stretch review guide](../../final_stretch/README.md) points to the current v1.1 runs, report source and review decisions.
+
 I, Agent separates what the agent remembers, what it measures, and how it reasons. This report assembles the implementation and test evidence for the four roles. The Role 4 evaluation checks whether a run follows the evidence rules and records where a check fails. The run uses simulated worlds and a scripted model so the agent loop and tool boundaries can be exercised offline.
 
 ## Architecture and information flow
@@ -83,13 +85,14 @@ Five fresh trials per case used the same seed, 42. Each control ran once.
 | Scope | Runs | Passed behavior checks | Other outcomes |
 | --- | ---: | ---: | --- |
 | Reference | 50 | 50 (100%) | All ten cases passed on each repeat |
-| Canonical and mixed | 50 | 45 (90%) | Five passes are scoped S07 unsupported-temperature probes. S09 failed in all five repeats. |
+| Canonical and mixed behavior | 50 planned, 45 eligible | 40 (80% of planned, 88.9% of eligible) | S09 failed in all five repeats. |
+| Scoped S07 diagnostics | 5 within those 50 planned | — | All five met the unsupported-temperature probe criteria. Adding these diagnostic verdicts yields the historical raw 45/50. |
 | Reference fault controls | 10 | 0 | All ten injected faults were detected |
 | Canonical and mixed controls | 15 | 12 (80%) | The unsupported update, blocked-movement and stale-action controls exposed known behavior gaps |
 
 All 125 verdicts matched the expected outcomes. Across the repeated cases, tool sequences, evaluated checks and before/after state were stable. All 14 boundary samples across 11 tools passed conformance. An independent evidence check read 437 JSON files, 190 JSONL files and all 45 metrics rows, and matched every standard run log to the summary.
 
-Full offline discovery passed 405 tests and 179 subtests with two existing collection warnings and zero collection errors. The offline guard recorded zero blocked network attempts. A separate one-trial strict rehearsal returned status 2. The five-trial summary flags 13 evidence paths for that gate, including five scoped S07 probes, five S09 failures and three failing controls.
+Full offline discovery on the 20 November checkout passed 405 tests and 179 subtests with two existing collection warnings and zero collection errors. The offline guard recorded zero blocked network attempts. A separate one-trial strict rehearsal returned status 2. That five-trial summary flags 13 evidence paths for the old gate, including five scoped S07 probes, five S09 failures and three failing controls.
 
 [Measured verification](verification.json) records the final commands, test counts, artifact checks and results. Packaged `evidence/summary.json` and `evidence/metrics.csv` contain the run-level and per-case evidence. Repeating a scripted fixture measures repeatability under those inputs. Hosted-model behavior and independent review of answer semantics remain unmeasured.
 

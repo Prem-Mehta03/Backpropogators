@@ -1,5 +1,6 @@
 """Separate observable canonical checks; English answer semantics stay ungraded."""
 from contracts.models import Belief, ToolResult
+from contracts.policy import DOWNGRADE_FACTOR
 from evaluation.role4.integration.canonical import sensor_evidence
 from evaluation.role4.models import EvaluationResult, utc_now
 
@@ -93,12 +94,30 @@ def evaluate_teammate(record):
             old = next(b for b in before if b["perspective"] == "historical")
             closed = next(b for b in after if b["belief_id"] == old["belief_id"])
             new = [b for b in after if b["perspective"] == "agent_sensor"]
+            if record["scenario_id"] == "S01":
+                lowered = [b for b in after if b["perspective"] == "historical"
+                           and b["supersedes"] == old["belief_id"]]
+                downgraded_id = lowered[0]["belief_id"] if len(lowered) == 1 else None
+                write_order = [c["tool"] for c in calls if c["tool"] in ("downgrade_belief", "update_belief")
+                               and c["result"]["ok"]]
+                check("demo_map_downgrade", old["source"] == "default_map" and old["confidence"] == 1.0
+                      and write_order == ["downgrade_belief", "update_belief"]
+                      and bool(downgraded_id) and lowered[0]["confidence"] == DOWNGRADE_FACTOR
+                      and lowered[0]["status"] == "superseded" and lowered[0]["valid_to"] is not None
+                      and closed["valid_to"] == lowered[0]["valid_from"],
+                      "Retain the demo's original 1.0 map and the downgraded 0.3 successor before the LiDAR write.")
+                expected_link = downgraded_id
+            else:
+                expected_link = old["belief_id"]
             check("canonical_supersession", closed["status"] == "superseded" and closed["valid_to"] is not None and
-                  len(new) == 1 and new[0]["supersedes"] == old["belief_id"],
+                  len(new) == 1 and new[0]["status"] == "active" and new[0]["supersedes"] == expected_link,
                   "Canonical newer strong sensor supersedes history; reference preservation rule does not apply")
         if record["scenario_id"] == "S03":
-            check("perspectives_retained", {b["perspective"] for b in after} >= {"user", "third_party", "agent_sensor"},
-                  "Prem's bot_02 demo fixture is distinct from reference historical blue and leader approval")
+            check("perspectives_retained", {b["perspective"] for b in after} == {"user", "third_party", "agent_sensor"}
+                  and all(b["status"] == "active" for b in after)
+                  and any(c["tool"] == "detect_conflict" and c["result"]["ok"] and c["result"]["data"] == []
+                          for c in calls),
+                  "Attributed demo views coexist as active beliefs and do not count as an observation conflict.")
         if record["scenario_id"] == "S07":
             check("no_invented_temperature", not any(c["result"]["ok"] for c in calls if c["tool"] == "read_temperature"),
                   "No teammate temperature tool exists; mixed unsupported-tool exercise is explicit")

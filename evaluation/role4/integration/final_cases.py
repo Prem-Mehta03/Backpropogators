@@ -23,6 +23,8 @@ from evaluation.role4.integration.teammate_runner import (
 from evaluation.role4.integration.trace_recorder import TraceRecorder
 from evaluation.role4.logger import EventLogger, read_events, write_json
 from evaluation.role4.models import EvaluationResult, utc_now
+from procedural.checklist import EvidenceCapability
+from procedural.prompts import ABSTENTION_SIGNAL
 
 FINAL_SCENARIOS = ("S04", "S05", "S06", "S09", "S10")
 CASE_SCOPE = {
@@ -45,8 +47,8 @@ CASE_SCOPE = {
     "S09": (
         "Is the robot battery definitely at 80 percent?",
         "Identify a null source, retain the capped and unverified claim, and abstain.",
-        "Real null-source memory and procedural rejection of an unavailable battery tool. "
-        "No battery measurement is simulated in this run.",
+        "Real null-source memory and evidence-bounded abstention when the battery sensor "
+        "is absent. No battery measurement is simulated in this run.",
     ),
     "S10": (
         "Is path_A still clear after the warning that the simulated scene may have changed?",
@@ -55,13 +57,11 @@ CASE_SCOPE = {
         "the actual simulator change hook after the first successful reading.",
     ),
 }
-KNOWN_FAILURES = {
-    ("S09", "valid"): ("agent_delivered_scripted_answer",),
-}
 STALE_AFTER_SECONDS = 3600
 INITIAL_MAP_TIME = "2026-10-03T09:15:00Z"
 S05_REAL_SOURCE = "sensorimotor.Sensorimotor"
 S05_FIXTURE_SOURCE = "role4.synthetic_secondary_front_ultrasonic"
+BATTERY_CAPABILITY = EvidenceCapability("robot", "battery_percent", "read_battery", "battery level")
 
 
 def _route_args() -> dict[str, str]:
@@ -93,7 +93,7 @@ def _plan(
                 "The map is old. A new LiDAR reading reports the path blocked."]
     if case == "S09":
         return [("query_belief", {"subject": "robot", "predicate": "battery_percent"}),
-                ("read_battery", {}), "The stored percentage has no source. I cannot verify it."]
+                ("read_battery", {}), ABSTENTION_SIGNAL]
 
     def signal_and_continue(messages: list[dict[str, Any]]) -> tuple[str, dict[str, Any]]:
         first = ToolResult.model_validate(json.loads(messages[-1]["content"]))
@@ -169,9 +169,10 @@ def _evaluate(record: dict[str, Any], events: list[Any]) -> EvaluationResult:
     check("looked_up_memory", any(c["tool"] == "query_belief" and (
           c["result"]["ok"] or c["result"]["error"]["code"] == "NOT_FOUND") for c in calls), "procedural",
           "The agent queried memory, including a typed no-match result when appropriate.")
-    check("agent_delivered_scripted_answer",
-          not agent["error"] and model_text and agent["answer"] == model_text[-1],
-          "procedural", "The agent delivered its scripted answer. Human semantics remain pending.")
+    if sid != "S09":
+        check("agent_delivered_scripted_answer",
+              not agent["error"] and model_text and agent["answer"] == model_text[-1],
+              "procedural", "The agent delivered its scripted answer. Human semantics remain pending.")
     if sid == "S04":
         check("weak_reading_retained", len(readings) == 1 and readings[0]["confidence"] == 0.25
               and readings[0]["status"] == "blocked", "sensorimotor",
@@ -216,9 +217,19 @@ def _evaluate(record: dict[str, Any], events: list[Any]) -> EvaluationResult:
               and before[0]["confidence"] == 0.5 and queried == [before],
               "declarative", "Official memory preserves null provenance and caps confidence at 0.5.")
         check("no_fabricated_battery_evidence", before == after and not updates
+              and "read_battery" not in record["tool_sources"]
+              and not any(o["tool"] == "read_battery" for o in outputs)
               and any(c["tool"] == "read_battery" and not c["result"]["ok"]
                       and c["result"]["error"]["code"] == "INVALID_ARGUMENT" for c in calls),
-              "procedural", "The unknown battery request was rejected without fabricating evidence.")
+              "procedural", "An unsupported battery request never dispatched or changed memory.")
+        answer = agent["answer"].lower()
+        check("accepted_evidence_bounded_abstention", not agent["error"]
+              and agent["answer_source"] == "fallback_summary"
+              and model_text and model_text[-1] == ABSTENTION_SIGNAL
+              and "cannot verify" in answer and "no matching sensor" in answer
+              and "no recorded source" in answer and not any(c.isdigit() for c in answer),
+              "procedural", "After the model explicitly abstains, the agent reports the actual "
+              "sensor and provenance limits without asserting a measured battery value.")
     elif sid == "S10":
         stale_action = record["control"] == "stale_action"
         if stale_action:
@@ -387,7 +398,8 @@ def run_final_case(
 
         result = run_agent(question, script, {name: instrument(name, fn) for name, fn in registry.items()},
                            max_steps=len(plan), known_subjects={"path_A": "final route fixture",
-                                                              "robot": "robot with no battery tool"})
+                                                              "robot": "robot with no battery tool"},
+                           evidence_capability=BATTERY_CAPABILITY if scenario_id == "S09" else None)
         record = {
             "scenario_id": scenario_id,
             "run_id": run_id,
@@ -401,7 +413,7 @@ def run_final_case(
             "tool_sources": sources,
             "import_origins": origins,
             "structured_answer_claims": None,
-            "answer_origin": "scripted_fixture",
+            "answer_origin": "agent_generated" if result.answer_source == "fallback_summary" else "scripted_fixture",
             "pending_checks": ["human_answer_semantics"],
         }
         record["dispatch_outcomes"] = _dispatch_outcomes(record, recorder.events)
@@ -409,7 +421,7 @@ def run_final_case(
         evaluation = _evaluate(record, recorder.events)
         record["evaluation"] = evaluation.to_dict()
         record["failure_layers"] = {c["name"]: c["layer"] for c in evaluation.checks if not c["passed"]}
-        record["expected_failures"] = list(KNOWN_FAILURES.get((scenario_id, control), ()))
+        record["expected_failures"] = []
         record["expectation_met"] = evaluation.failure_reasons == record["expected_failures"]
         emit("actual_agent_outcome", {"agent": record["agent"], "state_after": record["state_after"],
                                      "evaluation": record["evaluation"]})
@@ -419,7 +431,7 @@ def run_final_case(
         write_json(output / "run.json", record)
         official.write_test_log(scenario_id, run_id, {
             "question": question, "expected": expected, "state_before": before,
-            "state_after": record["state_after"], "answer": result.answer,
+            "state_after": record["state_after"], "answer": result.answer, "answer_source": result.answer_source,
             "tool_calls": result.tool_calls, "checks": evaluation.checks, "labels": labels,
             "result": "PASS" if evaluation.passed else "FAIL",
         })
@@ -441,6 +453,7 @@ def verify_final_case_artifacts(output_dir: Path | str) -> dict[str, int]:
         "question": record["question"], "expected": record["expected"],
         "state_before": record["state_before"], "state_after": record["state_after"],
         "tool_calls": record["agent"]["tool_calls"], "answer": record["agent"]["answer"],
+        "answer_source": record["agent"]["answer_source"],
         "checks": replay.checks, "labels": record["labels"],
         "result": "PASS" if replay.passed else "FAIL",
     }

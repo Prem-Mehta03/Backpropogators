@@ -17,11 +17,13 @@ python -B scripts/live_ui.py --replay <path-to-agent_run.json>
 
 See the [reproduction and review guide](docs/final_stretch/README.md), the
 [recorded results](evaluation/results/results_table.md), and the
-[verified logs](evaluation/logs/final/verified_20261123/).
+[verified logs](evaluation/logs/final/verified_20261123/). The
+[PR review notes](docs/final_stretch/prem_pr4_review.md) summarize the
+follow-up checks and layer-owner reviews.
 
-## Final Role 4 evaluation
+## Earlier Role 4 evaluation and regression suite
 
-Run the ten scenarios against the deterministic reference evaluator and against
+Run the original S01–S10 scenarios against the deterministic reference evaluator and against
 the teammate stack with a scripted model in a simulated environment. Every
 trial starts with fresh state. The runner saves per-case logs, traces and
 separate pass rates for the reference and teammate paths. Explicit synthetic

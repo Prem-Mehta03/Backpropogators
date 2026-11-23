@@ -22,12 +22,19 @@ from typing import Any
 
 from contracts.policy import MAX_CLAIM_REFUSALS, MAX_MODEL_CALLS
 from procedural.answer_text import normalize_answer_text
-from procedural.checklist import DEFAULT_REQUIRED_EVIDENCE, missing_evidence
+from procedural.checklist import (
+    DEFAULT_REQUIRED_EVIDENCE,
+    EvidenceCapability,
+    capability_evidence,
+    missing_evidence,
+)
 from procedural.claims import unbacked_write_claims
 from procedural.fallback_summary import build_fallback_summary
 from procedural.llm_client import LLMBackend, LLMClientError, LLMResponse, ToolCall
 from procedural.prompts import (
+    ABSTENTION_SIGNAL,
     MISSING_REPLY_NOTE,
+    build_capability_abstention_note,
     build_checklist_note,
     build_claim_note,
     build_system_prompt,
@@ -265,6 +272,8 @@ def run_agent(
     required_evidence: Sequence[tuple[str, ...]] = DEFAULT_REQUIRED_EVIDENCE,
     require_written_ids: bool = False,
     on_step: StepCallback | None = None,
+    *,
+    evidence_capability: EvidenceCapability | None = None,
 ) -> AgentResult:
     """Answer a question by letting the model call tools, with a hard step limit.
 
@@ -278,6 +287,12 @@ def run_agent(
     tool of every group must have been attempted before a final answer is accepted. The
     default needs memory (query_belief) and the registered range sensors for path queries,
     or a sensor for other queries. Pass () to switch the checklist off.
+    evidence_capability lets the caller supply the exact subject, property and tool for
+    a read-only scoped question, in place of the default checklist. Only the relevant
+    read schemas are offered and requests outside that scope are rejected before dispatch.
+    For an absent or
+    unavailable matching sensor, only an explicit abstention signal is accepted. The
+    returned summary is generated from the verified evidence limitation.
     require_written_ids=True also refuses an answer that does not name every belief the run
     wrote (live runs switch this on; scripted test answers need not name ids).
     A premature answer is kept in the history, refused, and the model is told what is missing
@@ -292,6 +307,8 @@ def run_agent(
     calls; the message names any missing evidence), INTERNAL (the LLM API failed). Tool-level
     errors are not run errors: the model sees them and may recover.
     """
+    if evidence_capability is not None and required_evidence != DEFAULT_REQUIRED_EVIDENCE:
+        raise ValueError("evidence_capability is an alternative to a custom evidence checklist")
     prompt = (
         system_prompt
         if system_prompt is not None
@@ -299,7 +316,16 @@ def run_agent(
     )
     state = new_agent_state(question, prompt)
     notify = make_notifier(on_step)
-    tool_schemas = registered_tool_schemas(registry)
+    tools = registry if evidence_capability is None else {
+        name: fn for name, fn in registry.items() if name in ("query_belief", evidence_capability.tool)
+    }
+    tool_schemas = registered_tool_schemas(tools)
+
+    def evidence() -> tuple[list[str], str | None]:
+        if evidence_capability is not None:
+            return capability_evidence(state.tool_log, evidence_capability, tuple(registry))
+        return missing_evidence(state.tool_log, required_evidence, tuple(registry)), None
+
     while state.model_calls < max_steps:
         try:
             reply = next_step(state, llm, tool_schemas)
@@ -309,14 +335,20 @@ def run_agent(
         if reply.tool_calls:
             state.add_assistant_turn(reply.content, reply.tool_calls)
             for call in reply.tool_calls:
-                outcome = execute_tool_call(
-                    call,
-                    registry,
-                    state.tool_log,
-                    known_subjects or (),
-                    question,
-                    notify,
-                )
+                if evidence_capability is not None and not evidence_capability.permits(call.name, call.arguments):
+                    reason = "Tool request is outside the read-only evidence scope"
+                    outcome = ToolOutcome(
+                        error_result(call.name, "INVALID_ARGUMENT", reason), call.arguments, {"refused": reason}
+                    )
+                else:
+                    outcome = execute_tool_call(
+                        call,
+                        tools,
+                        state.tool_log,
+                        known_subjects or (),
+                        question,
+                        notify,
+                    )
                 logger.info(
                     "model_call=%d tool=%s ok=%s",
                     state.model_calls,
@@ -335,13 +367,20 @@ def run_agent(
             state.add_assistant_turn(
                 text, []
             )  # the history keeps what the model really said
-            missing = missing_evidence(state.tool_log, required_evidence, tuple(registry))
+            missing, abstention = evidence()
             if missing:
                 state.evidence_nudges += 1
                 logger.warning(
                     "Answer refused, missing evidence: %s", _missing_note(missing)
                 )
                 state.add_user_note(build_checklist_note(missing))
+                continue
+            if abstention is not None:
+                if text == ABSTENTION_SIGNAL:
+                    return build_response(state, abstention, answer_source=ANSWER_FROM_FALLBACK)
+                state.evidence_nudges += 1
+                state.add_user_note(build_capability_abstention_note())
+                logger.warning("Answer refused: a scoped sensor could not verify the property")
                 continue
             unbacked = unbacked_write_claims(text, state.tool_log, require_written_ids)
             if unbacked:
@@ -371,11 +410,13 @@ def run_agent(
         state.add_user_note(MISSING_REPLY_NOTE)
 
     message = f"No final answer after {max_steps} model calls"
-    missing = missing_evidence(state.tool_log, required_evidence, tuple(registry))
-    if state.claim_refusals and not missing:
+    missing, abstention = evidence()
+    if state.claim_refusals and not missing and abstention is None:
         return _fallback(
             state, f"model calls ran out after {state.claim_nudges} refusals"
         )
     if missing:
         message += f"; required evidence never gathered: {_missing_note(missing)}"
+    elif abstention is not None:
+        message += "; no accepted abstention for the unavailable capability"
     return _failure(state, "STEP_LIMIT", message)

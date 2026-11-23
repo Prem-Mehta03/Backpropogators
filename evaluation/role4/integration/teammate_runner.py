@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from contracts.models import ToolResult
+from contracts.policy import DOWNGRADE_FACTOR
 from evaluation.logger import EvaluationLogger
 from evaluation.role4.integration.canonical import CanonicalMemoryAdapter, belief_view, sensor_evidence
 from evaluation.role4.integration.trace_recorder import TraceRecorder
@@ -54,16 +55,25 @@ def trace_consistent(record, events):
     def automatic(entry):
         return entry["tool"] in {"read_lidar", "read_ultrasonic"} and entry["call_id"] in recheck_ids
     auto_calls = [(c["call_id"], c["tool"], c["arguments"]) for c in calls if automatic(c)]
-    auto_results = [(r["call_id"], r["tool"], r["raw"]) for r in returns if automatic(r)]
+    auto_returns = [r for r in returns if automatic(r)]
     auto_expected = [(r["call_id"], receipt) for r, outcome in zip(requests, outcomes)
                      for receipt in (outcome.get("guard") or {}).get("recheck", {}).get("reads", [])]
-    for call_id, receipt in auto_expected:
-        key = (call_id, receipt["tool"], receipt["args"])
-        if key in auto_calls and (call_id, receipt["tool"], receipt["result"]) not in auto_results:
-            return False
-    if auto_results != [(cid, r["tool"], r["result"]) for cid, r in auto_expected
-                        if (cid, r["tool"], r["args"]) in auto_calls]:
+    if any(not receipt.get("auto") for _, receipt in auto_expected):
         return False
+    sources = record["tool_sources"]
+    dispatched_auto = [(cid, r) for cid, r in auto_expected
+                       if sources.get(r["tool"]) not in {None, "role4.disabled_tool_fault_fixture"}]
+    if (auto_calls != [(cid, r["tool"], r["args"]) for cid, r in dispatched_auto]
+            or [(r["call_id"], r["tool"]) for r in auto_returns]
+            != [(cid, r["tool"]) for cid, r in dispatched_auto]):
+        return False
+    for raw, (_, receipt) in zip(auto_returns, dispatched_auto):
+        outcome = receipt["result"]
+        if raw["canonical_envelope_valid"]:
+            if raw["raw"] != outcome:
+                return False
+        elif outcome["ok"] or outcome["error"]["code"] != "INTERNAL":
+            return False
     if returns and returns[-1]["state_after"] != record["state_after"]:
         return False
     calls = [c for c in calls if not automatic(c)]
@@ -163,16 +173,43 @@ def _plan(scenario, control, old_id):
     sensor = ("read_camera", {"target": "box_01"}) if scenario == "S03" else ("read_lidar", {"direction": "front"})
     answer = "Scripted fixture: consulted memory and sensor tools; see their attributed results."
 
+    def latest_receipt(messages, tool):
+        results = (json.loads(m["content"]) for m in reversed(messages) if m["role"] == "tool")
+        return next((r for r in results if r["tool"] == tool), None)
+
     def update(messages):
-        envelope = json.loads(messages[-1]["content"])
+        envelope = latest_receipt(messages, sensor[0])
+        if envelope is None:
+            raise LLMClientError("Script did not receive the requested sensor envelope")
         evidence = sensor_evidence(envelope)
         if evidence is None:
-            raise ValueError("Script cannot invent missing sensor evidence")
+            raise LLMClientError("Script cannot invent missing sensor evidence")
         if control == "unsupported_update":
             evidence["object"] = "clear"  # deliberate contradiction to actual blocked LiDAR
         if control == "confidence_override":
             evidence["confidence"] = 0.1
         return "update_belief", evidence
+
+    def downgrade_map(messages):
+        receipt = latest_receipt(messages, "query_belief")
+        old = next((b for b in (receipt or {}).get("data") or []
+                    if b["belief_id"] == old_id), None)
+        reading = latest_receipt(messages, "read_lidar")
+        if old is None or reading is None or not reading["ok"]:
+            raise LLMClientError("Script could not identify prior map and current LiDAR evidence")
+        return "downgrade_belief", {"belief_id": old_id, "new_confidence": old["confidence"] * DOWNGRADE_FACTOR,
+                                    "reason": "Current LiDAR contradicts the historical map."}
+
+    def map_answer(messages):
+        lowered = latest_receipt(messages, "downgrade_belief")
+        current = latest_receipt(messages, "update_belief")
+        reading = latest_receipt(messages, "read_lidar")
+        if not all(r and r["ok"] for r in (lowered, current, reading)):
+            return "The expected memory transition did not complete."
+        lidar = reading["data"]
+        return (f"No. The map from {lowered['data']['source']} was superseded. "
+                f"{lidar['sensor']} reads {lidar['status']} at {lidar['value']} cm. "
+                f"Memory receipts: {lowered['data']['belief_id']}, {current['data']['belief_id']}.")
 
     if control == "step_limit":
         return ["Premature scripted answer."] * 2
@@ -196,6 +233,8 @@ def _plan(scenario, control, old_id):
                 "Scripted fixture: the move was cancelled by the recheck before action; the robot did not move."]
     if scenario == "S07":
         return [query, query, ("read_temperature", {}), "Scripted temperature abstention; teammate temperature API absent."]
+    if scenario == "S01" and control == "valid":
+        return [query, sensor, downgrade_map, update, ("get_belief_history", {"subject": subject}), map_answer]
     prefix = ["Premature scripted answer."] if control == "premature_answer" else []
     return prefix + [query, sensor, update, ("get_belief_history", {"subject": subject}),
                      ("detect_conflict", {"subject": subject, "predicate": "color" if scenario == "S03" else "status"}), answer]
@@ -206,7 +245,7 @@ def run_teammate_case(
 ) -> dict:
     """Run fresh canonical layers locally; outputs preserve raw evidence and pending semantics."""
     from declarative.belief_graph import BeliefMemory
-    from declarative.seed import seed_bot_02_record
+    from declarative.seed import seed_for
     from procedural.agent import run_agent
     from sensorimotor import create_sensorimotor
     from scripts.tool_wiring import build_tool_registry
@@ -236,10 +275,18 @@ def run_teammate_case(
     adapter = CanonicalMemoryAdapter(memory)
     try:
         reference = next(s for s in load_scenarios(ROOT / "tests/role4/scenarios.json") if s.scenario_id == scenario_id)
-        if scenario_id == "S03":
-            # Exact demo data, not an assertion of the leader's Scenario B approval.
-            memory.add_belief("box_01", "color", "red", "user", 0.9, "user", "2026-10-03T09:15:00Z")
-            seed_bot_02_record(memory, "box_01", "color", "blue", 0.8, "2026-10-03T09:15:00Z")
+        question = reference.user_query
+        if scenario_id == "S01":
+            from evaluation.stretch_specs import ROUTE
+
+            question = ROUTE
+            receipt, = seed_for("T01", memory)
+            adapter.aliases[reference.initial_beliefs[0].belief_id] = receipt["data"]["belief_id"]
+            emit("canonical_demo_seed", {"fixture": "T01", "receipt": receipt})
+        elif scenario_id == "S03":
+            # Reuse the same attributed demo fixture without asserting team approval.
+            for receipt in seed_for("T03", memory):
+                emit("canonical_demo_seed", {"fixture": "T03", "receipt": receipt})
         elif scenario_id != "S07":
             for belief in reference.initial_beliefs:
                 emit("reference_seed_mapping", {"reference": belief.to_dict(), "canonical_receipt": adapter.seed_reference(belief)})
@@ -284,10 +331,11 @@ def run_teammate_case(
             return invoke
 
         wrapped = {name: instrument(name, fn) for name, fn in registry.items()}
-        result = run_agent(reference.user_query, script, wrapped, max_steps=8 if control != "step_limit" else 2,
+        result = run_agent(question, script, wrapped, max_steps=8 if control != "step_limit" else 2,
+                           require_written_ids=scenario_id == "S01" and control == "valid",
                            known_subjects={"path_A": "canonical path fixture", "box_01": "demo box", "room": "unsupported temperature query"})
         after = snapshot()
-        record = {"scenario_id": scenario_id, "run_id": run_id, "control": control, "labels": labels,
+        record = {"scenario_id": scenario_id, "run_id": run_id, "control": control, "labels": labels, "question": question,
                   "tool_sources": sources, "import_origins": origins, "reference_aliases": adapter.aliases,
                   "state_before": before, "state_after": after, "agent": asdict(result),
                   "canonical_views": [belief_view(b) for b in after["memory"]["nodes"]],
@@ -314,7 +362,7 @@ def run_teammate_case(
                 stream.record(event)
         assert read_events(output / "trace.jsonl") == recorder.events
         write_json(output / "run.json", record)
-        official.write_test_log(scenario_id, run_id, {"question": reference.user_query,
+        official.write_test_log(scenario_id, run_id, {"question": question,
             "state_before": before, "tool_calls": result.tool_calls, "state_after": after, "answer": result.answer,
             "expected": {"observable_policy": "canonical_teammate_v1", "pending_checks": record["pending_checks"]},
             "checks": evaluation.checks, "result": "PASS" if evaluation.passed else "FAIL", "labels": labels})

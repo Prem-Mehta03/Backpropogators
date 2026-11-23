@@ -43,8 +43,19 @@ def main(argv: list[str] | None = None) -> int:
         summary = run_suite(output, trials=args.trials, seed=args.seed, scenarios=tuple(args.scenario or CASES),
                             controls=not args.no_controls, show_cases=args.show_cases, blocked=blocked)
 
+    behavior = summary["canonical_behavior"]
+    passes = behavior["passes"]
+    exercised = behavior["exercised_runs"]
+    exercised_result = f"{passes}/{exercised} PASS" if exercised else "not exercised"
+    print(f"Canonical behavior (scripted): {passes}/{behavior['planned_runs']} PASS over planned runs; "
+          f"{exercised_result} over exercised behavior runs; {behavior['pending_runs']} scoped/pending")
+    probes = behavior["scoped_probes"]
+    if probes["runs"]:
+        print(f"Scoped diagnostics: {probes['passes']}/{probes['runs']} PASS against probe criteria "
+              "(excluded from behavior passes)")
     for scope, counts in summary["counts"].items():
-        print(f"{scope}: {counts['passes']}/{counts['runs']} PASS; "
+        label = "canonical raw verdicts (includes scoped probes)" if scope == "canonical" else scope
+        print(f"{label}: {counts['passes']}/{counts['runs']} PASS; "
               f"{counts['expected_outcomes']}/{counts['runs']} matched expectation")
     print(f"Validated boundary samples: {summary['conformance']['samples']} across "
           f"{summary['conformance']['tools']} tools; all passed: {summary['conformance']['passed']}")
