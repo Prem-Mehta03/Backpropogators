@@ -30,6 +30,7 @@ from procedural.prompts import (
     build_claim_note,
     build_system_prompt,
 )
+from procedural.recheck import recheck_before_action
 from procedural.state import MEMORY_TOOLS, AgentState, new_agent_state
 from procedural.tools import TOOL_SCHEMAS, ToolFn, call_tool, error_result
 from procedural.update_guard import check_memory_call
@@ -82,6 +83,9 @@ class ToolOutcome:
     envelope: dict[str, Any]
     args: dict[str, Any]
     guard: dict[str, Any] | None = None
+    before: list[dict[str, Any]] = field(
+        default_factory=list
+    )  # log entries the code made
 
 
 def execute_tool_call(
@@ -110,9 +114,17 @@ def execute_tool_call(
     if decision.error is not None:
         envelope = error_result(call.name, "INVALID_ARGUMENT", decision.error)
         return ToolOutcome(envelope, call.arguments, {"refused": decision.error})
+    guard: dict[str, Any] = {}
+    if decision.overridden:
+        guard["overridden"] = decision.overridden
+    check = recheck_before_action(call.name, decision.args, registry)
+    if check is not None:
+        guard["recheck"] = check.details
+        if check.cancel is not None:
+            envelope = error_result(call.name, "CONFLICT", check.cancel)
+            return ToolOutcome(envelope, decision.args, guard)
     envelope = call_tool(call.name, decision.args, registry)
-    guard = {"overridden": decision.overridden} if decision.overridden else None
-    return ToolOutcome(envelope, decision.args, guard)
+    return ToolOutcome(envelope, decision.args, guard or None)
 
 
 def build_response(

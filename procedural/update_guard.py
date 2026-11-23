@@ -123,11 +123,16 @@ def known_beliefs(tool_log: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
 
 
 def distance_readings(tool_log: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
-    """Distance sensors (readings in cm, such as the LiDAR and the ultrasonic) read in this run."""
+    """Forward distance sensors (readings in cm: LiDAR, ultrasonic) read in this run.
+
+    Only sensors facing ahead count: they speak about the path ahead. A rear LiDAR read by the
+    recheck before move_backward says nothing about that path, so it must not look like a
+    disagreement.
+    """
     return {
         name: reading
         for name, reading in sensor_readings(tool_log).items()
-        if reading.get("unit") == "cm"
+        if reading.get("unit") == "cm" and name.endswith("_front")
     }
 
 

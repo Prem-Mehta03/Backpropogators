@@ -170,6 +170,76 @@ def _is_update_claim(sentence: str) -> bool:
     return False
 
 
+# ---- disclosure: what the answer must say about cancelled moves and failed writes
+MOVE_TOOLS = ("move_forward", "move_backward")
+WRITE_TOOLS = ("downgrade_belief", "update_belief")
+RECHECK_PHRASE = "recheck before action"
+MOVE_CANCEL_SAID = re.compile(
+    r"cancel|did not move|didn't move|not moved|has not moved|no move|not execut|"
+    r"did not run|stayed|remain",
+    re.IGNORECASE,
+)
+FAILURE_SAID = re.compile(
+    r"fail|could not|couldn't|unable|did not (?:succeed|work|go through)|"
+    r"not (?:recorded|written|saved|stored|applied|completed)|refus|reject|error|"
+    r"was not (?:done|made)",
+    re.IGNORECASE,
+)
+# words that show the answer is talking about this particular write
+WRITE_TOPIC = {
+    "downgrade_belief": re.compile(r"downgrad|lower", re.IGNORECASE),
+    "update_belief": re.compile(r"updat|record|writ|wrote|new belief", re.IGNORECASE),
+}
+
+
+def cancelled_moves(tool_log: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Moves the recheck before action cancelled in this run."""
+    return [
+        e
+        for e in tool_log
+        if e["tool"] in MOVE_TOOLS
+        and not e["result"]["ok"]
+        and RECHECK_PHRASE in e["result"]["error"]["message"]
+    ]
+
+
+def failed_writes(tool_log: list[dict[str, Any]]) -> list[str]:
+    """Write tools whose latest call failed in a run where the other write succeeded (a half-done change).
+
+    A write that failed and was then retried successfully is not listed, and neither is a run
+    in which no write succeeded at all (then the answer has nothing half-done to disclose).
+    """
+    last_ok: dict[str, bool] = {}
+    for entry in tool_log:
+        if entry["tool"] in WRITE_TOOLS:
+            last_ok[entry["tool"]] = entry["result"]["ok"]
+    if not any(last_ok.values()):
+        return []
+    return [tool for tool in WRITE_TOOLS if last_ok.get(tool) is False]
+
+
+def undisclosed_actions(answer: str, tool_log: list[dict[str, Any]]) -> list[str]:
+    """Things that happened in this run that the answer must say but does not."""
+    problems = []
+    sentences = [s.strip() for s in SENTENCE_SPLIT.split(answer) if s.strip()]
+    if cancelled_moves(tool_log) and not MOVE_CANCEL_SAID.search(answer):
+        problems.append(
+            "say that the move was cancelled by the recheck before action and that the "
+            "robot did not move"
+        )
+    for tool in failed_writes(tool_log):
+        said = any(
+            WRITE_TOPIC[tool].search(s) and FAILURE_SAID.search(s) for s in sentences
+        )
+        if not said:
+            what = "downgrade" if tool == "downgrade_belief" else "belief update"
+            problems.append(
+                f"say that the {what} ({tool}) failed or was refused, so memory was only "
+                "partly changed, and which write did go through"
+            )
+    return problems
+
+
 def unbacked_write_claims(
     answer: str, tool_log: list[dict[str, Any]], require_written_ids: bool = False
 ) -> list[str]:
@@ -178,7 +248,8 @@ def unbacked_write_claims(
     Inputs: the answer text, the run's tool log (state.tool_log), and require_written_ids: when
     True, every belief the run really wrote must also be named in the answer (used for live
     runs; scripted test answers are free text and do not have to name ids). Output: one short
-    description per problem, in a fixed order (downgrade, update, unreported writes, unknown ids).
+    description per problem, in a fixed order (downgrade, update, unreported writes, unknown ids,
+    wrong statuses, then things the answer must disclose: a cancelled move, a half-done change).
     """
     sentences = [s.strip() for s in SENTENCE_SPLIT.split(answer) if s.strip()]
     problems: list[str] = []
@@ -211,4 +282,5 @@ def unbacked_write_claims(
             f"you call {belief_id} active, but this run's results show it is "
             f"{statuses[belief_id]}: report its status as {statuses[belief_id]}"
         )
+    problems += undisclosed_actions(answer, tool_log)
     return problems

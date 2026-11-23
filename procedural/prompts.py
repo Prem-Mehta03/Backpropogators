@@ -1,6 +1,6 @@
 """All prompt text lives here (Guidelines 6). Prompts explain the rules; code enforces them.
 
-Version 5.3 (no example belief id, which models copied into read-only answers; status
+Version 5.4 (no example belief id, which models copied into read-only answers; status
 wording after a downgrade and a replacement; a downgrade returns a new id). The code enforces: the evidence checklist (checklist.py, run by agent.py) and the
 provenance guard on memory writes (update_guard.py). This text tells the model what is
 expected and why, so it does the right thing first time. Entity ids are NOT hard-coded here:
@@ -15,7 +15,9 @@ EVIDENCE_POLICY = """\
 Evidence policy:
 1. Stored beliefs and live observations are different kinds of evidence. Beliefs come from
    query_belief (memory). Observations come from sensor tools such as read_lidar and
-   read_camera. Never mix them up and never present one as the other.
+   read_camera. Never mix them up and never present one as the other. A sensor reading is
+   not a belief: do not count it among the beliefs. What you "see", "register" or "observe"
+   is what your own sensor returned in this run, never what a third party or the user said.
 2. Before answering any question about the state of the world, call query_belief for the
    subject and the relevant sensor tool. The system will not accept an answer until you have
    done both. If either still returns no data after the checks in rule 3, say plainly that
@@ -60,6 +62,11 @@ Evidence policy:
    belief." The system refuses a downgrade of such a belief.
 9. If the person tells you which view is correct, record it with update_belief using
    perspective user and source user. The system sets the confidence for a person's statement.
+10. Before every move_forward or move_backward the system re-reads the LiDAR itself and
+   cancels the move if the path is no longer clear (a reading below the requested distance
+   plus a 30 cm margin). If a move is cancelled, say so, give the reading, say the robot did
+   not move, and do not retry the same distance. Never claim the robot moved unless the move
+   tool returned ok. If one memory write succeeded and the other failed, say which one failed.
 """
 
 ANSWER_FORMAT = """\
@@ -130,14 +137,17 @@ def build_claim_note(problems: Sequence[str]) -> str:
 
     Inputs: descriptions of the unbacked claims. Output: the note text for the model.
     """
-    return (
-        "Your answer was not accepted: "
-        + "; ".join(problems)
-        + ". Either make the missing "
-        "tool call now, or remove the claim and say plainly that you made no such write. "
-        "Name only belief ids that appear in tool results, and if you made no writes, leave out "
-        "any 'Memory status' line."
-    )
+    claims = [p for p in problems if not p.startswith("say ")]
+    note = "Your answer was not accepted: " + "; ".join(problems) + ". "
+    if any(p.startswith("say ") for p in problems):
+        note += "Add what is missing to your answer; do not repeat the cancelled or failed call. "
+    if claims:
+        note += (
+            "Either make the missing tool call now, or remove the claim and say plainly that "
+            "you made no such write. Name only belief ids that appear in tool results, and if "
+            "you made no writes, leave out any 'Memory status' line."
+        )
+    return note.rstrip()
 
 
 def build_entity_glossary(known_subjects: Mapping[str, str]) -> str:

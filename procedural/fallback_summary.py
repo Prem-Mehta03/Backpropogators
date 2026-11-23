@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any
 
-from procedural.claims import effective_statuses
+from procedural.claims import MOVE_TOOLS, effective_statuses
 from procedural.update_guard import sensor_readings
 
 MEMORY_READ_TOOLS = (
@@ -137,6 +137,24 @@ def _writes(tool_log: list[dict[str, Any]]) -> list[str]:
     return lines
 
 
+def _actions(tool_log: list[dict[str, Any]]) -> list[str]:
+    """One line per move the robot made or that the recheck before action cancelled."""
+    lines = []
+    for entry in tool_log:
+        if entry["tool"] not in MOVE_TOOLS:
+            continue
+        distance = entry["args"].get("distance_cm")
+        result = entry["result"]
+        if result["ok"]:
+            lines.append(f"- {entry['tool']} {distance} cm: ran (the robot moved).")
+        else:
+            lines.append(
+                f"- {entry['tool']} {distance} cm: cancelled, the robot did not move "
+                f"({result['error']['message']})"
+            )
+    return lines
+
+
 def build_fallback_summary(question: str, tool_log: list[dict[str, Any]]) -> str:
     """Build the fallback answer from the tool log alone.
 
@@ -156,6 +174,9 @@ def build_fallback_summary(question: str, tool_log: list[dict[str, Any]]) -> str
         lines += writes
     else:
         lines.append("- none: I made no memory writes in this run.")
+    actions = _actions(tool_log)
+    if actions:
+        lines += ["", "Moves in this run:"] + actions
     if not beliefs and not readings:
         lines += ["", "Evidence is missing: memory and the sensors returned nothing."]
     else:

@@ -48,6 +48,11 @@ def trace_consistent(record, events):
     outcomes = record["agent"]["tool_calls"]
     calls = [e.payload for e in events if e.event_type == "teammate_boundary_call"]
     returns = [e.payload for e in events if e.event_type == "teammate_boundary_return"]
+    # run_agent re-reads the LiDAR itself before a move (recheck before action, Prem's P6). That
+    # read reaches the boundary under the move's call id; it is not a model request.
+    recheck_ids = {r["call_id"] for r in requests if r["name"] in ("move_forward", "move_backward")}
+    calls = [c for c in calls if not (c["tool"] == "read_lidar" and c["call_id"] in recheck_ids)]
+    returns = [r for r in returns if not (r["tool"] == "read_lidar" and r["call_id"] in recheck_ids)]
     if len(requests) != len(outcomes) or len(calls) != len(returns):
         return False
     if any(r["name"] != o["tool"] for r, o in zip(requests, outcomes)):
@@ -174,7 +179,8 @@ def _plan(scenario, control, old_id):
     if control == "downgrade":
         return [query, sensor, ("downgrade_belief", {"belief_id": old_id, "new_confidence": 0.2, "reason": "returned sensor contradicts history"}), answer]
     if control == "movement_attempt":
-        return [query, sensor, ("move_forward", {"distance_cm": 20}), answer]
+        return [query, sensor, ("move_forward", {"distance_cm": 20}),
+                "Scripted fixture: the move was cancelled by the recheck before action; the robot did not move."]
     if scenario == "S07":
         return [query, query, ("read_temperature", {}), "Scripted temperature abstention; teammate temperature API absent."]
     prefix = ["Premature scripted answer."] if control == "premature_answer" else []
@@ -274,17 +280,17 @@ def run_teammate_case(scenario_id, output_dir, control="valid"):
                   "pending_checks": ["human_answer_semantics"] + (["leader_scenario_b_fixture_approval"] if scenario_id == "S03" else [])}
         record["trace_consistent"] = trace_consistent(record, recorder.events)
         requests = [c for e in recorder.events if e.event_type == "scripted_model_response" for c in e.payload.get("calls", [])]
-        dispatches = {e.payload["call_id"]: e.payload for e in recorder.events if e.event_type == "teammate_boundary_call"}
-        returns = {e.payload["call_id"]: e.payload for e in recorder.events if e.event_type == "teammate_boundary_return"}
+        dispatches = {(e.payload["call_id"], e.payload["tool"]): e.payload for e in recorder.events if e.event_type == "teammate_boundary_call"}
+        returns = {(e.payload["call_id"], e.payload["tool"]): e.payload for e in recorder.events if e.event_type == "teammate_boundary_return"}
         record["dispatch_outcomes"] = [{"call_id": r["call_id"], "tool": r["name"], "requested_arguments": r["arguments"],
-            "dispatched": r["call_id"] in dispatches, "rejected_before_dispatch": r["call_id"] not in dispatches,
-            "movement_observed": r["call_id"] in returns and
-                dispatches[r["call_id"]]["state_before"]["environment"]["robot"] != returns[r["call_id"]]["state_after"]["environment"]["robot"],
+            "dispatched": (r["call_id"], r["name"]) in dispatches, "rejected_before_dispatch": (r["call_id"], r["name"]) not in dispatches,
+            "movement_observed": (r["call_id"], r["name"]) in returns and
+                dispatches[(r["call_id"], r["name"])]["state_before"]["environment"]["robot"] != returns[(r["call_id"], r["name"])]["state_after"]["environment"]["robot"],
             "agent_result": o["result"], "guard": o.get("guard")}
             for r, o in zip(requests, result.tool_calls)]
         evaluation = evaluate_teammate(record)
         record["evaluation"] = evaluation.to_dict()
-        record["expected_failures"] = ["update_matches_returned_evidence"] if control == "unsupported_update" else ["no_movement_on_blocked_evidence"] if control == "movement_attempt" else []
+        record["expected_failures"] = ["update_matches_returned_evidence"] if control == "unsupported_update" else []  # movement_attempt: closed by the recheck before action, so it must now pass
         record["expectation_met"] = evaluation.failure_reasons == record["expected_failures"]
         # Agent outcomes include attempts rejected before any boundary dispatch.
         emit("actual_agent_outcome", {"agent": asdict(result), "state_after": after, "evaluation": evaluation.to_dict()})
