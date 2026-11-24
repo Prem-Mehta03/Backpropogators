@@ -227,3 +227,41 @@ def test_a_channel_marker_call_that_cannot_be_trusted_is_not_rebuilt(
     with pytest.raises(LLMClientError):
         client.chat([{"role": "user", "content": "go"}], [HISTORY, LIDAR])
     assert len(seen) == 3
+
+
+# ---- a retry after a malformed call must differ from the failed request (live T05, round 3)
+def test_a_malformed_call_retry_adds_a_note_and_keeps_the_temperature_pinned() -> None:
+    from procedural.llm_client import MALFORMED_CALL_NOTE
+
+    requests: list[dict[str, Any]] = []
+    answers = [
+        _ToolFail('{"name": "update_belief", "arguments": {"reason": ...}"}'),
+        _ok_reply(),
+    ]
+
+    def create(**kwargs: Any) -> Any:
+        requests.append(
+            {"temperature": kwargs["temperature"], "messages": list(kwargs["messages"])}
+        )
+        item = answers.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        return item
+
+    api = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=create))
+    )
+    client = LLMClient(
+        client=api, temperature=0.0, retry_temperature=0.0, tool_call_retries=2
+    )
+    reply = client.chat([{"role": "user", "content": "go"}], [LIDAR])
+    assert reply.content == "pong"
+    assert [r["temperature"] for r in requests] == [0.0, 0.0]
+    assert requests[1]["messages"] == [*requests[0]["messages"], MALFORMED_CALL_NOTE]
+
+
+def _ok_reply() -> SimpleNamespace:
+    message = SimpleNamespace(content="pong", tool_calls=None)
+    return SimpleNamespace(
+        choices=[SimpleNamespace(message=message, finish_reason="stop")]
+    )

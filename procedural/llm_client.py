@@ -60,6 +60,17 @@ RATE_LIMIT_RETRIES = 4
 MAX_RATE_LIMIT_WAIT_S = 30.0
 TOOL_CALL_RETRIES = 2
 RETRY_TEMPERATURE = 0.3
+# Added to the conversation when the provider rejects the model's tool call as malformed. Live T05
+# (round 3): the model wrote update_belief with typographic quotes inside "reason", the JSON broke,
+# and the retries at temperature 0 repeated it exactly.
+MALFORMED_CALL_NOTE = {
+    "role": "user",
+    "content": (
+        "Your last tool call could not be parsed: its arguments were not valid JSON. Call the "
+        "tool again with valid JSON. Keep every string short, plain ASCII, with no quotation "
+        "marks, backslashes or line breaks inside it."
+    ),
+}
 
 
 def is_rate_limit_error(exc: Exception) -> bool:
@@ -366,6 +377,9 @@ class LLMClient:
                         "temperature": max(
                             kwargs["temperature"], self.retry_temperature
                         ),
+                        # At temperature 0 an identical request gives an identical failure, so
+                        # the retry must differ: tell the model what went wrong.
+                        "messages": [*kwargs["messages"], MALFORMED_CALL_NOTE],
                     }
                     continue
                 if is_rate_limit_error(exc) or is_tool_call_generation_error(exc):
