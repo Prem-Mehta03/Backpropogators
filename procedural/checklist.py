@@ -139,8 +139,10 @@ def missing_evidence(
 ) -> list[str]:
     """List the requirements not yet met.
 
-    Inputs: the tool log (state.tool_log) and the requirement groups.
-    Output: a description of each unmet requirement, in order; [] when all are met.
+    Inputs: the tool log (state.tool_log), the requirement groups and the names of the tools
+    registered in this run. Output: a description of each unmet requirement, in order; [] when
+    all are met. With the default requirements, a question about a route (a path_* subject)
+    also needs every registered distance sensor and get_belief_history for that subject.
     """
     queried = {
         str(entry["args"].get("subject", ""))
@@ -153,7 +155,10 @@ def missing_evidence(
         name = entry["tool"]
         front = (name != "read_lidar"
                  or entry["args"].get("direction", "front") == "front")
-        if evidence_attempted(entry) and (front or not route_query):
+        about_route = name != "get_belief_history" or str(
+            entry["args"].get("subject", "")
+        ).startswith("path_")
+        if evidence_attempted(entry) and (front or not route_query) and about_route:
             attempted.add(name)
         guard = entry.get("guard", {}).get("recheck", {})
         if guard.get("direction") == "front":
@@ -162,6 +167,11 @@ def missing_evidence(
             )
     if required == DEFAULT_REQUIRED_EVIDENCE:
         relevant = tuple((name,) for name in DISTANCE_TOOLS if route_query and name in registered)
+        if route_query and "get_belief_history" in registered:
+            # A superseded (stale) belief is invisible to query_belief, which returns only
+            # current beliefs. History is the only way to see that an older entry was replaced
+            # (T06, live 0/3: the model never saw the 2026-09-01 map and never called it stale).
+            relevant += (("get_belief_history",),)
         if object_query and "read_camera" in registered:
             relevant += (("read_camera",),)
         if relevant:

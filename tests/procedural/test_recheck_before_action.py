@@ -213,6 +213,7 @@ def _script(answer: str) -> ScriptedLLM:
     return ScriptedLLM(
         [
             call("query_belief", {"subject": "path_A"}, "c1"),
+            call("get_belief_history", {"subject": "path_A"}, "c1h"),
             call("read_lidar", {}, "c2"),
             call("move_forward", {"distance_cm": 20}, "c3"),
             say(answer),
@@ -226,7 +227,7 @@ def test_blocked_path_move_is_cancelled_and_the_robot_stays_put() -> None:
     out = run_agent(
         QUESTION, _script("The move was cancelled; the robot did not move."), registry
     )
-    move = out.tool_calls[2]
+    move = out.tool_calls[3]
     assert move["tool"] == "move_forward" and move["result"]["ok"] is False
     assert move["result"]["error"]["code"] == "CONFLICT"
     assert "recheck before action" in move["result"]["error"]["message"]
@@ -240,6 +241,7 @@ def test_the_log_stays_one_entry_per_model_request() -> None:
     out = run_agent(QUESTION, _script("The move was cancelled."), registry)
     assert [c["tool"] for c in out.tool_calls] == [
         "query_belief",
+        "get_belief_history",
         "read_lidar",
         "move_forward",
     ]
@@ -253,7 +255,7 @@ def test_clear_path_move_runs_and_the_recheck_is_logged() -> None:
     out = run_agent(
         QUESTION, _script("The path was clear and the robot moved."), registry
     )
-    move = out.tool_calls[2]
+    move = out.tool_calls[3]
     assert move["result"]["ok"] is True and world.env.pose["x"] == 20
     assert move["guard"]["recheck"]["passed"] is True
     assert move["guard"]["recheck"]["reading_cm"] == 400
@@ -264,6 +266,7 @@ def test_the_model_cannot_skip_the_recheck_by_asking_again() -> None:
     llm = ScriptedLLM(
         [
             call("query_belief", {"subject": "path_A"}, "c1"),
+            call("get_belief_history", {"subject": "path_A"}, "c1h"),
             call("read_lidar", {}, "c2"),
             call("move_forward", {"distance_cm": 20}, "c3"),
             call("move_forward", {"distance_cm": 5}, "c4"),
@@ -271,7 +274,7 @@ def test_the_model_cannot_skip_the_recheck_by_asking_again() -> None:
         ]
     )
     out = run_agent(QUESTION, llm, registry)
-    assert [c["result"]["ok"] for c in out.tool_calls[2:]] == [False, False]
+    assert [c["result"]["ok"] for c in out.tool_calls[3:]] == [False, False]
     assert world.env.pose["x"] == 0
 
 
@@ -280,6 +283,7 @@ def test_an_answer_that_hides_a_cancelled_move_is_refused_then_accepted() -> Non
     llm = ScriptedLLM(
         [
             call("query_belief", {"subject": "path_A"}, "c1"),
+            call("get_belief_history", {"subject": "path_A"}, "c1h"),
             call("read_lidar", {}, "c2"),
             call("move_forward", {"distance_cm": 20}, "c3"),
             say("Route checked. The LiDAR reads 12 cm."),
@@ -301,6 +305,7 @@ def test_a_model_that_never_discloses_ends_in_a_fallback_that_does() -> None:
     llm = ScriptedLLM(
         [
             call("query_belief", {"subject": "path_A"}, "c1"),
+            call("get_belief_history", {"subject": "path_A"}, "c1h"),
             call("read_lidar", {}, "c2"),
             call("move_forward", {"distance_cm": 20}, "c3"),
             *[say("Route checked.")] * 6,

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-PROMPT_VERSION = "v6.1"  # recorded in every run log so a result can be tied to its prompt
+PROMPT_VERSION = "v6.2"  # recorded in every run log so a result can be tied to its prompt
 
 ABSTENTION_SIGNAL = "I cannot verify this with the available evidence."
 
@@ -38,7 +38,9 @@ Evidence policy:
    subject and the relevant sensor tool. The system will not accept an answer until you have
    done both. If either still returns no data after the checks in rule 3, say plainly that
    evidence is missing. Do not fill the gap with a guess.
-   For a route, try read_lidar and read_ultrasonic when the ultrasonic tool is available.
+   For a route, try read_lidar and read_ultrasonic when the ultrasonic tool is available, and
+   also call get_belief_history for the route subject: query_belief shows only current
+   beliefs, so only the history shows an older entry that was replaced.
 3. Memory lookups:
    - The subject must be an exact entity id (see the entity list below, if one is given).
      Never use a description such as "route" or "the box" as a subject.
@@ -91,9 +93,10 @@ Evidence policy:
 
 SITUATIONS = """\
 How to answer in these situations (each one only when it applies; the system checks the facts):
-A. Stale belief. A belief with status superseded, or one dated well before another belief
-   about the same thing, is outdated. Say it is outdated and give its date. Rely on the
-   newest active belief and check it against the live reading.
+A. Stale belief. A belief with status superseded (get_belief_history lists them), or one dated
+   well before another belief about the same thing, is outdated. Say it is outdated or stale and
+   give its date and source. Rely on the newest active belief and check it against the live
+   reading.
 B. Missing source. If a belief's source is null, say its source is unknown and its certainty
    was lowered. Say you did not rely on it alone: base the answer on the live reading.
 C. Disputed or conflicting evidence. If a belief is marked disputed, or two sensors disagree,

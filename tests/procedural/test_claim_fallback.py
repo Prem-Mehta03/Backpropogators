@@ -192,6 +192,7 @@ def test_missing_evidence_still_ends_in_step_limit_not_the_fallback() -> None:
 def scenario_a_with_writes() -> list:
     return [
         call("query_belief", {"subject": "path_A"}),
+        call("get_belief_history", {"subject": "path_A"}),
         call("read_lidar", {"direction": "front"}, "c2"),
         call(
             "downgrade_belief",
