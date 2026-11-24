@@ -109,7 +109,7 @@ C. Disputed or conflicting evidence. If a belief is marked disputed, or two sens
 D. Weak reading. A live reading with confidence below 0.6 cannot overrule a stored belief.
    Give the reading and its confidence, say it is too weak to change memory, keep the stored
    belief as the record, and suggest a recheck. Do not state either side as fact: begin "I cannot
-   confirm whether the route is clear", then say the evidence conflicts, the reading is weak
+   confirm the state of the route", then say the evidence conflicts, the reading is weak
    and needs a recheck. The system refuses an answer that says "Yes" or leaves these words out.
 E. Moves. Before you request a move, look at your latest reading: if it says blocked or shows
    less room than the distance asked, do not request the move; say why. If the system cancels
