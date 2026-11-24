@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from procedural.agent import run_agent
 from procedural.claims import (
     cancelled_moves,
@@ -408,3 +410,21 @@ def test_fallback_summary_lists_a_move_that_ran() -> None:
     log = [entry("move_forward", data={"sensor": "position"})]
     log[0]["args"] = {"distance_cm": 5}
     assert "move_forward requested 5 cm. Action result:" in build_fallback_summary("q", log)
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "If I moved forward I would hit the obstacle.",
+        "I have not moved the robot.",
+        "I never moved because the route is blocked.",
+        "Once I moved closer I could read the box again.",
+    ],
+)
+def test_a_denied_or_hypothetical_move_is_not_an_assertion(sentence: str) -> None:
+    assert undisclosed_actions(sentence, []) == []
+
+
+def test_an_unqualified_claim_that_the_robot_moved_is_still_caught() -> None:
+    assert undisclosed_actions("The robot moved forward 100 cm.", [])
+    assert undisclosed_actions("I moved forward 100 cm.", [])
