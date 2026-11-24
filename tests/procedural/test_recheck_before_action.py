@@ -436,3 +436,29 @@ def test_a_denied_or_hypothetical_move_is_not_an_assertion(sentence: str) -> Non
 def test_an_unqualified_claim_that_the_robot_moved_is_still_caught() -> None:
     assert undisclosed_actions("The robot moved forward 100 cm.", [])
     assert undisclosed_actions("I moved forward 100 cm.", [])
+
+
+def _ultrasonic_registry(value: float, status: str = "clear", lidar_cm: float = 250) -> dict:
+    registry = fake_registry(lidar_envelope(lidar_cm))
+    registry["read_ultrasonic"] = lambda: {
+        **lidar_envelope(value, status, "ultrasonic_front"),
+        "tool": "read_ultrasonic",
+    }
+    return registry
+
+
+def test_a_clear_ultrasonic_at_its_range_does_not_cancel_a_long_move() -> None:
+    check = recheck_before_action("move_forward", {"distance_cm": 190}, _ultrasonic_registry(200))
+    assert check is not None and check.cancel is None
+
+
+def test_the_lidar_still_has_to_clear_the_whole_long_move() -> None:
+    check = recheck_before_action("move_forward", {"distance_cm": 190}, _ultrasonic_registry(200, lidar_cm=210))
+    assert check is not None and check.cancel is not None
+    assert "LiDAR" in check.cancel
+
+
+def test_an_ultrasonic_reading_short_of_its_range_still_cancels() -> None:
+    check = recheck_before_action("move_forward", {"distance_cm": 190}, _ultrasonic_registry(150))
+    assert check is not None and check.cancel is not None
+    assert "ultrasonic" in check.cancel
