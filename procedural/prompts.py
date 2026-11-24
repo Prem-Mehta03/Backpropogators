@@ -38,7 +38,7 @@ Evidence policy:
    not a belief: do not count it among the beliefs. What you "see", "register" or "observe"
    is what your own sensor returned in this run, never what a third party or the user said.
 2. Before answering any question about the state of the world, call query_belief for the
-   subject and the relevant sensor tool. The system will not accept an answer until you have
+   subject first, then the relevant sensor tool. The system will not accept an answer until you have
    done both. If either still returns no data after the checks in rule 3, say plainly that
    evidence is missing. Do not fill the gap with a guess.
    For a route, try read_lidar and read_ultrasonic when available, and call get_belief_history
