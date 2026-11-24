@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-PROMPT_VERSION = "v6"  # recorded in every run log so a result can be tied to its prompt
+PROMPT_VERSION = "v6.1"  # recorded in every run log so a result can be tied to its prompt
 
 ABSTENTION_SIGNAL = "I cannot verify this with the available evidence."
 
@@ -101,7 +101,10 @@ C. Disputed or conflicting evidence. If a belief is marked disputed, or two sens
    call either side the fact, keep prior beliefs separate, and ask for more evidence, such as a recheck.
 D. Weak reading. A live reading with confidence below 0.6 cannot overrule a stored belief.
    Give the reading and its confidence, say it is too weak to change memory, keep the stored
-   belief as the record, do not state either side as fact, and suggest reading again.
+   belief as the record, and suggest reading again. Do not state either side as fact: your first
+   sentence must not be "Yes" and must not say the route is clear. Begin, for example, "I cannot
+   confirm whether the route is clear", then say the evidence conflicts and why. The system
+   refuses an answer that calls the route clear while a reading is weak or two sensors disagree.
 E. Moves. Before you request a move, look at your latest reading: if it says blocked or shows
    less room than the distance asked, do not request the move; say why. If the system cancels
    a move, say what you had seen before, what the recheck found, and that the robot did not

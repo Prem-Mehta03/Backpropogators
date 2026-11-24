@@ -13,6 +13,7 @@ from typing import Any
 
 from contracts.sensor_evidence import reading_claim
 from procedural.claims import MOVE_TOOLS, effective_statuses, failed_writes
+from procedural.certainty import weak_or_disputed_reason
 from procedural.update_guard import sensor_readings
 
 MEMORY_READ_TOOLS = (
@@ -181,8 +182,15 @@ def build_fallback_summary(question: str, tool_log: list[dict[str, Any]]) -> str
         conflicts = _disagreements(beliefs, readings)
         if conflicts:
             lines += ["", "Sources that disagree:"] + conflicts
-        elif beliefs and usable_readings:
+        elif beliefs and usable_readings and weak_or_disputed_reason(tool_log) is None:
             lines += ["", "No disagreement between the sources above."]
+    weak = weak_or_disputed_reason(tool_log)
+    if weak is not None:
+        lines += [
+            "",
+            f"The evidence is weak or conflicting: {weak}. I cannot confirm the state of the "
+            "route. Please read the sensors again to get more evidence.",
+        ]
     if any(b["source"] is None for b in beliefs):
         lines += ["", "At least one stored source is unknown. That claim cannot verify the world on its own."]
     lines += ["", CLOSING]
