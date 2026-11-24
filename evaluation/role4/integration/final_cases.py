@@ -84,7 +84,7 @@ def _plan(
     conflict = ("detect_conflict", _route_args())
     if case == "S04":
         return [query, history, lidar, _scripted_update, conflict,
-                "The map and weak LiDAR disagree. A stronger observation is needed."]
+                "The map and weak LiDAR reading conflict. A recheck is needed for a stronger observation."]
     if case == "S05":
         return [query, history, lidar, _scripted_update, ("read_ultrasonic", {}), _scripted_update, conflict,
                 "The two front readings conflict. I need more evidence before moving."]
