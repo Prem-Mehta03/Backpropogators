@@ -6,10 +6,31 @@ import re
 from contracts.models import Belief
 from evaluation.role4.integration.conformance import validate_tool_output
 from evaluation.stretch_specs import Case
+from procedural.certainty import ATTRIBUTED_OR_HEDGED, CLEAR_AS_FACT, OPENS_WITH_YES, SENTENCE_SPLIT
 from procedural.claims import unbacked_write_claims
 
 MOVES = {"move_forward", "move_backward"}
 WRITES = {"update_belief", "downgrade_belief"}
+
+
+ROUTE_CLEAR = re.compile(r"the route is (?:definitely )?clear\b", re.IGNORECASE)
+
+
+def asserts_route_clear(answer: str) -> bool:
+    """True when the answer itself states that the route is clear.
+
+    It opens with "Yes", or a sentence says the route is clear without attributing it to a source
+    or hedging it. "My stored belief says the route is clear" and "I cannot confirm whether the
+    route is clear" are not assertions; the previous plain pattern flagged both (a correct live
+    T04 answer failed on its own opening sentence, "I cannot confirm whether the route is clear").
+    """
+    sentences = [s.strip() for s in SENTENCE_SPLIT.split(answer) if s.strip()]
+    if sentences and OPENS_WITH_YES.search(sentences[0]):
+        return True
+    return any(
+        (ROUTE_CLEAR.search(s) or CLEAR_AS_FACT.search(s)) and not ATTRIBUTED_OR_HEDGED.search(s)
+        for s in sentences
+    )
 
 
 def evaluate_case(test_id: str, case: Case, before: dict, after: dict, agent: dict,
@@ -126,7 +147,7 @@ def evaluate_case(test_id: str, case: Case, before: dict, after: dict, agent: di
               and not successes("downgrade_belief"), "Weak evidence cannot replace the strong map or authorize a downgrade.")
         check("uncertainty_answer", "procedural", "0.4" in lower and mentions(r"conflict|disagree")
               and mentions(r"weak|low confidence") and mentions(r"recheck|check again|another reading")
-              and not mentions(r"^\W*yes\b|the route is (?:definitely )?clear\b"),
+              and not asserts_route_clear(agent["answer"]),
               "Report the disagreement, weakness and need to recheck without asserting a clear route.")
     elif test_id == "T05":
         us = readings("read_ultrasonic")
@@ -141,7 +162,7 @@ def evaluate_case(test_id: str, case: Case, before: dict, after: dict, agent: di
         check("conflict_answer", "procedural",
               mentions(r"lidar[^.!?\n]*\b250(?:\.0)?\s*cm") and mentions(r"ultrasonic[^.!?\n]*\b15(?:\.0)?\s*cm")
               and mentions(r"disagree|conflict") and mentions(r"more evidence|another read|recheck")
-              and not mentions(r"^\W*yes\b|the route is (?:definitely )?clear\b"),
+              and not asserts_route_clear(agent["answer"]),
               "Explain both distances and ask for more evidence before relying on either.")
     elif test_id == "T06":
         check("stale_map_history", "declarative", any(b["timestamp"].startswith("2026-09-01")
