@@ -83,10 +83,10 @@ def _plan(
     history = ("get_belief_history", _route_args())
     conflict = ("detect_conflict", _route_args())
     if case == "S04":
-        return [query, lidar, _scripted_update, conflict,
-                "The map and weak LiDAR disagree. A stronger observation is needed."]
+        return [query, history, lidar, _scripted_update, conflict,
+                "The map and weak LiDAR reading conflict. A recheck is needed for a stronger observation."]
     if case == "S05":
-        return [query, lidar, _scripted_update, ("read_ultrasonic", {}), _scripted_update, conflict,
+        return [query, history, lidar, _scripted_update, ("read_ultrasonic", {}), _scripted_update, conflict,
                 "The two front readings conflict. I need more evidence before moving."]
     if case == "S06":
         return [query, history, lidar, _scripted_update, history,
@@ -103,9 +103,9 @@ def _plan(
         return ("move_forward", {"distance_cm": 20}) if control == "stale_action" else lidar
 
     if control == "stale_action":
-        return [query, lidar, signal_and_continue,
+        return [query, history, lidar, signal_and_continue,
                 "The first reading was clear, but the recheck cancelled the move. I did not move."]
-    return [query, lidar, signal_and_continue, _scripted_update,
+    return [query, history, lidar, signal_and_continue, _scripted_update,
             "The path was clear at first. The refreshed LiDAR reading is blocked, so I will stay put."]
 
 

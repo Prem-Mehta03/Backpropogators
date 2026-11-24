@@ -34,7 +34,9 @@ def test_ultrasonic_is_only_advertised_when_the_world_registers_it() -> None:
     registry, sources = build_tool_registry(sensorimotor=World())
     assert len(registry) == 12 and registry["read_ultrasonic"] is read_ultrasonic
     assert sources["read_ultrasonic"] == SENSORIMOTOR_SOURCE
-    offered = {schema["function"]["name"] for schema in registered_tool_schemas(registry)}
+    offered = {
+        schema["function"]["name"] for schema in registered_tool_schemas(registry)
+    }
     assert offered == set(registry)
 
 

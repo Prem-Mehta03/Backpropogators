@@ -103,6 +103,7 @@ def test_scenario_a_end_to_end_against_real_memory() -> None:
     llm = ScriptedLLM(
         [
             call("query_belief", {"subject": "path_A"}, "c1"),
+            call("get_belief_history", {"subject": "path_A"}, "c1h"),
             call("read_lidar", {}, "c2"),
             call(
                 "downgrade_belief",
@@ -136,6 +137,7 @@ def test_scenario_a_end_to_end_against_real_memory() -> None:
     assert out.finished and out.error is None and out.evidence_nudges == 0
     assert [c["tool"] for c in out.tool_calls] == [
         "query_belief",
+        "get_belief_history",
         "read_lidar",
         "downgrade_belief",
         "update_belief",
@@ -157,6 +159,7 @@ def test_guard_still_refuses_a_made_up_belief_id_on_real_memory() -> None:
     llm = ScriptedLLM(
         [
             call("query_belief", {"subject": "path_A"}, "c1"),
+            call("get_belief_history", {"subject": "path_A"}, "c1h"),
             call("read_lidar", {}, "c2"),
             call(
                 "downgrade_belief",
@@ -167,6 +170,6 @@ def test_guard_still_refuses_a_made_up_belief_id_on_real_memory() -> None:
         ]
     )
     out = run_agent(QUESTION, llm, registry)
-    refused = out.tool_calls[2]
+    refused = out.tool_calls[3]
     assert refused["result"]["ok"] is False and "guard" in refused
     assert memory.query_belief("path_A")["data"][0]["confidence"] == 1.0

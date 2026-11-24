@@ -175,7 +175,8 @@ def _check_downgrade_evidence(
     belief = known_beliefs(tool_log).get(args.get("belief_id"), {})
     if (belief.get("subject"), belief.get("predicate")) != ("path_A", "status"):
         return GuardDecision(
-            args, "The forward distance readings do not observe this belief's subject and predicate."
+            args,
+            "The forward distance readings do not observe this belief's subject and predicate.",
         )
     if set(statuses.values()) == {belief.get("object")}:
         return GuardDecision(
@@ -295,7 +296,9 @@ def _check_sensor_update(
     if "source" not in args:
         return GuardDecision(args)  # validates as a missing argument at the wrapper
     if not isinstance(source, str):
-        return GuardDecision(args, "An agent_sensor belief needs the name of its observed sensor.")
+        return GuardDecision(
+            args, "An agent_sensor belief needs the name of its observed sensor."
+        )
     readings = sensor_readings(tool_log)
     if source not in readings:
         return GuardDecision(
@@ -347,11 +350,22 @@ def check_memory_call(
         if refusal is not None:
             return refusal
         perspective, source = args.get("perspective"), args.get("source")
-        reserved_sensors = FRONT_RANGE_SENSORS | {CAMERA_SENSOR} | sensor_readings(tool_log).keys()
-        if isinstance(source, str) and source in reserved_sensors and perspective != "agent_sensor":
-            return GuardDecision(args, "An observation from a robot sensor needs the agent_sensor perspective.")
+        reserved_sensors = (
+            FRONT_RANGE_SENSORS | {CAMERA_SENSOR} | sensor_readings(tool_log).keys()
+        )
+        if (
+            isinstance(source, str)
+            and source in reserved_sensors
+            and perspective != "agent_sensor"
+        ):
+            return GuardDecision(
+                args,
+                "An observation from a robot sensor needs the agent_sensor perspective.",
+            )
         if source == "user" and perspective != "user":
-            return GuardDecision(args, "A statement from the user must retain the user perspective.")
+            return GuardDecision(
+                args, "A statement from the user must retain the user perspective."
+            )
         if perspective == "agent_sensor":
             return _check_sensor_update(args, tool_log)
         if perspective == "user" and source == "user":

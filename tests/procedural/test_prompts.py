@@ -96,7 +96,9 @@ from procedural.prompts import PROMPT_VERSION, SITUATIONS
 
 
 def test_prompt_version_is_v6_and_the_prompt_includes_the_situations() -> None:
-    assert PROMPT_VERSION == "v6"
+    assert PROMPT_VERSION.startswith(
+        "v6"
+    )  # v6.N: bumped whenever the prompt text changes
     assert SITUATIONS in SYSTEM_PROMPT
     assert SYSTEM_PROMPT.index(EVIDENCE_POLICY) < SYSTEM_PROMPT.index(SITUATIONS)
     assert SYSTEM_PROMPT.index(SITUATIONS) < SYSTEM_PROMPT.index(ANSWER_FORMAT)
@@ -113,7 +115,7 @@ def test_each_situation_is_covered() -> None:
     assert "outdated" in SITUATIONS  # T06 stale
     assert "source is unknown" in SITUATIONS  # T09 missing provenance
     assert "do not\n   call either side the fact" in SITUATIONS  # T04, T05 disputed
-    assert "below 0.6" in SITUATIONS and "reading again" in SITUATIONS  # T04 weak
+    assert "below 0.6" in SITUATIONS and "recheck" in SITUATIONS  # T04 weak
     assert "robot did not\n   move" in SITUATIONS  # T08, T10 moves
     assert "evidence is\n   missing and name no value" in SITUATIONS  # T07
 

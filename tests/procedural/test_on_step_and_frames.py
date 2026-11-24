@@ -6,11 +6,19 @@ import json
 from pathlib import Path
 from typing import Any
 
-from procedural.agent import make_notifier, run_agent
+from procedural.agent import make_notifier
+from procedural.agent import run_agent as _run_agent
 from scripts.frame_recorder import FrameRecorder, basic_world
 from scripts.tool_wiring import build_memory, build_sensorimotor, build_tool_registry
 from sensorimotor import create_sensorimotor
 from tests.procedural.scripted_llm import ScriptedLLM, call, say
+
+
+def run_agent(*args: Any, **kwargs: Any) -> Any:
+    """These tests are about the observer and the frames, not the evidence checklist."""
+    kwargs.setdefault("required_evidence", ())
+    return _run_agent(*args, **kwargs)
+
 
 SCENARIO_A = (
     Path(__file__).parents[2] / "sensorimotor" / "scenarios" / "scenario_a.json"

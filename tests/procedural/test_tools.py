@@ -267,3 +267,20 @@ def test_every_memory_tool_asks_for_an_exact_entity_id() -> None:
         "detect_conflict",
     ):
         assert "Exact entity id" in _properties(name)["subject"]["description"], name
+
+
+def test_update_belief_rejects_a_null_source_from_the_model() -> None:
+    """The model may not record an unsourced belief; only seeding creates those."""
+    args = {
+        "subject": "path_A",
+        "predicate": "status",
+        "object": "clear",
+        "source": None,
+        "confidence": 0.9,
+        "perspective": "historical",
+        "reason": "test",
+    }
+    out = call_tool("update_belief", args, REGISTRY)
+    assert out["ok"] is False
+    assert out["error"]["code"] == "INVALID_ARGUMENT"
+    assert "source" in out["error"]["message"]

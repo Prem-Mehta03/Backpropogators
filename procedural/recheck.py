@@ -27,7 +27,9 @@ def _motion_distance(reading: SensorReading, tool: str, direction: str) -> float
     if tool == "read_ultrasonic":
         expected = {"ultrasonic_front"}
     else:
-        expected = {"lidar_front"} if direction == "front" else {"lidar_back", "lidar_rear"}
+        expected = (
+            {"lidar_front"} if direction == "front" else {"lidar_back", "lidar_rear"}
+        )
     if (
         reading.sensor not in expected
         or reading.unit != "cm"
@@ -66,7 +68,9 @@ def recheck_before_action(
     if distance <= 0 or (isinstance(distance, float) and not math.isfinite(distance)):
         return None
     need = distance + RECHECK_MARGIN_CM
-    checks: list[tuple[str, dict[str, Any]]] = [("read_lidar", {"direction": direction})]
+    checks: list[tuple[str, dict[str, Any]]] = [
+        ("read_lidar", {"direction": direction})
+    ]
     if "read_ultrasonic" in registry:
         checks.append(("read_ultrasonic", {}))
     details: dict[str, Any] = {
@@ -79,14 +83,18 @@ def recheck_before_action(
     failures: list[str] = []
     for name, args in checks:
         envelope = call_tool(name, args, registry)
-        details["reads"].append({"tool": name, "args": args, "result": envelope, "auto": True})
+        details["reads"].append(
+            {"tool": name, "args": args, "result": envelope, "auto": True}
+        )
         if on_read is not None:
             on_read(name, args, envelope)
         is_lidar = name == "read_lidar"
         details["lidar_result" if is_lidar else "ultrasonic_result"] = envelope
         label = f"{direction} LiDAR" if is_lidar else "front ultrasonic sensor"
         if not envelope["ok"]:
-            failures.append(f"The {label} could not be read ({envelope['error']['message']}).")
+            failures.append(
+                f"The {label} could not be read ({envelope['error']['message']})."
+            )
             continue
         try:
             reading = SensorReading.model_validate(envelope["data"])
@@ -97,7 +105,9 @@ def recheck_before_action(
         if is_lidar:
             details["reading_cm"] = value
         if value is None:
-            failures.append(f"The {label} returned an unusable reading (status {reading.status}).")
+            failures.append(
+                f"The {label} returned an unusable reading (status {reading.status})."
+            )
         elif reading.status == "blocked" or value < need:
             failures.append(
                 f"The {label} now reads {value} cm (status {reading.status}). "

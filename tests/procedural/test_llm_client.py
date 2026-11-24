@@ -102,3 +102,166 @@ def test_missing_api_key_is_a_clear_error(monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.delenv("LLM_API_KEY", raising=False)
     with pytest.raises(LLMClientError, match="API key"):
         LLMClient()
+
+
+# ---- repair of a malformed call to a tool that takes no arguments (live T05 failure)
+ULTRASONIC = {
+    "type": "function",
+    "function": {
+        "name": "read_ultrasonic",
+        "description": "Read the front ultrasonic sensor.",
+        "parameters": {"type": "object", "properties": {}, "required": []},
+    },
+}
+LIDAR = {
+    "type": "function",
+    "function": {
+        "name": "read_lidar",
+        "description": "Read the LiDAR.",
+        "parameters": {
+            "type": "object",
+            "properties": {"direction": {"type": "string"}},
+            "required": [],
+        },
+    },
+}
+
+
+class _ToolFail(Exception):
+    status_code = 400
+
+    def __init__(self, generated: str) -> None:
+        super().__init__(
+            "Error code: 400 - {'error': {'message': 'Failed to parse tool call arguments as "
+            "JSON', 'type': 'invalid_request_error', 'code': 'tool_use_failed', "
+            f"'failed_generation': '{generated}'}}}}"
+        )
+
+
+def _client_failing_with(
+    generated: str, retries: int = 2
+) -> tuple[LLMClient, list[Any]]:
+    seen: list[Any] = []
+
+    def create(**kwargs: Any) -> Any:
+        seen.append(kwargs["temperature"])
+        raise _ToolFail(generated)
+
+    api = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=create))
+    )
+    client = LLMClient(
+        client=api, temperature=0.0, retry_temperature=0.0, tool_call_retries=retries
+    )
+    return client, seen
+
+
+def test_malformed_no_argument_call_is_rebuilt_not_retried() -> None:
+    client, seen = _client_failing_with(
+        '{"name": "read_ultrasonic", "arguments": {""}"}'
+    )
+    reply = client.chat([{"role": "user", "content": "go"}], [ULTRASONIC, LIDAR])
+    assert [c.name for c in reply.tool_calls] == ["read_ultrasonic"]
+    assert (
+        reply.tool_calls[0].arguments == {}
+        and reply.tool_calls[0].arguments_error is None
+    )
+    assert len(seen) == 1  # no pointless identical retries at temperature 0
+
+
+@pytest.mark.parametrize(
+    "generated",
+    [
+        '{"name": "read_lidar", "arguments": {""}"}',  # tool takes an argument: do not guess
+        '{"name": "read_ultrasonic", "arguments": {"direction": "front"}}',  # args present
+        '{"name": "move_forward", "arguments": {""}"}',  # tool not offered
+        "not a tool call at all",
+    ],
+)
+def test_other_malformed_calls_are_not_rebuilt(generated: str) -> None:
+    client, seen = _client_failing_with(generated)
+    with pytest.raises(LLMClientError):
+        client.chat([{"role": "user", "content": "go"}], [ULTRASONIC, LIDAR])
+    assert len(seen) == 3  # first attempt plus the two normal retries
+
+
+# ---- repair of a tool name with a leaked channel marker (live T05, 2 of 3 runs)
+HISTORY = {
+    "type": "function",
+    "function": {
+        "name": "get_belief_history",
+        "description": "History.",
+        "parameters": {
+            "type": "object",
+            "properties": {"subject": {"type": "string"}},
+            "required": ["subject"],
+        },
+    },
+}
+LEAKED = '{"name": "get_belief_history<|channel|>commentary", "arguments": {"subject": "path_A"}}'
+
+
+def test_a_tool_name_with_a_leaked_channel_marker_is_rebuilt_with_the_models_arguments() -> (
+    None
+):
+    client, seen = _client_failing_with(LEAKED)
+    reply = client.chat([{"role": "user", "content": "go"}], [HISTORY, LIDAR])
+    (call,) = reply.tool_calls
+    assert call.name == "get_belief_history"
+    assert call.arguments == {"subject": "path_A"} and call.arguments_error is None
+    assert len(seen) == 1
+
+
+@pytest.mark.parametrize(
+    "generated",
+    [
+        '{"name": "move_forward<|channel|>commentary", "arguments": {"distance_cm": 5}}',  # not offered
+        '{"name": "get_belief_history<|channel|>commentary", "arguments": {"subject": }}',  # bad JSON
+        '{"name": "get_belief_history<|channel|>commentary", "arguments": [1, 2]}',  # not an object
+    ],
+)
+def test_a_channel_marker_call_that_cannot_be_trusted_is_not_rebuilt(
+    generated: str,
+) -> None:
+    client, seen = _client_failing_with(generated)
+    with pytest.raises(LLMClientError):
+        client.chat([{"role": "user", "content": "go"}], [HISTORY, LIDAR])
+    assert len(seen) == 3
+
+
+# ---- a retry after a malformed call must differ from the failed request (live T05, round 3)
+def test_a_malformed_call_retry_adds_a_note_and_keeps_the_temperature_pinned() -> None:
+    from procedural.llm_client import MALFORMED_CALL_NOTE
+
+    requests: list[dict[str, Any]] = []
+    answers = [
+        _ToolFail('{"name": "update_belief", "arguments": {"reason": ...}"}'),
+        _ok_reply(),
+    ]
+
+    def create(**kwargs: Any) -> Any:
+        requests.append(
+            {"temperature": kwargs["temperature"], "messages": list(kwargs["messages"])}
+        )
+        item = answers.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        return item
+
+    api = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=create))
+    )
+    client = LLMClient(
+        client=api, temperature=0.0, retry_temperature=0.0, tool_call_retries=2
+    )
+    reply = client.chat([{"role": "user", "content": "go"}], [LIDAR])
+    assert reply.content == "pong"
+    assert [r["temperature"] for r in requests] == [0.0, 0.0]
+    assert requests[1]["messages"] == [*requests[0]["messages"], MALFORMED_CALL_NOTE]
+
+
+def _ok_reply() -> SimpleNamespace:
+    message = SimpleNamespace(content="pong", tool_calls=None)
+    return SimpleNamespace(
+        choices=[SimpleNamespace(message=message, finish_reason="stop")]
+    )

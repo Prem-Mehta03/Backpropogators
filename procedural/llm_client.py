@@ -13,6 +13,7 @@ import re
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 from typing import Any, Protocol
 
 logger = logging.getLogger(__name__)
@@ -59,6 +60,17 @@ RATE_LIMIT_RETRIES = 4
 MAX_RATE_LIMIT_WAIT_S = 30.0
 TOOL_CALL_RETRIES = 2
 RETRY_TEMPERATURE = 0.3
+# Added to the conversation when the provider rejects the model's tool call as malformed. Live T05
+# (round 3): the model wrote update_belief with typographic quotes inside "reason", the JSON broke,
+# and the retries at temperature 0 repeated it exactly.
+MALFORMED_CALL_NOTE = {
+    "role": "user",
+    "content": (
+        "Your last tool call could not be parsed: its arguments were not valid JSON. Call the "
+        "tool again with valid JSON. Keep every string short, plain ASCII, with no quotation "
+        "marks, backslashes or line breaks inside it."
+    ),
+}
 
 
 def is_rate_limit_error(exc: Exception) -> bool:
@@ -104,6 +116,99 @@ def rate_limit_wait_seconds(exc: Exception, attempt: int) -> float:
         seconds = float(match.group(1)) / (1000.0 if match.group(2) == "ms" else 1.0)
         return min(seconds + 0.5, MAX_RATE_LIMIT_WAIT_S)
     return min(5.0 * (attempt + 1), MAX_RATE_LIMIT_WAIT_S)
+
+
+# ---- repair of a malformed call to a tool that takes no arguments (T05 live failure)
+FAILED_NAME = re.compile(r'"name"\s*:\s*"([A-Za-z_][A-Za-z0-9_]*)"')
+FAILED_ARGUMENTS = re.compile(r'"arguments"\s*:(.*)', re.DOTALL)
+
+
+def _no_argument_tools(tools: list[dict[str, Any]] | None) -> set[str]:
+    """Names of the offered tools whose schema has no parameters, such as read_ultrasonic."""
+    names: set[str] = set()
+    for tool in tools or []:
+        function = tool.get("function", {})
+        if not function.get("parameters", {}).get("properties"):
+            names.add(function.get("name", ""))
+    names.discard("")
+    return names
+
+
+def repair_no_argument_call(
+    exc: Exception, tools: list[dict[str, Any]] | None
+) -> Any | None:
+    """Rebuild the one call a provider rejected as malformed when it needs no arguments.
+
+    Groq answers HTTP 400 tool_use_failed when the model writes a tool call such as
+    {"name": "read_ultrasonic", "arguments": {""}}: the right tool, garbage in place of an empty
+    argument object. Retrying at temperature 0 repeats the same text, so the call is rebuilt
+    instead. It is only rebuilt when the named tool is offered, takes no arguments, and the
+    rejected text carries no argument key or value at all (nothing is guessed). Returns a
+    raw-response-shaped object for LLMClient.chat to parse, or None when the call cannot be
+    repaired.
+    """
+    text = str(exc)
+    named = FAILED_NAME.search(text)
+    if named is None or named.group(1) not in _no_argument_tools(tools):
+        return None
+    given = FAILED_ARGUMENTS.search(text[named.end() :])
+    leftover = re.sub(r"""[{}"'\s:,]""", "", given.group(1)) if given else ""
+    if leftover:
+        return None
+    call = SimpleNamespace(
+        id="repaired_call",
+        function=SimpleNamespace(name=named.group(1), arguments="{}"),
+    )
+    message = SimpleNamespace(content=None, tool_calls=[call])
+    return SimpleNamespace(
+        choices=[SimpleNamespace(message=message, finish_reason="tool_calls")]
+    )
+
+
+ANY_NAME = re.compile(r'"name"\s*:\s*"([^"]+)"')
+
+
+def _offered_names(tools: list[dict[str, Any]] | None) -> set[str]:
+    return {t.get("function", {}).get("name", "") for t in tools or []} - {""}
+
+
+def repair_channel_suffix_call(
+    exc: Exception, tools: list[dict[str, Any]] | None
+) -> Any | None:
+    """Rebuild a call whose tool name carries a leaked channel marker (T05 live failure).
+
+    gpt-oss sometimes writes its chat-format marker into the tool name, for example
+    "get_belief_history<|channel|>commentary". Groq then answers 400 tool_use_failed ("attempted
+    to call tool ... which was not in request.tools"), and a retry at temperature 0 repeats it.
+    When the part before the marker is an offered tool and the rejected text holds a valid JSON
+    argument object, the call is rebuilt with exactly those arguments. Nothing is invented: the
+    arguments are the model's own, and the tool still goes through normal argument validation.
+    Returns a raw-response-shaped object, or None when the call cannot be repaired.
+    """
+    text = str(exc)
+    named = ANY_NAME.search(text)
+    if named is None or "<|" not in named.group(1):
+        return None
+    base = named.group(1).split("<|", 1)[0].strip()
+    if base not in _offered_names(tools):
+        return None
+    given = FAILED_ARGUMENTS.search(text[named.end() :])
+    if given is None:
+        return None
+    try:
+        arguments, _ = json.JSONDecoder().raw_decode(given.group(1).lstrip())
+    except ValueError:
+        return None
+    if not isinstance(arguments, dict):
+        return None
+    call = SimpleNamespace(
+        id="repaired_call",
+        function=SimpleNamespace(name=base, arguments=json.dumps(arguments)),
+    )
+    message = SimpleNamespace(content=None, tool_calls=[call])
+    return SimpleNamespace(
+        choices=[SimpleNamespace(message=message, finish_reason="tool_calls")]
+    )
 
 
 class LLMClient:
@@ -246,6 +351,16 @@ class LLMClient:
                     self._sleep(wait)
                     rate_attempts += 1
                     continue
+                if is_tool_call_generation_error(exc):
+                    repaired = repair_no_argument_call(
+                        exc, kwargs.get("tools")
+                    ) or repair_channel_suffix_call(exc, kwargs.get("tools"))
+                    if repaired is not None:
+                        logger.warning(
+                            "Repaired a malformed tool call to %s",
+                            repaired.choices[0].message.tool_calls[0].function.name,
+                        )
+                        return repaired
                 if (
                     is_tool_call_generation_error(exc)
                     and tool_attempts < self.tool_call_retries
@@ -259,7 +374,12 @@ class LLMClient:
                     )
                     kwargs = {
                         **kwargs,
-                        "temperature": max(kwargs["temperature"], self.retry_temperature),
+                        "temperature": max(
+                            kwargs["temperature"], self.retry_temperature
+                        ),
+                        # At temperature 0 an identical request gives an identical failure, so
+                        # the retry must differ: tell the model what went wrong.
+                        "messages": [*kwargs["messages"], MALFORMED_CALL_NOTE],
                     }
                     continue
                 if is_rate_limit_error(exc) or is_tool_call_generation_error(exc):

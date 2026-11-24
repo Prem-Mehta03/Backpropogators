@@ -92,6 +92,7 @@ def test_scenario_a_end_to_end_with_real_memory_and_real_sensors() -> None:
     llm = ScriptedLLM(
         [
             call("query_belief", {"subject": "path_A"}, "c1"),
+            call("get_belief_history", {"subject": "path_A"}, "c1h"),
             call("read_lidar", {}, "c2"),
             call(
                 "downgrade_belief",
@@ -120,7 +121,7 @@ def test_scenario_a_end_to_end_with_real_memory_and_real_sensors() -> None:
     )
     out = run_agent(QUESTION, llm, registry)
     assert out.finished and out.error is None and out.evidence_nudges == 0
-    assert out.tool_calls[1]["result"]["data"]["sensor"] == lidar["sensor"]
+    assert out.tool_calls[2]["result"]["data"]["sensor"] == lidar["sensor"]
     assert all(c["result"]["ok"] for c in out.tool_calls), out.tool_calls
-    assert "guard" not in out.tool_calls[3]
+    assert "guard" not in out.tool_calls[4]
     assert sources["read_lidar"] == SENSORIMOTOR_SOURCE

@@ -158,7 +158,10 @@ class FrameRecorder:
         self._add(
             step,
             {
-                "name": tool, "args": args, "ok": bool(result.get("ok")),
-                "auto": auto, "result": result,
+                "name": tool,
+                "args": args,
+                "ok": bool(result.get("ok")),
+                "auto": auto,
+                "result": result,
             },
         )
