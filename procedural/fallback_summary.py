@@ -200,8 +200,8 @@ def build_fallback_summary(question: str, tool_log: list[dict[str, Any]]) -> str
         lines += [
             "",
             (
-                f"The evidence is weak or conflicting: {weak}. I cannot confirm the state of "
-                "the route. Please read the sensors again to get more evidence."
+                f"The evidence is weak and conflicting: {weak}. I cannot confirm the state of "
+                "the route. Please recheck by reading the sensors again to get more evidence."
             ),
         ]
     if any(b["source"] is None for b in beliefs):

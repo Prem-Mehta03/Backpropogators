@@ -87,7 +87,7 @@ def test_a_blocked_ultrasonic_read_cancels_clear_lidar_and_notifies_both() -> No
                 call("move_forward", {"distance_cm": 20}, "move"),
                 say(
                     "The move was cancelled and the robot did not move. The LiDAR and the "
-                    "ultrasonic sensor disagree, so I need more evidence before moving."
+                    "ultrasonic sensor disagree, so a recheck is needed before moving."
                 ),
             ]
         ),

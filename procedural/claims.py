@@ -22,7 +22,7 @@ import json
 import re
 from typing import Any
 
-from procedural.certainty import overclaimed_certainty
+from procedural.certainty import certainty_problems
 
 BELIEF_ID = re.compile(r"\bb_\d{3,}\b")
 DOWNGRADE_WORDS = re.compile(r"\bdowngrad(?:e|ed|ing)\b", re.IGNORECASE)
@@ -310,5 +310,5 @@ def unbacked_write_claims(
             f"{statuses[belief_id]}: report its status as {statuses[belief_id]}"
         )
     problems += undisclosed_actions(answer, tool_log)
-    problems += overclaimed_certainty(answer, tool_log)
+    problems += certainty_problems(answer, tool_log)
     return problems

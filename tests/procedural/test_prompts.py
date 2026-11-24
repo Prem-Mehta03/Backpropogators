@@ -115,7 +115,7 @@ def test_each_situation_is_covered() -> None:
     assert "outdated" in SITUATIONS  # T06 stale
     assert "source is unknown" in SITUATIONS  # T09 missing provenance
     assert "do not\n   call either side the fact" in SITUATIONS  # T04, T05 disputed
-    assert "below 0.6" in SITUATIONS and "reading again" in SITUATIONS  # T04 weak
+    assert "below 0.6" in SITUATIONS and "recheck" in SITUATIONS  # T04 weak
     assert "robot did not\n   move" in SITUATIONS  # T08, T10 moves
     assert "evidence is\n   missing and name no value" in SITUATIONS  # T07
 

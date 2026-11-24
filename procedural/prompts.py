@@ -41,9 +41,8 @@ Evidence policy:
    subject and the relevant sensor tool. The system will not accept an answer until you have
    done both. If either still returns no data after the checks in rule 3, say plainly that
    evidence is missing. Do not fill the gap with a guess.
-   For a route, try read_lidar and read_ultrasonic when the ultrasonic tool is available, and
-   also call get_belief_history for the route subject: query_belief shows only current
-   beliefs, so only the history shows an older entry that was replaced.
+   For a route, try read_lidar and read_ultrasonic when available, and call get_belief_history
+   for the route subject: query_belief hides replaced entries, the history shows them.
 3. Memory lookups:
    - The subject must be an exact entity id (see the entity list below, if one is given).
      Never use a description such as "route" or "the box" as a subject.
@@ -97,20 +96,21 @@ Evidence policy:
 SITUATIONS = """\
 How to answer in these situations (each one only when it applies; the system checks the facts):
 A. Stale belief. A belief with status superseded (get_belief_history lists them), or one dated
-   well before another belief about the same thing, is outdated. Say it is outdated or stale and
-   give its date and source. Rely on the newest active belief and check it against the live
-   reading.
+   well before another belief about the same thing, is outdated. Say it is stale or outdated
+   (use one of those words) with its date and source. Rely on the newest active belief and
+   check it against the live reading.
 B. Missing source. If a belief's source is null, say its source is unknown and its certainty
    was lowered. Say you did not rely on it alone: base the answer on the live reading.
 C. Disputed or conflicting evidence. If a belief is marked disputed, or two sensors disagree,
    give each side with its value, source and confidence. Say the state is disputed, do not
-   call either side the fact, keep prior beliefs separate, and ask for more evidence, such as a recheck.
+   call either side the fact, keep prior beliefs separate, and ask for more evidence, such as a
+   recheck. If two distance sensors disagree, first record each reading with update_belief
+   (source = the sensor name, perspective agent_sensor) so memory marks the state disputed.
 D. Weak reading. A live reading with confidence below 0.6 cannot overrule a stored belief.
    Give the reading and its confidence, say it is too weak to change memory, keep the stored
-   belief as the record, and suggest reading again. Do not state either side as fact: your first
-   sentence must not be "Yes" and must not say the route is clear. Begin, for example, "I cannot
-   confirm whether the route is clear", then say the evidence conflicts and why. The system
-   refuses an answer that calls the route clear while a reading is weak or two sensors disagree.
+   belief as the record, and suggest a recheck. Do not state either side as fact: begin "I cannot
+   confirm whether the route is clear", then say the evidence conflicts, the reading is weak
+   and needs a recheck. The system refuses an answer that says "Yes" or leaves these words out.
 E. Moves. Before you request a move, look at your latest reading: if it says blocked or shows
    less room than the distance asked, do not request the move; say why. If the system cancels
    a move, say what you had seen before, what the recheck found, and that the robot did not
