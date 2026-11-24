@@ -23,6 +23,7 @@ from typing import Any
 SCENARIO_DIR = Path(__file__).parent / "scenarios"
 TS_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 CHANGE_TYPES = ("add_obstacle", "remove_obstacle", "set_lighting", "set_object_color")
+EVENT_COUNTERS = ("action", "sensorimotor_call")
 
 
 class ScenarioConfigError(ValueError):
@@ -43,6 +44,7 @@ class ObstacleConfig:
     y_min: float
     x_max: float
     y_max: float
+    material: str = "solid"
 
 
 @dataclass(frozen=True)
@@ -90,10 +92,11 @@ class PositionConfig:
 
 @dataclass(frozen=True)
 class EventConfig:
-    """A world change applied when the step counter reaches ``at_step``."""
+    """A world change triggered by the selected action or tool-call counter."""
 
     at_step: int
     change: Mapping[str, Any]
+    after: str = "action"
 
 
 @dataclass(frozen=True)
@@ -113,6 +116,7 @@ class ScenarioConfig:
     camera: CameraConfig
     position: PositionConfig
     events: tuple[EventConfig, ...]
+    ultrasonic: LidarConfig | None = None
 
 
 # ---------------------------------------------------------------- helpers
@@ -148,17 +152,31 @@ def _bool(d: Mapping[str, Any], key: str, default: bool) -> bool:
     return val
 
 
-def _obstacle(d: Mapping[str, Any]) -> ObstacleConfig:
+def parse_obstacle(d: Mapping[str, Any]) -> ObstacleConfig:
+    """Return a validated obstacle, including its physical material."""
     ob = ObstacleConfig(
         _str(d, "obstacle_id"),
         _num(d, "x_min"),
         _num(d, "y_min"),
         _num(d, "x_max"),
         _num(d, "y_max"),
+        _str(d, "material", "solid"),
     )
     if ob.x_min >= ob.x_max or ob.y_min >= ob.y_max:
         raise ScenarioConfigError(f"Obstacle {ob.obstacle_id}: min must be < max")
+    if ob.material not in ("solid", "glass"):
+        raise ScenarioConfigError(f"Obstacle {ob.obstacle_id}: material must be solid or glass")
     return ob
+
+
+def _enabled(config: Mapping[str, Any]) -> bool:
+    available = _bool(config, "available", True)
+    if "enabled" not in config:
+        return available
+    enabled = _bool(config, "enabled", True)
+    if "available" in config and available != enabled:
+        raise ScenarioConfigError("Conflicting 'available' and 'enabled' flags")
+    return enabled
 
 
 def parse_timestamp(ts: str) -> datetime:
@@ -179,11 +197,18 @@ def _lighting(d: Mapping[str, Any]) -> LightingConfig:
 
 
 def _event(d: Mapping[str, Any]) -> EventConfig:
-    step = int(_num(d, "at_step"))
+    step = _num(d, "at_step")
+    if step < 0 or not step.is_integer():
+        raise ScenarioConfigError("event.at_step must be a nonnegative integer")
     change = d.get("change")
     if not isinstance(change, dict) or change.get("type") not in CHANGE_TYPES:
         raise ScenarioConfigError(f"event.change.type must be one of {CHANGE_TYPES}")
-    return EventConfig(step, dict(change))
+    if change["type"] == "add_obstacle":
+        parse_obstacle(change["obstacle"])
+    after = _str(d, "after", "action")
+    if after not in EVENT_COUNTERS:
+        raise ScenarioConfigError(f"event.after must be one of {EVENT_COUNTERS}")
+    return EventConfig(int(step), dict(change), after)
 
 
 # ----------------------------------------------------------------- loader
@@ -206,7 +231,7 @@ def parse_scenario(raw: Mapping[str, Any]) -> ScenarioConfig:
                 blocked_threshold_cm=_num(item, "blocked_threshold_cm", 30),
                 confidence=_conf(item, 0.98),
                 noise_std_cm=_num(item, "noise_std_cm", 0),
-                available=_bool(item, "available", True),
+                available=_enabled(item),
             )
         )
     names = [s.name for s in lidars]
@@ -215,7 +240,20 @@ def parse_scenario(raw: Mapping[str, Any]) -> ScenarioConfig:
 
     cam_raw = sensors.get("camera", {})
     pos_raw = sensors.get("position", {})
-    start = _str(raw, "start_time", "2026-10-03T09:00:00Z")
+    ultrasonic_raw = sensors.get("ultrasonic")
+    ultrasonic = None
+    if ultrasonic_raw is not None:
+        if not isinstance(ultrasonic_raw, Mapping):
+            raise ScenarioConfigError("sensors.ultrasonic must be an object")
+        ultrasonic = LidarConfig(
+            name="ultrasonic_front",
+            direction="front",
+            max_range_cm=_num(ultrasonic_raw, "max_range_cm", 200),
+            blocked_threshold_cm=_num(ultrasonic_raw, "blocked_threshold_cm", 30),
+            confidence=_conf(ultrasonic_raw, 0.85),
+            available=_enabled(ultrasonic_raw),
+        )
+    start = _str(raw, "clock_start", _str(raw, "start_time", "2026-10-03T09:00:00Z"))
     parse_timestamp(start)
 
     return ScenarioConfig(
@@ -232,7 +270,7 @@ def parse_scenario(raw: Mapping[str, Any]) -> ScenarioConfig:
             _num(robot_raw, "heading_deg", 0) % 360.0,
         ),
         lighting=_lighting(raw.get("lighting", {})),
-        obstacles=tuple(_obstacle(o) for o in raw.get("obstacles", [])),
+        obstacles=tuple(parse_obstacle(o) for o in raw.get("obstacles", [])),
         objects=tuple(
             ObjectConfig(_str(o, "object_id"), _num(o, "x"), _num(o, "y"), _str(o, "true_color"))
             for o in raw.get("objects", [])
@@ -243,14 +281,15 @@ def parse_scenario(raw: Mapping[str, Any]) -> ScenarioConfig:
             fov_deg=_num(cam_raw, "fov_deg", 60),
             max_range_cm=_num(cam_raw, "max_range_cm", 300),
             confidence=_conf(cam_raw, 0.9),
-            available=_bool(cam_raw, "available", True),
+            available=_enabled(cam_raw),
         ),
         position=PositionConfig(
             name=_str(pos_raw, "name", "position"),
             confidence=_conf(pos_raw, 1.0),
-            available=_bool(pos_raw, "available", True),
+            available=_enabled(pos_raw),
         ),
         events=tuple(_event(e) for e in raw.get("events", [])),
+        ultrasonic=ultrasonic,
     )
 
 

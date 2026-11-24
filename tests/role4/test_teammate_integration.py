@@ -20,7 +20,11 @@ def test_fresh_canonical_cases_keep_pending_answer_semantics(tmp_path, scenario)
     assert record["labels"]["human_semantic_review"] == "pending"
     assert record["labels"]["model_execution_mode"] == "scripted_llm"
     assert not any("tests.procedural.fakes" in source for source in record["tool_sources"].values())
+    tools = [c["tool"] for c in record["agent"]["tool_calls"]]
+    if scenario in ("S02", "S08"):
+        assert tools.index("get_belief_history") < tools.index("update_belief")
     if scenario == "S03":
+        assert tools.index("update_belief") < tools.index("get_belief_history")
         assert record["state_before"]["environment"]["lighting"]["name"] == "yellow"
         assert {b["source"] for b in record["state_after"]["memory"]["nodes"]} >= {"user", "bot_02", "camera_front"}
     if scenario == "S07":
@@ -34,6 +38,15 @@ def test_fresh_canonical_cases_keep_pending_answer_semantics(tmp_path, scenario)
 def test_real_layers_exercise_fault_guards_without_hiding_results(tmp_path, control):
     record = run_teammate_case("S07" if control == "unavailable_evidence" else "S01", tmp_path / control, control)
     assert record["evaluation"]["passed"] and record["expectation_met"]
+    if control in ("invalid_arguments", "malformed_arguments", "provenance_guard", "invented_downgrade", "downgrade"):
+        assert record["agent"]["error"] is None and record["agent"]["answer"]
+    if control in ("malformed_envelope", "missing_tool"):
+        error = record["agent"]["error"]
+        assert error["code"] == "STEP_LIMIT" and "read_lidar" in error["message"]
+        assert "get_belief_history" not in error["message"]
+        history, = [c for c in record["agent"]["tool_calls"] if c["tool"] == "get_belief_history"]
+        assert history["args"] == {"subject": "path_A", "predicate": "status"}
+        assert history["result"]["ok"]
     if control == "malformed_envelope":
         assert any(not e.payload["canonical_envelope_valid"] for e in read_events(tmp_path / control / "trace.jsonl") if e.event_type == "teammate_boundary_return")
     if control == "provenance_guard":
@@ -41,20 +54,30 @@ def test_real_layers_exercise_fault_guards_without_hiding_results(tmp_path, cont
         assert rejected["rejected_before_dispatch"] and rejected["guard"]["refused"]
 
 
-def test_unsupported_value_is_detected_as_teammate_guard_gap(tmp_path):
+def test_contradictory_sensor_value_is_rejected_before_write(tmp_path):
     record = run_teammate_case("S01", tmp_path / "unsupported", "unsupported_update")
-    assert record["expectation_met"] and not record["evaluation"]["passed"]
-    assert record["evaluation"]["failure_reasons"] == ["update_matches_returned_evidence"]
-    assert any(b["perspective"] == "agent_sensor" and b["object"] == "clear" for b in record["state_after"]["memory"]["nodes"])
+    assert record["expectation_met"] and record["evaluation"]["passed"]
+    write = next(d for d in record["dispatch_outcomes"] if d["tool"] == "update_belief")
+    assert write["rejected_before_dispatch"]
+    assert write["agent_result"]["error"]["code"] == "INVALID_ARGUMENT"
+    assert record["state_after"]["memory"] == record["state_before"]["memory"]
 
 
-def test_blocked_reading_does_not_itself_prevent_actual_movement(tmp_path):
+def test_recheck_cancels_a_move_toward_a_blocked_path(tmp_path):
+    """P6 closed the old gap: a blocked path no longer lets the model move the robot."""
     record = run_teammate_case("S08", tmp_path / "movement", "movement_attempt")
-    assert record["expectation_met"] and not record["evaluation"]["passed"]
+    assert record["expectation_met"] and record["evaluation"]["passed"]
     movement = next(d for d in record["dispatch_outcomes"] if d["tool"] == "move_forward")
-    assert movement["dispatched"] and not movement["rejected_before_dispatch"] and movement["movement_observed"]
+    assert movement["rejected_before_dispatch"] and not movement["dispatched"] and not movement["movement_observed"]
     assert movement["requested_arguments"]["distance_cm"] == 20
-    assert record["state_after"]["environment"]["robot"]["x"] == 11
+    assert movement["agent_result"]["error"]["code"] == "CONFLICT"
+    assert "recheck before action" in movement["agent_result"]["error"]["message"]
+    assert movement["guard"]["recheck"]["passed"] is False
+    assert record["state_before"]["environment"]["robot"] == record["state_after"]["environment"]["robot"]
+    assert record["agent"]["error"] is None and record["agent"]["answer_source"] == "llm"
+    recheck = movement["guard"]["recheck"]
+    assert f"front LiDAR now reads {recheck['reading_cm']} cm" in record["agent"]["answer"]
+    assert "The robot did not move." in record["agent"]["answer"]
 
 
 def test_canonical_mapping_preserves_validity_and_rejects_reference_fields(tmp_path):
@@ -68,6 +91,47 @@ def test_canonical_mapping_preserves_validity_and_rejects_reference_fields(tmp_p
         Belief.model_validate(view["reference_view"])
     with pytest.raises(ValueError):
         canonical_timestamp("2026-10-06T09:00:00")
+
+
+def test_s01_matches_the_demo_seed_and_two_write_chain(tmp_path):
+    record = run_teammate_case("S01", tmp_path / "demo")
+    old, = record["state_before"]["memory"]["nodes"]
+    assert (old["object"], old["source"], old["confidence"]) == ("clear", "default_map", 1.0)
+    calls = record["agent"]["tool_calls"]
+    assert [c["tool"] for c in calls[:5]] == [
+        "query_belief", "get_belief_history", "read_lidar", "downgrade_belief", "update_belief"
+    ]
+    assert calls[1]["args"] == {"subject": "path_A", "predicate": "status"}
+    assert calls[1]["result"]["data"] == [old]
+    assert calls[2]["result"]["data"]["value"] == 12
+    initial, lowered, active = record["state_after"]["memory"]["nodes"]
+    assert initial["belief_id"] == old["belief_id"] == lowered["supersedes"]
+    assert initial["valid_to"] == lowered["valid_from"]
+    assert lowered["confidence"] == 0.3 and lowered["status"] == "superseded"
+    assert lowered["valid_to"] == active["valid_from"] and active["supersedes"] == lowered["belief_id"]
+    assert (active["status"], active["source"], active["object"], active["confidence"]) == (
+        "active", "lidar_front", "blocked", 0.98
+    )
+    assert all(token in record["agent"]["answer"] for token in (
+        old["source"], active["source"], lowered["belief_id"], active["belief_id"]
+    ))
+
+
+def test_trace_verifier_requires_actual_automatic_read_boundaries(tmp_path):
+    folder = tmp_path / "movement"
+    record = run_teammate_case("S08", folder, "movement_attempt")
+    events = read_events(folder / "trace.jsonl")
+    move = next(d for d in record["dispatch_outcomes"] if d["tool"] == "move_forward")
+    automatic = [e for e in events if e.event_type in {"teammate_boundary_call", "teammate_boundary_return"}
+                 and (e.payload["call_id"], e.payload["tool"]) == (move["call_id"], "read_lidar")]
+    assert len(automatic) == 2
+    assert trace_consistent(record, events)
+    assert not trace_consistent(record, [event for event in events if event not in automatic])
+    altered = deepcopy(events)
+    recheck_result = next(e for e in altered if e.event_type == "teammate_boundary_return"
+                          and (e.payload["call_id"], e.payload["tool"]) == (move["call_id"], "read_lidar"))
+    recheck_result.payload["raw"]["data"]["value"] = 100
+    assert not trace_consistent(record, altered)
 
 
 def test_artifact_tampering_breaks_delivery_consistency(tmp_path):
@@ -117,6 +181,7 @@ def test_fresh_runs_are_isolated_and_outputs_never_overwrite(tmp_path):
     first = run_teammate_case("S08", tmp_path / "first", "movement_attempt")
     second = run_teammate_case("S08", tmp_path / "second")
     assert first["state_before"] == second["state_before"]
-    assert first["state_after"]["environment"]["robot"] != second["state_after"]["environment"]["robot"]
+    assert first["state_after"]["environment"]["robot"] == second["state_after"]["environment"]["robot"]
+    assert first["agent"]["tool_calls"][-1]["guard"]["recheck"]["passed"] is False  # only the first run tried to move
     with pytest.raises(FileExistsError):
         run_teammate_case("S08", tmp_path / "second")

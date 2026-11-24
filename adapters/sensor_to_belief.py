@@ -15,6 +15,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Any
 
+from contracts.sensor_evidence import reading_claim
+
 # --- decided defaults (see the Sensorimotor Interface Guide, section 7) ----
 # A LiDAR reading is evidence about path_A / status, so Scenario A's sensor
 # evidence can conflict with the map belief. Change here if the team seeds a
@@ -87,29 +89,20 @@ def reading_to_evidence(reading: Any) -> BeliefEvidence | None:
         reading = reading["data"]
     sensor, status = _get(reading, "sensor"), _get(reading, "status")
     value, ts = _get(reading, "value"), _get(reading, "timestamp")
-    if status in ("unknown", "error"):
+    claim = reading_claim(reading)
+    if claim is None:
         return None
-
-    if sensor.startswith("lidar"):
-        return BeliefEvidence(
-            subject=LIDAR_SUBJECT,
-            predicate=LIDAR_PREDICATE,
-            object=status,
-            source=sensor,
-            confidence=float(_get(reading, "confidence")),
-            perspective=PERSPECTIVE,
-            reason=f"{sensor} read {value} cm ({status}) at {ts}",
-        )
-    if sensor.startswith("camera") and isinstance(value, dict):
-        if value.get("object_id") is None or value.get("color") is None:
-            return None
-        return BeliefEvidence(
-            subject=str(value["object_id"]),
-            predicate=CAMERA_PREDICATE,
-            object=str(value["color"]),
-            source=sensor,
-            confidence=float(_get(reading, "confidence")),
-            perspective=PERSPECTIVE,
-            reason=f"{sensor} saw {value['object_id']} as {value['color']} at {ts}",
-        )
-    return None  # position or any sensor not yet mapped
+    subject, predicate, observed = claim
+    if predicate == CAMERA_PREDICATE:
+        reason = f"{sensor} saw {subject} as {observed} at {ts}"
+    else:
+        reason = f"{sensor} read {value} cm ({status}) at {ts}"
+    return BeliefEvidence(
+        subject=subject,
+        predicate=predicate,
+        object=observed,
+        source=sensor,
+        confidence=float(_get(reading, "confidence")),
+        perspective=PERSPECTIVE,
+        reason=reason,
+    )

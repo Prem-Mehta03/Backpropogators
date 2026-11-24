@@ -6,8 +6,8 @@ like evaluation/runner.py).
 - Memory tools: Vyom's BeliefMemory (declarative/belief_graph.py) is created once per run and
   its methods are the five memory tools. Its methods already return ToolResult envelopes.
 - Sensor and action tools: Asvin's simulated world (sensorimotor.create_sensorimotor) is created
-  once per run and its tool_registry() supplies the six sensor and action tools. If it is
-  missing, or does not provide a tool, the test fake in tests/procedural/fakes fills in.
+  once per run and its tool_registry() supplies the sensor and action tools. For the original
+  tools, a test fake fills in missing implementations. Optional ultrasonic is never faked.
 
 The sources are logged so you can see which implementation is in use.
 """
@@ -40,10 +40,13 @@ SENSOR_TOOLS: tuple[str, ...] = (
     "move_backward",
     "turn",
 )
+OPTIONAL_SENSOR_TOOLS = ("read_ultrasonic",)
 SENSORIMOTOR_MODULE = "sensorimotor"
 SENSORIMOTOR_SOURCE = "sensorimotor.Sensorimotor"
 DEFAULT_SCENARIO = "scenario_a"
-DEMO_TS = "2026-10-03T09:15:00Z"  # when the demo beliefs were stored, before the live reading
+DEMO_TS = (
+    "2026-10-03T09:15:00Z"  # when the demo beliefs were stored, before the live reading
+)
 FAKES_PACKAGE = "tests.procedural.fakes"
 FAKE_MEMORY_MODULE = f"{FAKES_PACKAGE}.declarative_fake"
 FAKE_SENSOR_MODULE = f"{FAKES_PACKAGE}.sensorimotor_fake"
@@ -55,7 +58,9 @@ def _import_or_none(module_name: str) -> Any | None:
         return importlib.import_module(module_name)
     except ModuleNotFoundError as exc:
         if exc.name is not None and module_name.startswith(exc.name):
-            return None  # the module itself is missing; a missing dependency is a real bug
+            return (
+                None  # the module itself is missing; a missing dependency is a real bug
+            )
         raise
 
 
@@ -74,7 +79,9 @@ def seed_demo_world(memory: Any) -> None:
     """
     from declarative.seed import seed_bot_02_record
 
-    memory.add_belief("path_A", "status", "clear", "default_map", 1.0, "historical", DEMO_TS)
+    memory.add_belief(
+        "path_A", "status", "clear", "default_map", 1.0, "historical", DEMO_TS
+    )
     memory.add_belief("box_01", "color", "red", "user", 0.9, "user", DEMO_TS)
     seed_bot_02_record(memory, "box_01", "color", "blue", 0.8, DEMO_TS)
 
@@ -93,20 +100,26 @@ def build_memory(seed: bool = True) -> Any | None:
     return memory
 
 
-def build_sensorimotor(scenario: str = DEFAULT_SCENARIO, seed: int | None = None) -> Any | None:
+def build_sensorimotor(
+    scenario: str = DEFAULT_SCENARIO, seed: int | None = None
+) -> Any | None:
     """Create Asvin's simulated world for one run.
 
     Returns None if sensorimotor/ does not provide create_sensorimotor yet. Raises RuntimeError
     if the scenario cannot be loaded (unknown name, invalid file).
     """
     module = _import_or_none(SENSORIMOTOR_MODULE)
-    factory = getattr(module, "create_sensorimotor", None) if module is not None else None
+    factory = (
+        getattr(module, "create_sensorimotor", None) if module is not None else None
+    )
     if factory is None:
         return None
     try:
         return factory(scenario, seed)
     except Exception as exc:
-        raise RuntimeError(f"Could not start sensorimotor scenario {scenario!r}: {exc}") from exc
+        raise RuntimeError(
+            f"Could not start sensorimotor scenario {scenario!r}: {exc}"
+        ) from exc
 
 
 def build_tool_registry(
@@ -135,15 +148,19 @@ def build_tool_registry(
                 sources[name] = MEMORY_SOURCE
         world = None
         if real_sensors:
-            world = sensorimotor if sensorimotor is not None else build_sensorimotor(scenario)
+            world = (
+                sensorimotor
+                if sensorimotor is not None
+                else build_sensorimotor(scenario)
+            )
         if world is not None:
             provided = world.tool_registry()
-            for name in SENSOR_TOOLS:
+            for name in SENSOR_TOOLS + OPTIONAL_SENSOR_TOOLS:
                 if name in provided:
                     registry[name] = provided[name]
                     sources[name] = SENSORIMOTOR_SOURCE
     for spec in TOOL_SPECS:
-        if spec.name in registry:
+        if spec.name in registry or spec.name in OPTIONAL_SENSOR_TOOLS:
             continue
         fake = FAKE_MEMORY_MODULE if spec.name in MEMORY_TOOLS else FAKE_SENSOR_MODULE
         fn = _load(fake, spec.name)

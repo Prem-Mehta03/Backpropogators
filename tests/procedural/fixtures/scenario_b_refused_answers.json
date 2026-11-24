@@ -1,0 +1,143 @@
+{
+ "note": "Real run of 2026-11-23 (scenario_b, openai/gpt-oss-20b) whose answers the claim check refused 4 times; used as a regression fixture for P2.",
+ "question": "What color does the user think the object is, what color do you register it as, and what does your data history say its true state is?",
+ "tool_calls": [
+  {
+   "step": 1,
+   "tool": "query_belief",
+   "args": {
+    "subject": "box_01"
+   },
+   "result": {
+    "schema_version": "1.0",
+    "tool": "query_belief",
+    "ok": true,
+    "data": [
+     {
+      "schema_version": "1.0",
+      "belief_id": "b_000002",
+      "subject": "box_01",
+      "predicate": "color",
+      "object": "red",
+      "source": "user",
+      "confidence": 0.9,
+      "timestamp": "2026-10-03T09:15:00Z",
+      "perspective": "user",
+      "status": "active",
+      "valid_from": "2026-10-03T09:15:00Z",
+      "valid_to": null,
+      "supersedes": null
+     },
+     {
+      "schema_version": "1.0",
+      "belief_id": "b_000003",
+      "subject": "box_01",
+      "predicate": "color",
+      "object": "blue",
+      "source": "bot_02",
+      "confidence": 0.8,
+      "timestamp": "2026-10-03T09:15:00Z",
+      "perspective": "third_party",
+      "status": "active",
+      "valid_from": "2026-10-03T09:15:00Z",
+      "valid_to": null,
+      "supersedes": null
+     }
+    ],
+    "error": null,
+    "timestamp": "2026-11-23T02:14:17Z"
+   }
+  },
+  {
+   "step": 2,
+   "tool": "read_camera",
+   "args": {
+    "target": "box_01"
+   },
+   "result": {
+    "schema_version": "1.0",
+    "tool": "read_camera",
+    "ok": true,
+    "data": {
+     "schema_version": "1.0",
+     "sensor": "camera_front",
+     "value": {
+      "object_id": "box_01",
+      "color": "brown"
+     },
+     "unit": null,
+     "status": "clear",
+     "timestamp": "2026-10-03T09:16:00Z",
+     "confidence": 0.9
+    },
+    "error": null,
+    "timestamp": "2026-10-03T09:16:00Z"
+   }
+  },
+  {
+   "step": 3,
+   "tool": "update_belief",
+   "args": {
+    "confidence": 0.9,
+    "object": "brown",
+    "perspective": "agent_sensor",
+    "predicate": "color",
+    "reason": "Live camera reading",
+    "source": "camera_front",
+    "subject": "box_01"
+   },
+   "result": {
+    "schema_version": "1.0",
+    "tool": "update_belief",
+    "ok": true,
+    "data": {
+     "schema_version": "1.0",
+     "belief_id": "b_000004",
+     "subject": "box_01",
+     "predicate": "color",
+     "object": "brown",
+     "source": "camera_front",
+     "confidence": 0.9,
+     "timestamp": "2026-11-23T02:14:55Z",
+     "perspective": "agent_sensor",
+     "status": "disputed",
+     "valid_from": "2026-11-23T02:14:55Z",
+     "valid_to": null,
+     "supersedes": null
+    },
+    "error": null,
+    "timestamp": "2026-11-23T02:14:55Z"
+   }
+  }
+ ],
+ "claim_refusals": [
+  {
+   "attempt": 1,
+   "text": "The user says the box is **red**.  \nI register the box’s color as **brown** based on the live camera reading.  \nThe data history shows that the most recent sensor evidence indicates **brown**, but this belief is disputed because it conflicts with earlier user and third‑party reports.\n\n**Stored evidence**  \n- User belief: color = red, source = user, confidence = 0.9, perspective = user.  \n- Third‑party belief: color = blue, source = bot_02, confidence = 0.8, perspective = third_party.\n\n**Observed evidence**  \n- Camera reading: color = brown, sensor = camera_front, confidence = 0.9, status = clear.\n\n**Memory updates**  \nI added a new belief (b_000004) for box_01 with color = brown, perspective = agent_sensor, status = disputed.  \nNo stored belief was downgraded.\n\nMemory status: b_000004 (brown, camera_front) is recorded as disputed, not settled.",
+   "problems": [
+    "you claim a downgrade, but no downgrade_belief call succeeded"
+   ]
+  },
+  {
+   "attempt": 2,
+   "text": "The user says the box is **red**.  \nI register the box’s color as **brown** based on the live camera reading.  \nThe data history shows that the most recent sensor evidence indicates **brown**, but this belief is disputed because it conflicts with earlier user and third‑party reports.\n\n**Stored evidence**  \n- User belief: color = red, source = user, confidence = 0.9, perspective = user.  \n- Third‑party belief: color = blue, source = bot_02, confidence = 0.8, perspective = third_party.\n\n**Observed evidence**  \n- Camera reading: color = brown, sensor = camera_front, confidence = 0.9, status = clear.",
+   "problems": [
+    "you wrote belief(s) b_000004 but your answer does not name them; name every belief you downgraded or recorded"
+   ]
+  },
+  {
+   "attempt": 3,
+   "text": "The user says the box is **red**.  \nI register the box’s color as **brown** based on the live camera reading.  \nThe data history shows that the most recent sensor evidence indicates **brown**, but this belief is disputed because it conflicts with earlier user and third‑party reports.\n\n**Stored evidence**  \n- User belief: color = red, source = user, confidence = 0.9, perspective = user.  \n- Third‑party belief: color = blue, source = bot_02, confidence = 0.8, perspective = third_party.\n\n**Observed evidence**  \n- Camera reading: color = brown, sensor = camera_front, confidence = 0.9, status = clear.\n\n**Memory updates**  \nI recorded a new belief (b_000004) for box_01 with color = brown, perspective = agent_sensor, status = disputed. No belief was downgraded.",
+   "problems": [
+    "you claim a downgrade, but no downgrade_belief call succeeded"
+   ]
+  },
+  {
+   "attempt": 4,
+   "text": "The user says the box is **red**.  \nI register the box’s color as **brown** based on the live camera reading.  \nThe data history shows that the most recent sensor evidence indicates **brown**, but this belief is disputed because it conflicts with earlier user and third‑party reports.\n\n**Stored evidence**  \n- User belief: color = red, source = user, confidence = 0.9, perspective = user.  \n- Third‑party belief: color = blue, source = bot_02, confidence = 0.8, perspective = third_party.\n\n**Observed evidence**  \n- Camera reading: color = brown, sensor = camera_front, confidence = 0.9, status = clear.\n\n**Memory updates**  \nI recorded a new belief (b_000004) for box_01 with color = brown, perspective = agent_sensor, status = disputed. No belief was downgraded.",
+   "problems": [
+    "you claim a downgrade, but no downgrade_belief call succeeded"
+   ]
+  }
+ ]
+}

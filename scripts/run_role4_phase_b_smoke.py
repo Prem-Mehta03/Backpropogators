@@ -32,12 +32,20 @@ class FakeChatAPI:
 
 
 def raw_reply(content=None, arguments=None):
-    calls = [] if arguments is None else [SimpleNamespace(
-        id="requested_tool_001",
-        function=SimpleNamespace(name="read_lidar", arguments=arguments),
-    )]
+    calls = (
+        []
+        if arguments is None
+        else [
+            SimpleNamespace(
+                id="requested_tool_001",
+                function=SimpleNamespace(name="read_lidar", arguments=arguments),
+            )
+        ]
+    )
     message = SimpleNamespace(content=content, tool_calls=calls)
-    return SimpleNamespace(choices=[SimpleNamespace(message=message, finish_reason="stop")])
+    return SimpleNamespace(
+        choices=[SimpleNamespace(message=message, finish_reason="stop")]
+    )
 
 
 def run_smoke(output_dir):
@@ -51,42 +59,68 @@ def run_smoke(output_dir):
     for name, raw, injected_error in fixtures:
         api = FakeChatAPI(raw, injected_error)
         client = LLMClient(client=api, model="phase-b-offline-fixture")
-        adapter = PremClientAdapter(client, backend_provenance="real", model_mode="fake_api")
+        adapter = PremClientAdapter(
+            client, backend_provenance="real", model_mode="fake_api"
+        )
         reply = None
         error = None
         try:
-            reply = adapter.chat([{"role": "user", "content": "Offline client boundary probe."}])
+            reply = adapter.chat(
+                [{"role": "user", "content": "Offline client boundary probe."}]
+            )
         except LLMClientError as exc:
             error = {"type": type(exc).__name__, "message": str(exc)}
         if name == "plain_reply":
-            verified = reply is not None and reply.content == "offline pong" and not reply.tool_calls
+            verified = (
+                reply is not None
+                and reply.content == "offline pong"
+                and not reply.tool_calls
+            )
         elif name == "parsed_tool_request":
-            verified = (reply is not None and len(reply.tool_calls) == 1 and
-                        reply.tool_calls[0].arguments == {"direction": "front"} and
-                        reply.tool_calls[0].arguments_error is None)
+            verified = (
+                reply is not None
+                and len(reply.tool_calls) == 1
+                and reply.tool_calls[0].arguments == {"direction": "front"}
+                and reply.tool_calls[0].arguments_error is None
+            )
         elif name == "malformed_tool_arguments":
-            verified = (reply is not None and len(reply.tool_calls) == 1 and
-                        reply.tool_calls[0].arguments == {} and
-                        reply.tool_calls[0].arguments_error is not None)
+            verified = (
+                reply is not None
+                and len(reply.tool_calls) == 1
+                and reply.tool_calls[0].arguments == {}
+                and reply.tool_calls[0].arguments_error is not None
+            )
         else:
             verified = error is not None and reply is None
         verified = bool(verified and len(api.calls) == 1 and len(adapter.events) == 2)
         for event in adapter.events:
             events.append({"case": name, **event})
-        cases.append({
-            "case": name, **adapter.labels,
-            "expected_outcome_confirmed": verified, "error": error,
-            "actual_api_requests": api.calls,
-            "observed_reply": adapter.events[-1]["payload"] if reply is not None else None,
-        })
+        cases.append(
+            {
+                "case": name,
+                **adapter.labels,
+                "expected_outcome_confirmed": verified,
+                "error": error,
+                "actual_api_requests": api.calls,
+                "observed_reply": (
+                    adapter.events[-1]["payload"] if reply is not None else None
+                ),
+            }
+        )
     summary = {
-        "phase": "NEW_B", "backend_provenance": "real", "model_mode": "fake_api",
-        "integration_scope": "partial_pipeline", "pipeline_stage": "client_chat_only",
+        "phase": "NEW_B",
+        "backend_provenance": "real",
+        "model_mode": "fake_api",
+        "integration_scope": "partial_pipeline",
+        "pipeline_stage": "client_chat_only",
         "layer_provenance": {"procedural": "real"},
         "unexercised_layers": ["declarative", "sensorimotor"],
-        "complete_agent_integrated": False, "tools_executed": False,
-        "hosted_reliability_measured": False, "human_review": "not_reviewed",
-        "cases": cases, "all_expectations_met": all(c["expected_outcome_confirmed"] for c in cases),
+        "complete_agent_integrated": False,
+        "tools_executed": False,
+        "hosted_reliability_measured": False,
+        "human_review": "not_reviewed",
+        "cases": cases,
+        "all_expectations_met": all(c["expected_outcome_confirmed"] for c in cases),
     }
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
@@ -99,13 +133,21 @@ def run_smoke(output_dir):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output-dir", type=Path, default=ROOT / "evaluation/logs/role4/phase_b")
+    parser.add_argument(
+        "--output-dir", type=Path, default=ROOT / "evaluation/logs/role4/phase_b"
+    )
     args = parser.parse_args(argv)
     result = run_smoke(args.output_dir)
     for case in result["cases"]:
-        print(f"{case['case']}: {'verified' if case['expected_outcome_confirmed'] else 'unexpected'}")
-    print("Prem client=real; model=fake_api; scope=client_chat_only; tools executed=false.")
-    print("Single-tool pipeline blocked by missing official modules; no hosted trial or prose review.")
+        print(
+            f"{case['case']}: {'verified' if case['expected_outcome_confirmed'] else 'unexpected'}"
+        )
+    print(
+        "Prem client=real; model=fake_api; scope=client_chat_only; tools executed=false."
+    )
+    print(
+        "Single-tool pipeline blocked by missing official modules; no hosted trial or prose review."
+    )
     return 0 if result["all_expectations_met"] else 1
 
 

@@ -13,6 +13,7 @@ import re
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 from typing import Any, Protocol
 
 logger = logging.getLogger(__name__)
@@ -59,6 +60,17 @@ RATE_LIMIT_RETRIES = 4
 MAX_RATE_LIMIT_WAIT_S = 30.0
 TOOL_CALL_RETRIES = 2
 RETRY_TEMPERATURE = 0.3
+# Added to the conversation when the provider rejects the model's tool call as malformed. Live T05
+# (round 3): the model wrote update_belief with typographic quotes inside "reason", the JSON broke,
+# and the retries at temperature 0 repeated it exactly.
+MALFORMED_CALL_NOTE = {
+    "role": "user",
+    "content": (
+        "Your last tool call could not be parsed: its arguments were not valid JSON. Call the "
+        "tool again with valid JSON. Keep every string short, plain ASCII, with no quotation "
+        "marks, backslashes or line breaks inside it."
+    ),
+}
 
 
 def is_rate_limit_error(exc: Exception) -> bool:
@@ -78,6 +90,21 @@ def is_tool_call_generation_error(exc: Exception) -> bool:
     return getattr(exc, "status_code", None) == 400 and "tool_use_failed" in str(exc)
 
 
+def is_daily_limit_error(exc: Exception) -> bool:
+    """True for a 429 that says the DAILY quota is used up (tokens or requests per day).
+
+    Waiting a few seconds cannot help with this one, so the client does not retry it: it
+    switches to the fallback model if one is configured, otherwise it stops with a clear message.
+    """
+    return is_rate_limit_error(exc) and bool(
+        re.search(
+            r"per day|tokens per day|requests per day|\bTPD\b|\bRPD\b",
+            str(exc),
+            re.IGNORECASE,
+        )
+    )
+
+
 def rate_limit_wait_seconds(exc: Exception, attempt: int) -> float:
     """How long to wait before retrying a 429.
 
@@ -89,6 +116,99 @@ def rate_limit_wait_seconds(exc: Exception, attempt: int) -> float:
         seconds = float(match.group(1)) / (1000.0 if match.group(2) == "ms" else 1.0)
         return min(seconds + 0.5, MAX_RATE_LIMIT_WAIT_S)
     return min(5.0 * (attempt + 1), MAX_RATE_LIMIT_WAIT_S)
+
+
+# ---- repair of a malformed call to a tool that takes no arguments (T05 live failure)
+FAILED_NAME = re.compile(r'"name"\s*:\s*"([A-Za-z_][A-Za-z0-9_]*)"')
+FAILED_ARGUMENTS = re.compile(r'"arguments"\s*:(.*)', re.DOTALL)
+
+
+def _no_argument_tools(tools: list[dict[str, Any]] | None) -> set[str]:
+    """Names of the offered tools whose schema has no parameters, such as read_ultrasonic."""
+    names: set[str] = set()
+    for tool in tools or []:
+        function = tool.get("function", {})
+        if not function.get("parameters", {}).get("properties"):
+            names.add(function.get("name", ""))
+    names.discard("")
+    return names
+
+
+def repair_no_argument_call(
+    exc: Exception, tools: list[dict[str, Any]] | None
+) -> Any | None:
+    """Rebuild the one call a provider rejected as malformed when it needs no arguments.
+
+    Groq answers HTTP 400 tool_use_failed when the model writes a tool call such as
+    {"name": "read_ultrasonic", "arguments": {""}}: the right tool, garbage in place of an empty
+    argument object. Retrying at temperature 0 repeats the same text, so the call is rebuilt
+    instead. It is only rebuilt when the named tool is offered, takes no arguments, and the
+    rejected text carries no argument key or value at all (nothing is guessed). Returns a
+    raw-response-shaped object for LLMClient.chat to parse, or None when the call cannot be
+    repaired.
+    """
+    text = str(exc)
+    named = FAILED_NAME.search(text)
+    if named is None or named.group(1) not in _no_argument_tools(tools):
+        return None
+    given = FAILED_ARGUMENTS.search(text[named.end() :])
+    leftover = re.sub(r"""[{}"'\s:,]""", "", given.group(1)) if given else ""
+    if leftover:
+        return None
+    call = SimpleNamespace(
+        id="repaired_call",
+        function=SimpleNamespace(name=named.group(1), arguments="{}"),
+    )
+    message = SimpleNamespace(content=None, tool_calls=[call])
+    return SimpleNamespace(
+        choices=[SimpleNamespace(message=message, finish_reason="tool_calls")]
+    )
+
+
+ANY_NAME = re.compile(r'"name"\s*:\s*"([^"]+)"')
+
+
+def _offered_names(tools: list[dict[str, Any]] | None) -> set[str]:
+    return {t.get("function", {}).get("name", "") for t in tools or []} - {""}
+
+
+def repair_channel_suffix_call(
+    exc: Exception, tools: list[dict[str, Any]] | None
+) -> Any | None:
+    """Rebuild a call whose tool name carries a leaked channel marker (T05 live failure).
+
+    gpt-oss sometimes writes its chat-format marker into the tool name, for example
+    "get_belief_history<|channel|>commentary". Groq then answers 400 tool_use_failed ("attempted
+    to call tool ... which was not in request.tools"), and a retry at temperature 0 repeats it.
+    When the part before the marker is an offered tool and the rejected text holds a valid JSON
+    argument object, the call is rebuilt with exactly those arguments. Nothing is invented: the
+    arguments are the model's own, and the tool still goes through normal argument validation.
+    Returns a raw-response-shaped object, or None when the call cannot be repaired.
+    """
+    text = str(exc)
+    named = ANY_NAME.search(text)
+    if named is None or "<|" not in named.group(1):
+        return None
+    base = named.group(1).split("<|", 1)[0].strip()
+    if base not in _offered_names(tools):
+        return None
+    given = FAILED_ARGUMENTS.search(text[named.end() :])
+    if given is None:
+        return None
+    try:
+        arguments, _ = json.JSONDecoder().raw_decode(given.group(1).lstrip())
+    except ValueError:
+        return None
+    if not isinstance(arguments, dict):
+        return None
+    call = SimpleNamespace(
+        id="repaired_call",
+        function=SimpleNamespace(name=base, arguments=json.dumps(arguments)),
+    )
+    message = SimpleNamespace(content=None, tool_calls=[call])
+    return SimpleNamespace(
+        choices=[SimpleNamespace(message=message, finish_reason="tool_calls")]
+    )
 
 
 class LLMClient:
@@ -106,16 +226,29 @@ class LLMClient:
         temperature: float = 0.0,
         max_tokens: int = 1024,  # gpt-oss spends tokens on hidden reasoning first
         timeout: float = 30.0,
+        fallback_model: str | None = None,
         client: Any = None,
         rate_limit_retries: int = RATE_LIMIT_RETRIES,
         tool_call_retries: int = TOOL_CALL_RETRIES,
         sleep: Callable[[float], None] = time.sleep,
+        retry_temperature: float = RETRY_TEMPERATURE,
     ) -> None:
         self.model = model or os.getenv("LLM_MODEL", DEFAULT_MODEL)
+        # LLM_FALLBACK_MODEL (D10): used for the rest of the run only if the main model cannot
+        # answer (retries used up, or the daily limit is reached). Empty means no fallback.
+        self.fallback_model = (
+            fallback_model
+            if fallback_model is not None
+            else os.getenv("LLM_FALLBACK_MODEL", "")
+        ) or None
+        self.switched_from: str | None = (
+            None  # the main model, once the switch happened
+        )
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.rate_limit_retries = rate_limit_retries
         self.tool_call_retries = tool_call_retries
+        self.retry_temperature = retry_temperature
         self._sleep = sleep
         if client is not None:  # injected (tests)
             self._client = client
@@ -166,13 +299,31 @@ class LLMClient:
             finish_reason=choice.finish_reason,
         )
 
+    def _switch_to_fallback(
+        self, kwargs: dict[str, Any], reason: str
+    ) -> dict[str, Any] | None:
+        """Change to the fallback model for the rest of this client's life; None if impossible.
+
+        Only one switch happens: once on the fallback model there is nothing further to try.
+        Returns the request arguments with the new model name.
+        """
+        if self.fallback_model is None or self.switched_from is not None:
+            return None
+        logger.warning(
+            "Switching from %s to fallback model %s (%s)",
+            self.model,
+            self.fallback_model,
+            reason,
+        )
+        self.switched_from, self.model = self.model, self.fallback_model
+        return {**kwargs, "model": self.model}
+
     def _create_with_rate_limit_retries(self, kwargs: dict[str, Any]) -> Any:
         """Call the API with two kinds of retry. Raise LLMClientError on any other failure.
 
         - HTTP 429: wait as the server asks, then retry (up to rate_limit_retries times).
         - HTTP 400 tool_use_failed: the model produced a malformed tool call; retry up to
-          tool_call_retries times with a slightly higher temperature so it does not repeat
-          the same slip.
+            tool_call_retries times. The caller can retain temperature zero for measured runs.
         """
         rate_attempts = 0
         tool_attempts = 0
@@ -180,6 +331,15 @@ class LLMClient:
             try:
                 return self._client.chat.completions.create(**kwargs)
             except Exception as exc:  # transport/API errors
+                if is_daily_limit_error(exc):
+                    switched = self._switch_to_fallback(kwargs, "daily limit reached")
+                    if switched is None:
+                        raise LLMClientError(
+                            f"Daily limit reached for model {self.model} and no "
+                            f"LLM_FALLBACK_MODEL is set: {exc}"
+                        ) from exc
+                    kwargs, rate_attempts, tool_attempts = switched, 0, 0
+                    continue
                 if is_rate_limit_error(exc) and rate_attempts < self.rate_limit_retries:
                     wait = rate_limit_wait_seconds(exc, rate_attempts)
                     logger.warning(
@@ -191,6 +351,16 @@ class LLMClient:
                     self._sleep(wait)
                     rate_attempts += 1
                     continue
+                if is_tool_call_generation_error(exc):
+                    repaired = repair_no_argument_call(
+                        exc, kwargs.get("tools")
+                    ) or repair_channel_suffix_call(exc, kwargs.get("tools"))
+                    if repaired is not None:
+                        logger.warning(
+                            "Repaired a malformed tool call to %s",
+                            repaired.choices[0].message.tool_calls[0].function.name,
+                        )
+                        return repaired
                 if (
                     is_tool_call_generation_error(exc)
                     and tool_attempts < self.tool_call_retries
@@ -204,9 +374,19 @@ class LLMClient:
                     )
                     kwargs = {
                         **kwargs,
-                        "temperature": max(kwargs["temperature"], RETRY_TEMPERATURE),
+                        "temperature": max(
+                            kwargs["temperature"], self.retry_temperature
+                        ),
+                        # At temperature 0 an identical request gives an identical failure, so
+                        # the retry must differ: tell the model what went wrong.
+                        "messages": [*kwargs["messages"], MALFORMED_CALL_NOTE],
                     }
                     continue
+                if is_rate_limit_error(exc) or is_tool_call_generation_error(exc):
+                    switched = self._switch_to_fallback(kwargs, "retries used up")
+                    if switched is not None:
+                        kwargs, rate_attempts, tool_attempts = switched, 0, 0
+                        continue
                 logger.error("LLM request failed: %s", exc)
                 hint = ""
                 if "model_not_found" in str(exc):

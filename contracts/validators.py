@@ -13,6 +13,11 @@ from .version import SCHEMA_VERSION
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
 
+def timestamp_value(value: str) -> datetime:
+    """Parse a validated UTC contract timestamp, including on Python 3.10."""
+    return datetime.fromisoformat(value[:-1] + "+00:00")
+
+
 def utc_timestamp() -> str:
     """Return the current time as an ISO 8601 UTC timestamp ending in Z.
 

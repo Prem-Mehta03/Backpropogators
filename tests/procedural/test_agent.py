@@ -231,3 +231,19 @@ def test_no_warning_for_known_subjects_or_when_no_list_is_given(
             REGISTRY,
         )
     assert not [r for r in caplog.records if "unknown subject" in r.getMessage()]
+
+
+def test_the_default_step_limit_is_the_shared_policy_value_and_allows_eleven_calls() -> (
+    None
+):
+    """T05 live (round 3) used 10 calls on tools and refusals and then had none left to answer."""
+    from contracts.policy import MAX_MODEL_CALLS
+    from procedural.agent import DEFAULT_MAX_STEPS
+
+    assert DEFAULT_MAX_STEPS == MAX_MODEL_CALLS == 12
+    steps = [call("read_lidar", {}, f"c{i}") for i in range(11)] + [say("Done.")]
+    out = run_agent(QUESTION, ScriptedLLM(steps), REGISTRY, required_evidence=())
+    assert out.finished and out.model_calls == 12 and out.answer_source == "llm"
+    too_many = [call("read_lidar", {}, f"d{i}") for i in range(12)] + [say("Too late.")]
+    stopped = run_agent(QUESTION, ScriptedLLM(too_many), REGISTRY, required_evidence=())
+    assert not stopped.finished and stopped.error["code"] == "STEP_LIMIT"

@@ -31,6 +31,10 @@ class AgentState:
     tool_log: list[dict[str, Any]] = field(default_factory=list)
     model_calls: int = 0
     evidence_nudges: int = 0
+    claim_nudges: int = 0
+    # Every answer the claim check rejected: {"attempt", "text", "problems"}. Kept so a
+    # step-limit failure can be diagnosed from the log (the refused text was not saved before).
+    claim_refusals: list[dict[str, Any]] = field(default_factory=list)
 
     def add_assistant_turn(self, content: str | None, calls: list[ToolCall]) -> None:
         """Append the model's turn exactly as the API expects it back in the history."""

@@ -16,7 +16,7 @@ from typing import Any
 
 from procedural.llm_client import LLMBackend, ToolCall
 from procedural.prompts import SYSTEM_PROMPT
-from procedural.tools import TOOL_SCHEMAS, ToolFn, call_tool, error_result
+from procedural.tools import ToolFn, call_tool, error_result, registered_tool_schemas
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,8 @@ def run_single_tool_call(
     ]
     result = SingleToolCallResult(messages=messages)
 
-    first = llm.chat(messages, TOOL_SCHEMAS)
+    tools = registered_tool_schemas(registry)
+    first = llm.chat(messages, tools)
     if not first.tool_calls:
         logger.warning("Model answered without calling any tool")
         result.answer = first.content or ""
@@ -97,6 +98,6 @@ def run_single_tool_call(
             {"role": "tool", "tool_call_id": call.id, "content": json.dumps(envelope)}
         )
 
-    final = llm.chat(messages, TOOL_SCHEMAS, tool_choice="none")
+    final = llm.chat(messages, tools, tool_choice="none")
     result.answer = final.content or ""
     return result

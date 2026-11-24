@@ -36,6 +36,11 @@ class Actions:
     def __init__(self, env: MockEnvironment) -> None:
         self._env = env
 
+    def _run(self, tool, body) -> dict:
+        receipt = bd.run_tool(tool, self._env.now_iso, body)
+        self._env.complete_tool_call(receipt, action=True)
+        return receipt
+
     def _act(self, action: str, amount: float):
         cfg = self._env.scenario.position
         if not cfg.available:
@@ -56,7 +61,7 @@ class Actions:
                 )
             return self._act(action, d)
 
-        return bd.run_tool(tool, self._env.now_iso, body)
+        return self._run(tool, body)
 
     def move_forward(self, distance_cm: float):
         """Move along the heading. Args: distance_cm (> 0).
@@ -83,4 +88,4 @@ class Actions:
                 raise bd.ToolFailure("INVALID_ARGUMENT", f"|degrees| must be <= 360, got {deg}")
             return self._act("turn", deg)
 
-        return bd.run_tool("turn", self._env.now_iso, body)
+        return self._run("turn", body)

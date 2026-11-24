@@ -8,7 +8,7 @@ Rules this file keeps (Team Guidelines sections 2 and 6):
 
 Geometry: 2-D plane in cm, +x axis is heading 0 deg, positive turns are
 counter-clockwise. Obstacles are axis-aligned rectangles that block movement
-and LiDAR. Objects are visual only (camera); they do not block anything.
+and ultrasound. LiDAR in this model ignores glass. Objects are visual only.
 """
 
 from __future__ import annotations
@@ -27,6 +27,7 @@ from .config import (
     ObjectConfig,
     ObstacleConfig,
     ScenarioConfig,
+    parse_obstacle,
     parse_timestamp,
 )
 
@@ -84,12 +85,15 @@ class MockEnvironment:
         if seed is not None:
             self._seed = int(seed)
         self._step = 0
+        self._tool_calls = 0
         self._clock: datetime = parse_timestamp(sc.start_time)
         self._x, self._y, self._heading = sc.robot.x, sc.robot.y, sc.robot.heading_deg
         self._lighting: LightingConfig = sc.lighting
         self._obstacles: list[ObstacleConfig] = list(sc.obstacles)
         self._objects: dict[str, ObjectConfig] = {o.object_id: o for o in sc.objects}
         self._applied: set[int] = set()
+        self._added_at: dict[str, int] = {}
+        self._readings: dict[str, dict[str, Any]] = {}
         self._apply_due_events()
         _log.info("Environment reset: %s seed=%s", sc.name, self._seed)
 
@@ -122,6 +126,34 @@ class MockEnvironment:
         """Simulated time, ISO 8601 UTC with trailing Z."""
         return self._clock.strftime(TS_FORMAT)
 
+    @property
+    def tool_calls(self) -> int:
+        """Number of completed sensorimotor tool attempts since reset."""
+        return self._tool_calls
+
+    @property
+    def obstacle_additions(self) -> dict[str, int]:
+        """Return the recorded insertion counter for each added obstacle."""
+        return self._added_at.copy()
+
+    def last_readings(self) -> dict[str, dict[str, Any]]:
+        """Return copies of readings actually returned by sensor tools."""
+        return copy.deepcopy(self._readings)
+
+    def complete_tool_call(self, result: dict[str, Any], *, action: bool = False) -> None:
+        """Keep the receipt and apply call-triggered events after the tool measured."""
+        self._tool_calls += 1
+        if not action and result["ok"]:
+            reading = result["data"]
+            self._readings[reading["sensor"]] = copy.deepcopy(reading)
+        # Only opt-in scenarios tick on reads. Existing scenarios and action-based events
+        # keep their original clock and step semantics.
+        if not (action and result["ok"]) and any(
+            event.after == "sensorimotor_call" for event in self._scenario.events
+        ):
+            self._clock += timedelta(seconds=self._scenario.tick_seconds)
+        self._apply_due_events()
+
     # ----------------------------------------------------------------- time
     def advance_time(self, seconds: float) -> None:
         """Move the simulated clock forward without acting (staleness control).
@@ -133,7 +165,9 @@ class MockEnvironment:
         self._clock += timedelta(seconds=seconds)
 
     # ------------------------------------------------------------- geometry
-    def ray_distance(self, offset_deg: float, max_range_cm: float) -> float | None:
+    def ray_distance(
+        self, offset_deg: float, max_range_cm: float, *, ignore_glass: bool = False
+    ) -> float | None:
         """Distance to the nearest obstacle along heading+offset, or None.
 
         None means nothing within ``max_range_cm``.
@@ -141,7 +175,10 @@ class MockEnvironment:
         angle = math.radians(self._heading + offset_deg)
         dx, dy = math.cos(angle), math.sin(angle)
         hits = [
-            t for ob in self._obstacles if (t := ray_aabb(self._x, self._y, dx, dy, ob)) is not None
+            t
+            for ob in self._obstacles
+            if not (ignore_glass and ob.material == "glass")
+            if (t := ray_aabb(self._x, self._y, dx, dy, ob)) is not None
         ]
         if not hits:
             return None
@@ -195,13 +232,13 @@ class MockEnvironment:
         """
         kind = change.get("type")
         if kind == "add_obstacle":
-            o = change["obstacle"]
-            self._obstacles.append(
-                ObstacleConfig(o["obstacle_id"], o["x_min"], o["y_min"], o["x_max"], o["y_max"])
-            )
+            obstacle = parse_obstacle(change["obstacle"])
+            self._obstacles.append(obstacle)
+            self._added_at[obstacle.obstacle_id] = self._tool_calls
         elif kind == "remove_obstacle":
             oid = change["obstacle_id"]
             self._obstacles = [o for o in self._obstacles if o.obstacle_id != oid]
+            self._added_at.pop(oid, None)
         elif kind == "set_lighting":
             lt = change["lighting"]
             self._lighting = LightingConfig(lt["name"], dict(lt.get("color_shift", {})))
@@ -216,7 +253,8 @@ class MockEnvironment:
 
     def _apply_due_events(self) -> None:
         for idx, ev in enumerate(self._scenario.events):
-            if idx not in self._applied and ev.at_step <= self._step:
+            counter = self._tool_calls if ev.after == "sensorimotor_call" else self._step
+            if idx not in self._applied and ev.at_step <= counter:
                 self.apply_change(dict(ev.change))
                 self._applied.add(idx)
 
@@ -241,6 +279,7 @@ class MockEnvironment:
                         "y_min": o.y_min,
                         "x_max": o.x_max,
                         "y_max": o.y_max,
+                        "material": o.material,
                     }
                     for o in self._obstacles
                 ],

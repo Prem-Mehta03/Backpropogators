@@ -9,6 +9,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from .version import SchemaVersion
+
 Perspective = Literal["user", "agent_sensor", "historical", "third_party"]
 BeliefStatus = Literal["active", "superseded", "disputed"]
 SensorStatus = Literal["clear", "blocked", "unknown", "error"]
@@ -68,7 +70,7 @@ class ContractModel(BaseModel):
 class Belief(ContractModel):
     """A sourced claim with confidence, perspective, status, and validity."""
 
-    schema_version: Literal["1.0"]
+    schema_version: SchemaVersion
     belief_id: str = Field(pattern=r"^b_\d{6}$")
     subject: str = Field(min_length=1)
     predicate: str = Field(min_length=1)
@@ -137,7 +139,7 @@ class Belief(ContractModel):
 class SensorReading(ContractModel):
     """A sensor observation represented as JSON-compatible data."""
 
-    schema_version: Literal["1.0"]
+    schema_version: SchemaVersion
     sensor: str = Field(min_length=1)
     value: SensorValue
     unit: str | None
@@ -169,7 +171,7 @@ class ToolError(ContractModel):
 class ToolResult(ContractModel):
     """Standard result envelope returned by declarative and sensorimotor APIs."""
 
-    schema_version: Literal["1.0"]
+    schema_version: SchemaVersion
     tool: str = Field(min_length=1)
     ok: bool
     data: Any

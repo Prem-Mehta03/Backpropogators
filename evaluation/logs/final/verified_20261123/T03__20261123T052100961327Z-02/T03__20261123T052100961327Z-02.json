@@ -1,0 +1,346 @@
+{
+  "schema_version": "1.1",
+  "test_id": "T03",
+  "run_id": "20261123T052100961327Z-02",
+  "question": "What color does the user think the object is, what color do you register it as, and what does your data history say its true state is?",
+  "state_before": {
+    "memory": {
+      "nodes": [
+        {
+          "schema_version": "1.1",
+          "belief_id": "b_000001",
+          "subject": "box_01",
+          "predicate": "color",
+          "object": "red",
+          "source": "user",
+          "confidence": 0.9,
+          "timestamp": "2026-10-03T09:15:00Z",
+          "perspective": "user",
+          "status": "active",
+          "valid_from": "2026-10-03T09:15:00Z",
+          "valid_to": null,
+          "supersedes": null
+        },
+        {
+          "schema_version": "1.1",
+          "belief_id": "b_000002",
+          "subject": "box_01",
+          "predicate": "color",
+          "object": "blue",
+          "source": "bot_02",
+          "confidence": 0.8,
+          "timestamp": "2026-10-03T09:15:00Z",
+          "perspective": "third_party",
+          "status": "active",
+          "valid_from": "2026-10-03T09:15:00Z",
+          "valid_to": null,
+          "supersedes": null
+        }
+      ],
+      "edges": []
+    },
+    "environment": {
+      "scenario": "scenario_b",
+      "seed": 42,
+      "step": 0,
+      "time": "2026-10-03T09:16:00Z",
+      "robot": {
+        "x": 0.0,
+        "y": 0.0,
+        "heading_deg": 0.0
+      },
+      "lighting": {
+        "name": "yellow",
+        "color_shift": {
+          "red": "brown"
+        }
+      },
+      "obstacles": [],
+      "objects": [
+        {
+          "object_id": "box_01",
+          "x": 80.0,
+          "y": 20.0,
+          "true_color": "red"
+        }
+      ]
+    }
+  },
+  "tool_calls": [
+    {
+      "step": 1,
+      "tool": "query_belief",
+      "args": {
+        "subject": "box_01"
+      },
+      "result": {
+        "schema_version": "1.1",
+        "tool": "query_belief",
+        "ok": true,
+        "data": [
+          {
+            "schema_version": "1.1",
+            "belief_id": "b_000002",
+            "subject": "box_01",
+            "predicate": "color",
+            "object": "blue",
+            "source": "bot_02",
+            "confidence": 0.8,
+            "timestamp": "2026-10-03T09:15:00Z",
+            "perspective": "third_party",
+            "status": "active",
+            "valid_from": "2026-10-03T09:15:00Z",
+            "valid_to": null,
+            "supersedes": null
+          },
+          {
+            "schema_version": "1.1",
+            "belief_id": "b_000001",
+            "subject": "box_01",
+            "predicate": "color",
+            "object": "red",
+            "source": "user",
+            "confidence": 0.9,
+            "timestamp": "2026-10-03T09:15:00Z",
+            "perspective": "user",
+            "status": "active",
+            "valid_from": "2026-10-03T09:15:00Z",
+            "valid_to": null,
+            "supersedes": null
+          }
+        ],
+        "error": null,
+        "timestamp": "2026-11-23T05:21:01Z"
+      },
+      "auto": false
+    },
+    {
+      "step": 2,
+      "tool": "read_camera",
+      "args": {
+        "target": "box_01"
+      },
+      "result": {
+        "schema_version": "1.1",
+        "tool": "read_camera",
+        "ok": true,
+        "data": {
+          "schema_version": "1.1",
+          "sensor": "camera_front",
+          "value": {
+            "object_id": "box_01",
+            "color": "brown"
+          },
+          "unit": null,
+          "status": "clear",
+          "timestamp": "2026-10-03T09:16:00Z",
+          "confidence": 0.9
+        },
+        "error": null,
+        "timestamp": "2026-10-03T09:16:00Z"
+      },
+      "auto": false
+    },
+    {
+      "step": 3,
+      "tool": "update_belief",
+      "args": {
+        "subject": "box_01",
+        "predicate": "color",
+        "object": "brown",
+        "source": "camera_front",
+        "confidence": 0.9,
+        "perspective": "agent_sensor",
+        "reason": "camera_front saw box_01 as brown at 2026-10-03T09:16:00Z"
+      },
+      "result": {
+        "schema_version": "1.1",
+        "tool": "update_belief",
+        "ok": true,
+        "data": {
+          "schema_version": "1.1",
+          "belief_id": "b_000003",
+          "subject": "box_01",
+          "predicate": "color",
+          "object": "brown",
+          "source": "camera_front",
+          "confidence": 0.9,
+          "timestamp": "2026-10-03T09:16:00Z",
+          "perspective": "agent_sensor",
+          "status": "active",
+          "valid_from": "2026-10-03T09:16:00Z",
+          "valid_to": null,
+          "supersedes": null
+        },
+        "error": null,
+        "timestamp": "2026-10-03T09:16:00Z"
+      },
+      "auto": false
+    }
+  ],
+  "state_after": {
+    "memory": {
+      "nodes": [
+        {
+          "schema_version": "1.1",
+          "belief_id": "b_000001",
+          "subject": "box_01",
+          "predicate": "color",
+          "object": "red",
+          "source": "user",
+          "confidence": 0.9,
+          "timestamp": "2026-10-03T09:15:00Z",
+          "perspective": "user",
+          "status": "active",
+          "valid_from": "2026-10-03T09:15:00Z",
+          "valid_to": null,
+          "supersedes": null
+        },
+        {
+          "schema_version": "1.1",
+          "belief_id": "b_000002",
+          "subject": "box_01",
+          "predicate": "color",
+          "object": "blue",
+          "source": "bot_02",
+          "confidence": 0.8,
+          "timestamp": "2026-10-03T09:15:00Z",
+          "perspective": "third_party",
+          "status": "active",
+          "valid_from": "2026-10-03T09:15:00Z",
+          "valid_to": null,
+          "supersedes": null
+        },
+        {
+          "schema_version": "1.1",
+          "belief_id": "b_000003",
+          "subject": "box_01",
+          "predicate": "color",
+          "object": "brown",
+          "source": "camera_front",
+          "confidence": 0.9,
+          "timestamp": "2026-10-03T09:16:00Z",
+          "perspective": "agent_sensor",
+          "status": "active",
+          "valid_from": "2026-10-03T09:16:00Z",
+          "valid_to": null,
+          "supersedes": null
+        }
+      ],
+      "edges": []
+    },
+    "environment": {
+      "scenario": "scenario_b",
+      "seed": 42,
+      "step": 0,
+      "time": "2026-10-03T09:16:00Z",
+      "robot": {
+        "x": 0.0,
+        "y": 0.0,
+        "heading_deg": 0.0
+      },
+      "lighting": {
+        "name": "yellow",
+        "color_shift": {
+          "red": "brown"
+        }
+      },
+      "obstacles": [],
+      "objects": [
+        {
+          "object_id": "box_01",
+          "x": 80.0,
+          "y": 20.0,
+          "true_color": "red"
+        }
+      ]
+    }
+  },
+  "answer": "The user thinks red. I register brown from the camera. The bot_02 third_party record says blue. They are separate views. Memory receipts: b_000003.",
+  "expected": "Report user red, camera brown and bot_02 blue with distinct attribution and no claim about why the camera saw brown.",
+  "checks": [
+    {
+      "name": "ordered_tools",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "Required model call order: query_belief, read_camera."
+    },
+    {
+      "name": "canonical_tool_outputs",
+      "layer": "boundary",
+      "passed": true,
+      "detail": "Invalid result envelopes or payloads: []."
+    },
+    {
+      "name": "one_frame_per_observation",
+      "layer": "evaluation",
+      "passed": true,
+      "detail": "Frame zero precedes the model. Each manual or automatic tool has a corresponding frame."
+    },
+    {
+      "name": "observer_matches_model_receipts",
+      "layer": "evaluation",
+      "passed": true,
+      "detail": "Automatic reads are additional receipts and do not replace model results."
+    },
+    {
+      "name": "answer_delivered",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "Agent error: None."
+    },
+    {
+      "name": "supported_claims",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "Answer uses known belief IDs and represents writes and cancelled moves according to receipts."
+    },
+    {
+      "name": "history_retained",
+      "layer": "declarative",
+      "passed": true,
+      "detail": "No seeded or historical belief ID was deleted."
+    },
+    {
+      "name": "pose_change_expected",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "Only the box approach demo should move the simulated robot."
+    },
+    {
+      "name": "camera_brown",
+      "layer": "sensorimotor",
+      "passed": true,
+      "detail": "Camera must return box_01 as brown at .9 without exposing lighting to the agent."
+    },
+    {
+      "name": "three_views_isolated",
+      "layer": "declarative",
+      "passed": true,
+      "detail": "Keep the two attributed stored views unchanged and camera evidence undisputed."
+    },
+    {
+      "name": "perspective_answer",
+      "layer": "procedural",
+      "passed": true,
+      "detail": "Name three attributed views without asserting a true color or cause of the camera label."
+    }
+  ],
+  "result": "PASS",
+  "model": "scripted_llm",
+  "trace_file": "agent_run_20261123T052100961327Z-02.json",
+  "answer_source": "llm",
+  "labels": {
+    "execution": "scripted_llm",
+    "environment": "simulated",
+    "layers": {
+      "declarative": "actual",
+      "procedural": "actual",
+      "sensorimotor": "actual"
+    }
+  },
+  "agent_error": null,
+  "failure_layers": [],
+  "scenario": "scenario_b",
+  "started_utc": "2026-11-23T05:21:01.530407Z"
+}

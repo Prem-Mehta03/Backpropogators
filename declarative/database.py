@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from contracts.models import Belief
+from contracts.validators import timestamp_value
 
 
 class BeliefDatabase:
@@ -41,19 +42,19 @@ class BeliefDatabase:
     def insert(self, belief: Belief) -> None:
         """Insert a new immutable belief record."""
         payload = belief.model_dump_json()
-        self._connection.execute(
-            "INSERT INTO beliefs (belief_id, subject, predicate, perspective, status, timestamp, payload) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (
-                belief.belief_id,
-                belief.subject,
-                belief.predicate,
-                belief.perspective,
-                belief.status,
-                belief.timestamp,
-                payload,
-            ),
-        )
-        self._connection.commit()
+        with self._connection:
+            self._connection.execute(
+                "INSERT INTO beliefs (belief_id, subject, predicate, perspective, status, timestamp, payload) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (
+                    belief.belief_id,
+                    belief.subject,
+                    belief.predicate,
+                    belief.perspective,
+                    belief.status,
+                    belief.timestamp,
+                    payload,
+                ),
+            )
 
     def replace(self, belief: Belief) -> None:
         """Update one belief's state while leaving all other history intact."""
@@ -68,12 +69,12 @@ class BeliefDatabase:
     def append_with_supersession(self, prior: Belief, successor: Belief) -> None:
         """Atomically close one prior belief and insert its successor."""
         closed = prior.model_copy(
-            update={"status": "superseded", "valid_to": successor.timestamp}
+            update={"status": "superseded", "valid_to": successor.valid_from}
         )
         with self._connection:
             cursor = self._connection.execute(
-                "UPDATE beliefs SET status=?, payload=? WHERE belief_id=?",
-                (closed.status, closed.model_dump_json(), closed.belief_id),
+                "UPDATE beliefs SET status=?, payload=? WHERE belief_id=? AND status=?",
+                (closed.status, closed.model_dump_json(), closed.belief_id, prior.status),
             )
             if cursor.rowcount != 1:
                 raise KeyError(prior.belief_id)
@@ -110,7 +111,8 @@ class BeliefDatabase:
                 "SELECT payload FROM beliefs WHERE subject=? AND predicate=? ORDER BY timestamp, belief_id",
                 (subject, predicate),
             ).fetchall()
-        return [Belief.model_validate_json(row["payload"]) for row in rows]
+        items = [Belief.model_validate_json(row["payload"]) for row in rows]
+        return sorted(items, key=lambda item: (timestamp_value(item.timestamp), item.belief_id))
 
     def list_active(self, subject: str, predicate: str | None = None) -> list[Belief]:
         """Fetch current active or disputed beliefs for a subject."""
@@ -122,7 +124,8 @@ class BeliefDatabase:
         rows = self._connection.execute(
             "SELECT payload FROM beliefs ORDER BY timestamp, belief_id"
         ).fetchall()
-        return [Belief.model_validate_json(row["payload"]) for row in rows]
+        items = [Belief.model_validate_json(row["payload"]) for row in rows]
+        return sorted(items, key=lambda item: (timestamp_value(item.timestamp), item.belief_id))
 
     def next_id(self) -> str:
         """Return the next sequential contract belief ID."""

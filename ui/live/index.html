@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>I, Agent Live</title>
+<style>
+/* Layout: chat on the left, 3D belief graph in the middle, live trace and checks on the right. */
+:root {
+  --bg: #0a0f17; --panel: #111926; --panel2: #151f2e; --line: #223049; --fg: #e6ebf3;
+  --muted: #8d99ae; --declarative: #7c93ff; --procedural: #b39bff; --sensor: #3fcfb0;
+  --guard: #ff7d9f; --amber: #e8b44f; --grey: #6b768a; --amberbg: #2a2210;
+  --font: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", Consolas, "SF Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.45 var(--font); }
+h1, h2, h3, p { margin: 0; }
+button, input { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--declarative); outline-offset: 2px; }
+
+.app { height: 100%; display: flex; flex-direction: column; gap: 10px; padding: 12px 16px; min-height: 0; }
+.top { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; justify-content: space-between; }
+.top h1 { font-size: 18px; font-weight: 600; letter-spacing: -.01em; }
+.top .sub { color: var(--muted); font-size: 12px; }
+.top .right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { background: transparent; border: 0; padding: 6px 12px; color: var(--muted); cursor: pointer; font-size: 13px; }
+.seg button[aria-pressed="true"] { background: var(--panel2); color: var(--fg); }
+.btn { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 13px; }
+.badge { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--sensor); color: var(--sensor); }
+.badge.replay { border-color: var(--amber); color: var(--amber); }
+
+.grid { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(230px, 0.75fr) minmax(400px, 1.8fr) minmax(245px, 0.85fr); gap: 10px; }
+@media (max-width: 970px) {
+  .grid { grid-template-columns: minmax(0, 1fr); overflow-y: auto; }
+  .panel { min-height: 420px; }
+  .world-panel { min-height: 690px; grid-row: 1; }
+}
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.panel > header { padding: 10px 12px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.panel > header h2 { font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+.panel > header span { color: var(--muted); font-size: 12px; }
+.scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+
+/* chat */
+.msg { max-width: 100%; border-radius: 8px; padding: 9px 11px; overflow-wrap: anywhere; }
+.msg.user { align-self: flex-end; background: var(--panel2); border: 1px solid var(--line); max-width: 92%; }
+.msg.agent { border: 1px solid var(--line); background: transparent; }
+.msg.agent.err { border-color: var(--guard); }
+.msg .who { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.msg ul { margin: 4px 0; padding-left: 20px; }
+.chip { font-family: var(--mono); font-size: 12px; background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
+.srcs { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.src { font-size: 11.5px; border: 1px solid currentColor; border-radius: 10px; padding: 1px 8px; }
+.src.declarative { color: var(--declarative); } .src.sensorimotor { color: var(--sensor); } .src.rule { color: var(--guard); }
+.draft { border: 1px dashed var(--guard); border-radius: 6px; padding: 6px 9px; color: var(--muted); font-size: 12.5px; }
+.draft b { color: var(--guard); font-weight: 600; }
+.typing { color: var(--muted); font-size: 13px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 8px; }
+.q { background: transparent; border: 1px solid var(--line); border-radius: 14px; padding: 4px 10px; font-size: 12px; color: var(--muted); cursor: pointer; text-align: left; }
+.q:hover { color: var(--fg); border-color: var(--muted); }
+form.ask { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); }
+form.ask input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 9px 11px; }
+form.ask button { background: var(--fg); color: var(--bg); border: 0; border-radius: 6px; padding: 0 16px; font-weight: 600; cursor: pointer; }
+form.ask button:disabled { opacity: .45; cursor: default; }
+
+/* graph */
+.world-stage { flex: 2.25; position: relative; min-height: 260px; border-bottom: 1px solid var(--line); }
+#world-canvas { width: 100%; height: 100%; position: absolute; inset: 0; display: block; touch-action: none; }
+#world-hud { pointer-events: none; position: absolute; left: 10px; top: 9px; max-width: calc(100% - 20px); white-space: pre-line; overflow-wrap: anywhere; font-size: 12px; background: #111926e6; border-radius: 5px; padding: 5px 8px; }
+#world-fallback { position: absolute; inset: 55px 20px 0; text-align: center; color: var(--muted); padding-top: 40px; }
+.graph-title { padding: 7px 12px; color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--line); }
+.playbar { display: flex; align-items: center; flex-wrap: wrap; padding: 6px 10px; gap: 6px; border-bottom: 1px solid var(--line); }
+.playbar[hidden] { display: none; }
+#scrub { flex: 1; min-width: 60px; }
+#frame-count { color: var(--muted); white-space: nowrap; font-family: var(--mono); font-size: 11px; }
+#camera-view, #play-speed { background: var(--panel2); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 5px; }
+.ev.current { border-color: var(--sensor); background: var(--panel2); }
+.it.changed { border-left: 2px solid var(--sensor); padding-left: 5px; }
+.stage { position: relative; flex: 1; min-height: 0; }
+#gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
+#gl:active { cursor: grabbing; }
+.legend { position: absolute; left: 12px; bottom: 10px; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); max-width: calc(100% - 24px); pointer-events: none; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+.tip { position: absolute; pointer-events: none; background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 12px; max-width: 260px; display: none; }
+.tip b { font-family: var(--mono); font-weight: 500; }
+.nogl { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; color: var(--muted); padding: 24px; text-align: center; }
+
+/* trace */
+.ev { border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 3px; animation: in .25s ease-out; }
+@keyframes in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ev { animation: none; } }
+.ev .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.layer { font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; border: 1px solid currentColor; }
+.layer.declarative { color: var(--declarative); } .layer.sensorimotor { color: var(--sensor); }
+.layer.procedural { color: var(--procedural); } .layer.rule { color: var(--guard); }
+.tool { font-family: var(--mono); font-size: 12px; font-weight: 500; }
+.args { font-family: var(--mono); font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
+.out { font-size: 12.5px; overflow-wrap: anywhere; }
+.out.bad { color: var(--guard); }
+.ovr { color: var(--guard); font-size: 12px; font-weight: 500; }
+.checks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 10px 12px; border-top: 1px solid var(--line); }
+.chk { border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font-size: 11.5px; color: var(--muted); }
+.chk b { display: flex; align-items: center; gap: 6px; color: var(--fg); font-size: 12px; margin-bottom: 2px; }
+.chk i { width: 8px; height: 8px; border-radius: 50%; background: var(--grey); flex: none; }
+.chk.ok i { background: var(--sensor); } .chk.fired i { background: var(--guard); }
+.so { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); max-height: 28%; overflow-y: auto; }
+.so h3 { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 4px; }
+.so .it { font-size: 12px; margin-bottom: 4px; overflow-wrap: anywhere; }
+.so .it.sup { opacity: .45; text-decoration: line-through; }
+.so .it span { color: var(--muted); font-family: var(--mono); }
+.empty { color: var(--muted); font-size: 12.5px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div>
+      <h1>I, Agent <span class="sub">Team Backpropogators</span></h1>
+    </div>
+    <div class="right">
+      <span class="badge" id="mode">live</span>
+      <div class="seg" id="scn">
+        <button data-s="scenario_a" aria-pressed="true">Scenario A · route</button>
+        <button data-s="scenario_b" aria-pressed="false">Scenario B · box</button>
+      </div>
+      <button class="btn" id="reset">Reset memory</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <header><h2>Chat</h2><span id="runno"></span></header>
+      <div class="scroll" id="chat"></div>
+      <div class="chips" id="chips"></div>
+      <form class="ask" id="form">
+        <input id="q" autocomplete="off" placeholder="Ask the agent something" aria-label="Question">
+        <button id="send" type="submit">Ask</button>
+      </form>
+    </section>
+
+    <section class="panel world-panel">
+      <header><h2>Simulated world</h2>
+        <select aria-label="Camera view" id="camera-view">
+          <option value="orbit">Orbit</option><option value="follow" selected>Follow</option><option value="top">Top-down</option>
+        </select>
+      </header>
+      <div class="world-stage">
+        <canvas id="world-canvas" aria-label="3D view of the recorded simulated world"></canvas>
+        <div id="world-hud"></div>
+        <p id="world-fallback" hidden>WebGL is unavailable. The readings, trace, and belief table remain available.</p>
+      </div>
+      <div class="playbar" id="playbar" hidden>
+        <button class="btn" id="play">Play</button>
+        <button class="btn" id="back" aria-label="Previous frame">←</button>
+        <button class="btn" id="forward" aria-label="Next frame">→</button>
+        <select aria-label="Playback speed" id="play-speed">
+          <option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option>
+        </select>
+        <input id="scrub" type="range" min="0" max="0" value="0" aria-label="Replay timeline">
+        <span id="frame-count"></span>
+      </div>
+      <div class="graph-title">Belief graph</div>
+      <div class="stage" id="stage">
+        <canvas id="gl"></canvas>
+        <div class="nogl" id="nogl">3D view needs WebGL. Open this page in Chrome or Edge.</div>
+        <div class="tip" id="tip"></div>
+        <div class="legend">
+          <span><i style="background:var(--declarative)"></i>stored belief</span>
+          <span><i style="background:var(--amber)"></i>disputed</span>
+          <span><i style="background:var(--grey)"></i>superseded</span>
+          <span><i style="background:var(--sensor)"></i>live sensor reading</span>
+          <span><i style="background:#fff"></i>subject</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <header><h2>Live trace</h2><span id="trace-meta"></span></header>
+      <div class="scroll" id="trace"><p class="empty">Ask a question. Each model call, tool call and rule check appears here as it happens.</p></div>
+      <div class="checks" id="checks"></div>
+      <div class="so"><div><h3>Stored</h3><div id="stored"></div></div><div><h3>Observed</h3><div id="observed"></div></div></div>
+    </section>
+  </div>
+</div>
+
+<script src="/three.min.js"></script>
+<script src="/world3d.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const SUGGEST = {
+  scenario_a: ["Is your route clear? Justify your response by inspecting your internal system layers.", "What color is box_99?"],
+  scenario_b: ["What color does the user think the object is, what color do you register it as, and what does your data history say its true state is?", "What color is box_01?", "I say box_01 is red. Please record that.", "What color is box_99?"]
+};
+let scenario = "scenario_a", busy = false, session = { beliefs: [], observations: [] };
+let worldViewer, recording = null, replayIndex = 0, playTimer = null;
+let changedNodes = new Set();
+
+/* ---------- chat + trace ---------- */
+function formatAnswer(text) {
+  let out = "", inList = false;
+  esc(text).split("\n").forEach((ln) => {
+    const li = ln.startsWith("- ");
+    if (li && !inList) { out += "<ul>"; inList = true; }
+    if (!li && inList) { out += "</ul>"; inList = false; }
+    const t = (li ? ln.slice(2) : ln).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\b(b_\d{6})\b/g, '<span class="chip">$1</span>');
+    out += li ? `<li>${t}</li>` : (t === "" ? '<div style="height:6px"></div>' : `<div>${t}</div>`);
+  });
+  return out + (inList ? "</ul>" : "");
+}
+function addMsg(cls, html) {
+  const d = document.createElement("div"); d.className = "msg " + cls; d.innerHTML = html;
+  $("chat").appendChild(d); $("chat").scrollTop = $("chat").scrollHeight; return d;
+}
+function layerOf(tool) {
+  if (["query_belief", "get_belief_history", "update_belief", "downgrade_belief", "detect_conflict"].includes(tool)) return "declarative";
+  return "sensorimotor";
+}
+function summarize(tool, env) {
+  if (!env || typeof env !== "object") return { text: String(env), bad: false };
+  if (env.ok === false) return { text: `${env.error.code}: ${env.error.message}`, bad: true };
+  const d = "ok" in env ? env.data : env;
+  if (tool === "query_belief") return { text: Array.isArray(d) && d.length ? d.map((b) => `${b.belief_id}: ${b.subject} ${b.predicate} = ${b.object} (${b.source}, ${Number(b.confidence).toFixed(2)})`).join("\n") : "No beliefs found." };
+  if (tool === "update_belief" || tool === "downgrade_belief") return { text: `Wrote ${d.belief_id}: ${d.subject} ${d.predicate} = ${d.object}, confidence ${Number(d.confidence).toFixed(2)}${d.supersedes ? ", supersedes " + d.supersedes : ""}${d.status === "disputed" ? " [disputed]" : ""}` };
+  if (tool === "read_lidar" || tool === "read_ultrasonic") return { text: `${d.value} ${d.unit}, status ${d.status}, confidence ${d.confidence}` };
+  if (tool === "read_camera") return { text: d.value?.color ? `sees ${d.value.color}, confidence ${d.confidence}` : "Nothing in view." };
+  return { text: JSON.stringify(d) };
+}
+let trace = null, typingMsg = null;
+function resetTrace(q) {
+  $("trace").innerHTML = ""; trace = { tools: [], rows: [], texts: [], q };
+  setChecks(null);
+}
+function addEv(layer, label, args, out, bad) {
+  const d = document.createElement("div"); d.className = "ev";
+  d.innerHTML = `<div class="row"><span class="layer ${layer}">${layer === "rule" ? "rule" : layer}</span><span class="tool">${esc(label)}</span></div>` +
+    (args ? `<div class="args">${esc(args)}</div>` : "") + (out ? `<div class="out ${bad ? "bad" : ""}" style="white-space:pre-wrap">${esc(out)}</div>` : "");
+  $("trace").appendChild(d); $("trace").scrollTop = $("trace").scrollHeight; return d;
+}
+function argsText(a) { return Object.entries(a || {}).map(([k, v]) => `${k}: ${typeof v === "object" ? JSON.stringify(v) : v}`).join(", "); }
+function setChecks(f) {
+  const c = [
+    { n: "Evidence checklist", s: f ? (f.evidence_nudges ? "fired" : "ok") : "", t: f ? (f.evidence_nudges ? `${f.evidence_nudges} early answer(s) refused` : "memory and a sensor consulted first") : "waiting" },
+    { n: "Provenance guard", s: "", t: "waiting" },
+    { n: "Claim check", s: f ? (f.claim_nudges ? "fired" : "ok") : "", t: f ? (f.claim_nudges ? `${f.claim_nudges} draft(s) refused` : "no unbacked claims") : "waiting" }
+  ];
+  if (f) {
+    const calls = f.tool_calls || [];
+    const over = calls.filter((x) => x.guard && x.guard.overridden).length, ref = calls.filter((x) => x.guard && x.guard.refused).length;
+    c[1] = { n: "Provenance guard", s: over || ref ? "fired" : "ok", t: over || ref ? `${over} value(s) overridden, ${ref} write(s) refused` : (calls.some((x) => ["update_belief", "downgrade_belief"].includes(x.tool)) ? "writes backed by evidence" : "no writes attempted") };
+  }
+  $("checks").innerHTML = c.map((x) => `<div class="chk ${x.s}"><b><i></i>${x.n}</b>${x.t}</div>`).join("");
+}
+function handle(ev) {
+  if (ev.type === "model_call") { $("typing") && ($("typing").textContent = `Agent is working. Model call ${ev.n}…`); }
+  else if (ev.type === "model_reply") {
+    if (ev.tools.length) addEv("procedural", `model call ${ev.n}`, "", `chose ${ev.tools.join(", ")}`);
+    else if (ev.text) trace.texts.push({ n: ev.n, text: ev.text });
+  } else if (ev.type === "tool") {
+    const s = summarize(ev.tool, ev.result);
+    const row = addEv(layerOf(ev.tool), ev.tool + (ev.auto ? " · automatic" : ""), argsText(ev.args), s.text, s.bad);
+    if (!ev.auto) trace.rows.push(row);
+  } else if (ev.type === "session") { session = ev; updateGraph(); renderSO(); }
+  else if (ev.type === "frame") worldViewer.show(ev.frame);
+  else if (ev.type === "final") finish(ev);
+}
+function finish(f) {
+  setChecks(f);
+  (f.tool_calls || []).forEach((c, i) => {
+    const row = trace.rows[i]; if (!row || !c.guard) return;
+    const note = document.createElement("div"); note.className = "ovr";
+    if (c.guard.overridden) { const o = c.guard.overridden.new_confidence; note.textContent = o ? `Guard: model asked ${o.model_value}, rule set ${o.used}` : "Guard: values replaced from this run's evidence"; }
+    else if (c.guard.refused) note.textContent = "Guard refused: " + c.guard.refused;
+    row.appendChild(note);
+  });
+  const drafts = trace.texts.filter((t) => t.text && (!f.answer || t.n !== Math.max(...trace.texts.map((x) => x.n))));
+  if (typingMsg) { typingMsg.remove(); typingMsg = null; }
+  drafts.forEach((t) => {
+    addEv("rule", "claim or evidence check", "", "Refused a draft answer and asked the model to fix it.");
+    addMsg("agent", `<div class="draft"><b>Draft refused by a rule.</b> ${esc(t.text.slice(0, 160))}${t.text.length > 160 ? "…" : ""}</div>`);
+  });
+  if (f.error) {
+    addEv("rule", f.error.code, "", f.error.message, true);
+    addMsg("agent err", `<div class="who">Agent</div>No final answer. ${esc(f.error.code)}: ${esc(f.error.message)}`);
+  } else {
+    addEv("procedural", "final answer", "", `accepted after ${f.model_calls} model calls`);
+    const srcs = sourcesFor(f);
+    addMsg("agent", `<div class="who">Agent</div>${formatAnswer(f.answer)}<div class="srcs">${srcs}</div>`);
+  }
+  $("trace-meta").textContent = `${f.model_calls || 0} model calls`;
+}
+function sourcesFor(f) {
+  const out = [], seen = new Set();
+  (f.tool_calls || []).forEach((c) => {
+    if (c.result && c.result.ok === false) return;
+    const l = layerOf(c.tool);
+    const label = l === "declarative" ? "Memory " + c.tool : "Sensor " + c.tool;
+    if (!seen.has(label)) { seen.add(label); out.push(`<span class="src ${l}">${esc(label)}</span>`); }
+    if (c.guard && c.guard.overridden && !seen.has("rule")) { seen.add("rule"); out.push('<span class="src rule">Rule: downgrade value</span>'); }
+  });
+  return out.join("");
+}
+function renderSO() {
+  const bs = session.beliefs.slice().sort((a, b) => a.belief_id.localeCompare(b.belief_id));
+  $("stored").innerHTML = bs.length ? bs.map((b) => `<div class="it ${b.status === "superseded" || b.superseded_by ? "sup" : ""} ${changedNodes.has(b.belief_id) ? "changed" : ""}"><span>${esc(b.belief_id)}</span> ${esc(b.subject)} ${esc(b.predicate)} = <b>${esc(b.object)}</b> ${Number(b.confidence).toFixed(2)} · ${esc(b.perspective)} · ${esc(b.status)}</div>`).join("") : '<p class="empty">Nothing yet.</p>';
+  $("observed").innerHTML = session.observations.length ? session.observations.map((o) => `<div class="it"><span>${esc(o.sensor)}</span> ${esc(o.subject)} ${esc(o.predicate)} = <b>${esc(o.object)}</b>${o.value != null && o.unit ? " (" + esc(o.value) + " " + esc(o.unit) + ")" : ""} ${Number(o.confidence).toFixed(2)}</div>`).join("") : '<p class="empty">No sensor read yet.</p>';
+}
+function ask(q) {
+  if (busy || !q.trim()) return;
+  busy = true; $("send").disabled = true; $("q").value = "";
+  addMsg("user", esc(q));
+  typingMsg = addMsg("agent", '<div class="typing" id="typing">Agent is working…</div>');
+  resetTrace(q);
+  const es = new EventSource("/api/ask?q=" + encodeURIComponent(q));
+  es.onmessage = (m) => {
+    const ev = JSON.parse(m.data);
+    if (ev.type === "start") { $("runno").textContent = "run " + ev.run; return; }
+    if (ev.type === "done") { es.close(); busy = false; $("send").disabled = false; if (typingMsg) { typingMsg.remove(); typingMsg = null; } return; }
+    handle(ev);
+  };
+  es.onerror = () => { es.close(); if (busy) { busy = false; $("send").disabled = false; addMsg("agent err", "Lost connection to the local server."); } };
+}
+function renderChips() {
+  const prompts = SUGGEST[scenario] || SUGGEST[scenario.startsWith("scenario_b") ? "scenario_b" : "scenario_a"];
+  $("chips").innerHTML = prompts.map((s, i) => `<button class="q" data-i="${i}">${esc(s.length > 70 ? s.slice(0, 68) + "…" : s)}</button>`).join("");
+  $("chips").querySelectorAll(".q").forEach((b) => b.addEventListener("click", () => ask(prompts[Number(b.dataset.i)])));
+}
+function setScenarioButtons() { document.querySelectorAll("#scn button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.s === scenario))); }
+async function reset(s) {
+  if (busy) return;
+  const r = await fetch("/api/reset?scenario=" + encodeURIComponent(s)); const st = await r.json();
+  scenario = st.scenario; setScenarioButtons(); renderChips();
+  session = st; updateGraph(true); renderSO(); setChecks(null);
+  worldViewer.show(st.frame || null, false);
+  $("chat").innerHTML = ""; $("trace").innerHTML = '<p class="empty">Ask a question. Each model call, tool call and rule check appears here as it happens.</p>';
+  $("runno").textContent = ""; $("trace-meta").textContent = "";
+  if (st.error) addMsg("agent err", "Setup problem: " + esc(st.error));
+}
+$("form").addEventListener("submit", (e) => { e.preventDefault(); ask($("q").value); });
+document.querySelectorAll("#scn button").forEach((b) => b.addEventListener("click", () => reset(b.dataset.s)));
+$("reset").addEventListener("click", () => reset(scenario));
+
+/* ---------- 3D belief graph ---------- */
+let G = null;
+function initGL() {
+  if (!window.THREE) { $("nogl").style.display = "flex"; return; }
+  const canvas = $("gl");
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true }); } catch (e) { $("nogl").style.display = "flex"; return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 200); camera.position.set(0, 4.5, 14);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+  const pl = new THREE.PointLight(0xffffff, 0.8); pl.position.set(8, 10, 12); scene.add(pl);
+  const root = new THREE.Group(); scene.add(root);
+  root.rotation.x = 0.25;
+  G = { clock: new THREE.Clock(), timeNow: () => G.clock.elapsedTime, renderer, scene, camera, root, nodes: new Map(), lines: [], hubs: new Map(), drag: false, last: [0, 0], idle: 0, hover: null, mouse: new THREE.Vector2(-9, -9), ray: new THREE.Raycaster() };
+  const stage = $("stage");
+  const resize = () => { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / Math.max(h, 1); camera.updateProjectionMatrix(); };
+  new ResizeObserver(resize).observe(stage); resize();
+  canvas.addEventListener("pointerdown", (e) => { G.drag = true; G.last = [e.clientX, e.clientY]; canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener("pointerup", () => { G.drag = false; });
+  canvas.addEventListener("pointermove", (e) => {
+    const r = canvas.getBoundingClientRect();
+    G.mouse.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); G.mx = e.clientX - r.left; G.my = e.clientY - r.top;
+    if (G.drag) { root.rotation.y += (e.clientX - G.last[0]) * 0.007; root.rotation.x = Math.max(-1.2, Math.min(1.2, root.rotation.x + (e.clientY - G.last[1]) * 0.007)); G.last = [e.clientX, e.clientY]; G.idle = 0; }
+  });
+  canvas.addEventListener("dblclick", () => { root.rotation.set(0.25, 0, 0); camera.position.z = 14; G.idle = 0; });
+  canvas.addEventListener("pointerleave", () => G.mouse.set(-9, -9));
+  canvas.addEventListener("wheel", (e) => { e.preventDefault(); camera.position.z = Math.max(7, Math.min(32, camera.position.z + e.deltaY * 0.01)); }, { passive: false });
+  (function loop() {
+    requestAnimationFrame(loop);
+    const dt = G.clock.getDelta(), t = G.clock.elapsedTime;
+    if (!G.drag) { G.idle += dt; if (G.idle > 1.5) root.rotation.y += (0.4 * Math.sin(t * 0.35) - root.rotation.y) * 0.02; }
+    G.nodes.forEach((n) => { const k = Math.min(1, (t - n.born) / 0.6); const s = k * (1 + (n.pulse > t ? 0.18 * Math.sin((n.pulse - t) * 12) : 0)); n.group.scale.setScalar(Math.max(0.001, s)); });
+    camera.lookAt(0, -0.5, 0);
+    camera.updateMatrixWorld();
+    G.ray.setFromCamera(G.mouse, camera);
+    const hit = G.ray.intersectObjects([...G.nodes.values()].map((n) => n.mesh), false)[0];
+    const tip = $("tip");
+    if (hit && hit.object.userData.info) { tip.style.display = "block"; tip.innerHTML = hit.object.userData.info; tip.style.left = Math.min(G.mx + 14, stage.clientWidth - 270) + "px"; tip.style.top = Math.max(G.my - 10, 4) + "px"; canvas.style.cursor = "pointer"; }
+    else { tip.style.display = "none"; canvas.style.cursor = G.drag ? "grabbing" : "grab"; }
+    renderer.render(scene, camera);
+  })();
+}
+function css(name) { return new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue(name).trim()); }
+function label(l1, l2, color) {
+  const c = document.createElement("canvas"); c.width = 512; c.height = 128; const x = c.getContext("2d");
+  x.textAlign = "center"; x.fillStyle = "#e6ebf3"; x.font = "500 38px 'IBM Plex Mono', Consolas, monospace"; x.fillText(l1, 256, 50);
+  x.fillStyle = color || "#8d99ae"; x.font = "400 34px 'IBM Plex Sans', 'Segoe UI', sans-serif"; x.fillText(l2, 256, 100);
+  const tex = new THREE.CanvasTexture(c); tex.minFilter = THREE.LinearFilter;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false })); sp.scale.set(3.1, 0.78, 1); return sp;
+}
+function updateGraph(hard) {
+  if (!G) return;
+  if (hard) { G.nodes.forEach((n) => G.root.remove(n.group)); G.nodes.clear(); G.hubs.forEach((h) => G.root.remove(h.group)); G.hubs.clear(); }
+  G.lines.forEach((l) => { G.root.remove(l); if (l.geometry) l.geometry.dispose(); }); G.lines = [];
+  const bySubject = Object.create(null); session.beliefs.forEach((b) => (bySubject[b.subject] = bySubject[b.subject] || []).push(b));
+  session.observations.forEach((o) => (bySubject[o.subject] = bySubject[o.subject] || []));
+  const subjects = Object.keys(bySubject), m = subjects.length, SX = 3.4, SZ = 6.5;
+  const hubAt = Object.create(null), nodeFor = Object.create(null), rowX = Object.create(null);
+  /* one row per subject: beliefs run left to right in the order they were written, the hub sits below, sensor readings above */
+  subjects.forEach((s, i) => {
+    const z = (i - (m - 1) / 2) * -SZ;
+    let hub = G.hubs.get(s);
+    if (!hub) {
+      const group = new THREE.Group();
+      group.add(new THREE.Mesh(new THREE.IcosahedronGeometry(0.5, 0), new THREE.MeshStandardMaterial({ color: 0xffffff, wireframe: true })));
+      const lb = label(s, "subject", "#8d99ae"); lb.position.set(0, -1.1, 0); group.add(lb);
+      G.root.add(group); hub = { group }; G.hubs.set(s, hub);
+    }
+    hub.group.position.set(0, -2.6, z); hubAt[s] = hub.group.position;
+  });
+  const place = (key, build) => {
+    let n = G.nodes.get(key);
+    if (!n) { n = build(); n.born = G.timeNow(); n.pulse = G.timeNow() + 1.4; G.nodes.set(key, n); G.root.add(n.group); }
+    return n;
+  };
+  subjects.forEach((s) => {
+    const list = bySubject[s].slice().sort((a, b) => a.belief_id.localeCompare(b.belief_id));
+    list.forEach((b, j) => {
+      const sup = b.status === "superseded" || !!b.superseded_by, sig = `${sup}|${b.status}|${b.confidence}`, key = "b:" + b.belief_id;
+      const old = G.nodes.get(key);
+      if (old && old.sig !== sig) { G.root.remove(old.group); G.nodes.delete(key); }
+      const n = place(key, () => {
+        const group = new THREE.Group();
+        const col = sup ? css("--grey") : b.status === "disputed" ? css("--amber") : css("--declarative");
+        const r = 0.3 + 0.35 * Number(b.confidence);
+        const mesh = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 18), new THREE.MeshStandardMaterial({ color: col, transparent: true, opacity: sup ? 0.4 : 1, roughness: 0.4 }));
+        mesh.userData.info = `<b>${esc(b.belief_id)}</b><br>${esc(b.subject)} ${esc(b.predicate)} = <b>${esc(b.object)}</b><br>source ${esc(b.source)} · ${esc(b.perspective)}<br>confidence ${Number(b.confidence).toFixed(2)} · ${b.superseded_by ? "superseded by " + esc(b.superseded_by) : esc(b.status)}${b.supersedes ? "<br>supersedes " + esc(b.supersedes) : ""}`;
+        group.add(mesh);
+        const lb = label(b.belief_id, `${b.object} · ${Number(b.confidence).toFixed(2)}`, sup ? "#6b768a" : "#e6ebf3"); lb.position.set(0, r + 0.65, 0); group.add(lb);
+        return { group, mesh, sig };
+      });
+      if (changedNodes.has(b.belief_id)) n.pulse = G.timeNow() + 1.35;
+      n.group.position.set((j - (list.length - 1) / 2) * SX, 0, hubAt[s].z);
+      nodeFor[b.belief_id] = n;
+      link(hubAt[s], n.group.position, "--line", 0.7);
+    });
+    rowX[s] = list.length ? (list.length - 1) / 2 * SX : 0;
+  });
+  session.observations.forEach((o) => {
+    const key = "o:" + o.key + "|" + o.object + "|" + o.run;
+    const n = place(key, () => {
+      const group = new THREE.Group();
+      const mesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.5), new THREE.MeshStandardMaterial({ color: css("--sensor"), roughness: 0.35 }));
+      mesh.userData.info = `<b>${esc(o.sensor)}</b> (live)<br>${esc(o.subject)} ${esc(o.predicate)} = <b>${esc(o.object)}</b>${o.value && o.unit ? "<br>reading " + o.value + " " + o.unit : ""}<br>confidence ${Number(o.confidence).toFixed(2)}`;
+      group.add(mesh);
+      const lb = label(o.sensor, `${o.object}${o.value && o.unit ? " · " + o.value + o.unit : ""}`, "#3fcfb0"); lb.position.set(0, 1.0, 0); group.add(lb);
+      return { group, mesh };
+    });
+    n.group.position.set(rowX[o.subject] || 0, 2.9, (hubAt[o.subject] || { z: 0 }).z);
+    link(hubAt[o.subject], n.group.position, "--sensor", 0.35);
+    session.beliefs.filter((b) => b.subject === o.subject && b.predicate === o.predicate && ["historical", "agent_sensor"].includes(b.perspective) && b.status !== "superseded" && !b.superseded_by && String(b.object) !== String(o.object))
+      .forEach((b) => link(n.group.position, nodeFor[b.belief_id].group.position, "--amber", 0.95, true));
+  });
+  session.beliefs.forEach((b) => { if (b.supersedes && nodeFor[b.belief_id] && nodeFor[b.supersedes]) arrow(nodeFor[b.belief_id].group.position, nodeFor[b.supersedes].group.position); });
+  const live = Object.create(null);
+  session.beliefs.filter((b) => b.status !== "superseded" && !b.superseded_by && ["historical", "agent_sensor"].includes(b.perspective)).forEach((b) => { const k = b.subject + "|" + b.predicate; (live[k] = live[k] || []).push(b); });
+  Object.values(live).forEach((arr) => { for (let i = 0; i < arr.length; i++) for (let j = i + 1; j < arr.length; j++) if (arr[i].object !== arr[j].object) link(nodeFor[arr[i].belief_id].group.position, nodeFor[arr[j].belief_id].group.position, "--amber", 0.95, true); });
+  function link(a, b, colVar, opacity, dashed) {
+    if (!a || !b) return;
+    const geo = new THREE.BufferGeometry().setFromPoints([a.clone(), b.clone()]);
+    const mat = dashed ? new THREE.LineDashedMaterial({ color: css(colVar), dashSize: 0.25, gapSize: 0.16, transparent: true, opacity }) : new THREE.LineBasicMaterial({ color: css(colVar), transparent: true, opacity });
+    const line = new THREE.Line(geo, mat); if (dashed) line.computeLineDistances(); G.root.add(line); G.lines.push(line);
+  }
+  function arrow(from, to) {
+    const dir = to.clone().sub(from); const len = dir.length(); if (len < 0.8) return; dir.normalize();
+    const a = new THREE.ArrowHelper(dir, from.clone().add(dir.clone().multiplyScalar(0.7)), len - 1.4, css("--declarative").getHex(), 0.5, 0.3);
+    G.root.add(a); G.lines.push(a);
+  }
+}
+
+function replayObservations(frame) {
+  const rows = [];
+  for (const [sensor, reading] of Object.entries(frame.world.sensors)) {
+    if (!reading || reading.status === "unknown" || reading.status === "error") continue;
+    if (sensor === "camera_front" && reading.value?.color) {
+      rows.push({key: sensor, sensor, subject: reading.value.object_id, predicate: "color",
+        object: reading.value.color, confidence: reading.confidence, run: 1});
+    } else if (sensor === "lidar_front" || sensor === "ultrasonic_front") {
+      rows.push({key: sensor, sensor, subject: "path_A", predicate: "status",
+        object: reading.status, value: reading.value, unit: reading.unit || "cm",
+        confidence: reading.confidence, run: 1});
+    }
+  }
+  return rows;
+}
+
+function showReplay(index, animate = true) {
+  const frames = recording.frames;
+  const previous = frames[replayIndex];
+  replayIndex = Math.max(0, Math.min(frames.length - 1, index));
+  const frame = frames[replayIndex];
+  const old = new Map(previous.beliefs.map(belief => [belief.belief_id, JSON.stringify(belief)]));
+  changedNodes = new Set(frame.beliefs.filter(belief => old.get(belief.belief_id) !== JSON.stringify(belief)).map(belief => belief.belief_id));
+  session = {beliefs: frame.beliefs, observations: replayObservations(frame)};
+  updateGraph(true);
+  renderSO();
+  worldViewer.show(frame, animate);
+  $("scrub").value = replayIndex;
+  $("frame-count").textContent = `${replayIndex + 1} / ${frames.length}`;
+  $("back").disabled = replayIndex === 0;
+  $("forward").disabled = replayIndex === frames.length - 1;
+  trace.rows.forEach((row, i) => row.classList.toggle("current", i === replayIndex - 1));
+  if (trace.rows[replayIndex - 1]) trace.rows[replayIndex - 1].scrollIntoView({block: "nearest"});
+  const last = replayIndex === frames.length - 1;
+  $("recorded-answer").hidden = !last;
+  setChecks(last ? recording : null);
+}
+
+function stopPlayback() {
+  if (playTimer !== null) clearTimeout(playTimer);
+  playTimer = null;
+  $("play").textContent = "Play";
+}
+
+function queuePlayback() {
+  playTimer = setTimeout(() => {
+    showReplay(replayIndex + 1);
+    if (replayIndex === recording.frames.length - 1) stopPlayback();
+    else queuePlayback();
+  }, 1600 / Number($("play-speed").value));
+}
+
+function loadReplay(data) {
+  recording = data;
+  $("mode").textContent = data.labels?.model_execution_mode === "scripted_llm" || data.model === "scripted_llm"
+    ? "scripted replay" : "recorded replay";
+  $("playbar").hidden = false;
+  for (const id of ["scn", "reset", "form", "chips"]) $(id).style.display = "none";
+  $("scrub").max = data.frames.length - 1;
+  $("runno").textContent = data.scenario || data.frames[0].world.scenario || "";
+  const question = data.question || "Recorded demonstration";
+  addMsg("user", esc(question));
+  const answer = addMsg("agent", data.error
+    ? `<div class="who">Recorded error</div>${esc(data.error.code)}: ${esc(data.error.message)}`
+    : `<div class="who">Recorded answer</div>${formatAnswer(data.answer || "")}`);
+  answer.id = "recorded-answer";
+  resetTrace(question);
+  const calls = data.tool_calls || [];
+  let modelIndex = 0;
+  for (const frame of data.frames.slice(1)) {
+    const tool = frame.tool;
+    if (!tool) {
+      trace.rows.push(addEv("procedural", `step ${frame.step}`, "", "State snapshot"));
+      continue;
+    }
+    const actual = tool.auto ? null : calls[modelIndex++];
+    const result = tool.result || (actual?.tool === tool.name ? actual.result : null);
+    const readingName = tool.name === "read_lidar" ? `lidar_${tool.args?.direction || "front"}`
+      : {read_ultrasonic: "ultrasonic_front", read_camera: "camera_front"}[tool.name];
+    const savedReading = readingName ? frame.world.sensors[readingName] : null;
+    const summary = result ? summarize(tool.name, result) : tool.ok && savedReading
+      ? summarize(tool.name, savedReading) : {text: tool.ok ? "Completed" : "Rejected", bad: !tool.ok};
+    trace.rows.push(addEv(layerOf(tool.name), `${frame.step} · ${tool.name}${tool.auto ? " · automatic" : ""}`,
+      argsText(tool.args), summary.text, summary.bad));
+  }
+  showReplay(0, false);
+}
+
+$("camera-view").addEventListener("change", event => worldViewer.setMode(event.target.value));
+$("play").addEventListener("click", () => {
+  if (playTimer !== null) { stopPlayback(); return; }
+  if (recording.frames.length < 2) return;
+  if (replayIndex === recording.frames.length - 1) showReplay(0, false);
+  $("play").textContent = "Pause";
+  queuePlayback();
+});
+$("back").addEventListener("click", () => { stopPlayback(); showReplay(replayIndex - 1); });
+$("forward").addEventListener("click", () => { stopPlayback(); showReplay(replayIndex + 1); });
+$("scrub").addEventListener("input", event => { stopPlayback(); showReplay(Number(event.target.value), false); });
+document.addEventListener("keydown", event => {
+  if (["INPUT", "SELECT", "BUTTON", "TEXTAREA"].includes(event.target.tagName)) return;
+  const view = {"1": "orbit", "2": "follow", "3": "top"}[event.key];
+  if (view) { $("camera-view").value = view; worldViewer.setMode(view); }
+  if (!recording) return;
+  const action = {" ": "play", ArrowLeft: "back", ArrowRight: "forward"}[event.key];
+  if (action) { event.preventDefault(); $(action).click(); }
+});
+
+function boot() {
+  worldViewer = new WorldViewer($("world-canvas"), $("world-hud"), $("world-fallback"));
+  worldViewer.show(null);
+  initGL();
+  fetch("/api/state").then((r) => r.json()).then(async (st) => {
+    scenario = st.scenario;
+    if (st.has_recording) {
+      $("mode").classList.add("replay");
+      const response = await fetch("/api/replay");
+      if (!response.ok) throw new Error("The recording cannot be loaded.");
+      loadReplay(await response.json());
+      return;
+    }
+    setScenarioButtons(); renderChips(); session = st; renderSO(); setChecks(null);
+    $("mode").textContent = st.replay ? "replay · recorded runs" : "live"; $("mode").classList.toggle("replay", !!st.replay);
+    if (st.error) addMsg("agent err", "Setup problem: " + esc(st.error));
+    worldViewer.show(st.frame || null, false);
+    updateGraph(true);
+  }).catch(() => addMsg("agent err", "Could not load the demo from the local server."));
+}
+boot();
+</script>
+</body>
+</html>
