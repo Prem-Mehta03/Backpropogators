@@ -318,3 +318,11 @@ def test_a_disagreement_found_only_by_the_recheck_before_a_move_needs_no_memory_
     log = [lidar, move]
     assert weak_or_disputed_reason(log) is not None  # still needs the conflict wording
     assert unrecorded_disagreement(log) == []
+
+
+def test_for_disagreeing_sensors_asking_for_more_evidence_is_enough() -> None:
+    answer = "The LiDAR and the ultrasonic sensor disagree. I need more evidence."
+    assert overclaimed_certainty(answer, DISAGREE) == []
+    assert any(
+        "recheck" in p for p in overclaimed_certainty(answer, WEAK)
+    )  # not for a weak reading
