@@ -120,10 +120,10 @@ TOOL_SPECS: tuple[ToolSpec, ...] = (
                 "The claimed value, for example clear, red or 12.",
                 True,
             ),
-            Param(
+            _str(
                 "source",
-                ("string", "null"),
-                "Where the evidence came from, for example lidar_front or user.",
+                "Where the evidence came from, for example lidar_front or user. "
+                "A source is always required: the model may not record an unsourced belief.",
                 True,
             ),
             _num(
