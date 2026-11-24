@@ -168,8 +168,13 @@ class OfflineScript:
 
 def _plan(scenario, control, old_id):
     from procedural.llm_client import LLMClientError
+    from procedural.recheck import RECHECK_PHRASE
     subject = "box_01" if scenario == "S03" else "room" if scenario == "S07" else "path_A"
+    predicate = "color" if scenario == "S03" else "status"
     query = ("query_belief", {"subject": subject})
+    history = ("get_belief_history", {"subject": subject, "predicate": predicate})
+    route_query = subject.startswith("path_")
+    route_reads = [query, history] if route_query else [query]
     sensor = ("read_camera", {"target": "box_01"}) if scenario == "S03" else ("read_lidar", {"direction": "front"})
     answer = "Scripted fixture: consulted memory and sensor tools; see their attributed results."
 
@@ -211,33 +216,42 @@ def _plan(scenario, control, old_id):
                 f"{lidar['sensor']} reads {lidar['status']} at {lidar['value']} cm. "
                 f"Memory receipts: {lowered['data']['belief_id']}, {current['data']['belief_id']}.")
 
+    def movement_answer(messages):
+        receipt = latest_receipt(messages, "move_forward")
+        if receipt and not receipt["ok"] and receipt["error"]["code"] == "CONFLICT":
+            message = receipt["error"]["message"]
+            if RECHECK_PHRASE in message:
+                return message.removesuffix(" Report the readings and that the move was cancelled.")
+        raise LLMClientError("Script did not receive an automatic movement cancellation")
+
     if control == "step_limit":
         return ["Premature scripted answer."] * 2
     if control == "llm_error":
         return [LLMClientError("Role 4 scripted transport failure")]
     if control == "invalid_arguments":
-        return [query, ("read_lidar", {"direction": 5}), sensor, answer]
+        return [*route_reads, ("read_lidar", {"direction": 5}), sensor, answer]
     if control == "malformed_arguments":
-        return [query, ("read_lidar", {}, "injected malformed JSON"), sensor, answer]
+        return [*route_reads, ("read_lidar", {}, "injected malformed JSON"), sensor, answer]
     if control in ("missing_tool", "malformed_envelope", "unavailable_evidence"):
-        return [query, sensor, answer]
+        return [*route_reads, sensor, answer]
     if control == "provenance_guard":
-        return [query, ("update_belief", {"subject": subject, "predicate": "status", "object": "clear",
+        return [*route_reads, ("update_belief", {"subject": subject, "predicate": "status", "object": "clear",
                 "source": "imaginary_sensor", "confidence": 0.99, "perspective": "agent_sensor", "reason": "fault fixture"}), sensor, answer]
     if control == "invented_downgrade":
-        return [query, sensor, ("downgrade_belief", {"belief_id": "b_999999", "new_confidence": 0.2, "reason": "fault fixture"}), answer]
+        return [*route_reads, sensor, ("downgrade_belief", {"belief_id": "b_999999", "new_confidence": 0.2, "reason": "fault fixture"}), answer]
     if control == "downgrade":
-        return [query, sensor, ("downgrade_belief", {"belief_id": old_id, "new_confidence": 0.2, "reason": "returned sensor contradicts history"}), answer]
+        return [*route_reads, sensor, ("downgrade_belief", {"belief_id": old_id, "new_confidence": 0.2, "reason": "returned sensor contradicts history"}), answer]
     if control == "movement_attempt":
-        return [query, sensor, ("move_forward", {"distance_cm": 20}),
-                "Scripted fixture: the move was cancelled by the recheck before action; the robot did not move."]
+        return [*route_reads, sensor, ("move_forward", {"distance_cm": 20}), movement_answer]
     if scenario == "S07":
         return [query, query, ("read_temperature", {}), "Scripted temperature abstention; teammate temperature API absent."]
     if scenario == "S01" and control == "valid":
-        return [query, sensor, downgrade_map, update, ("get_belief_history", {"subject": subject}), map_answer]
+        return [*route_reads, sensor, downgrade_map, update, map_answer]
     prefix = ["Premature scripted answer."] if control == "premature_answer" else []
-    return prefix + [query, sensor, update, ("get_belief_history", {"subject": subject}),
-                     ("detect_conflict", {"subject": subject, "predicate": "color" if scenario == "S03" else "status"}), answer]
+    evidence = [*route_reads, sensor, update]
+    if not route_query:
+        evidence.append(history)
+    return [*prefix, *evidence, ("detect_conflict", {"subject": subject, "predicate": predicate}), answer]
 
 
 def run_teammate_case(

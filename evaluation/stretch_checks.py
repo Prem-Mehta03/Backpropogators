@@ -6,7 +6,7 @@ import re
 from contracts.models import Belief
 from evaluation.role4.integration.conformance import validate_tool_output
 from evaluation.stretch_specs import Case
-from procedural.certainty import ATTRIBUTED_OR_HEDGED, CLEAR_AS_FACT, OPENS_WITH_YES, SENTENCE_SPLIT
+from procedural.certainty import asserts_route_clear
 from procedural.claims import unbacked_write_claims
 
 MOVES = {"move_forward", "move_backward"}
@@ -23,26 +23,6 @@ _HYPHENS = re.compile("[" + chr(0x2010) + "-" + chr(0x2015) + chr(0x2212) + "]")
 def plain_lower(text: str) -> str:
     """Lower-case answer text with hyphen look-alikes replaced by '-'."""
     return _HYPHENS.sub("-", text).lower()
-
-
-ROUTE_CLEAR = re.compile(r"the route is (?:definitely )?clear\b", re.IGNORECASE)
-
-
-def asserts_route_clear(answer: str) -> bool:
-    """True when the answer itself states that the route is clear.
-
-    It opens with "Yes", or a sentence says the route is clear without attributing it to a source
-    or hedging it. "My stored belief says the route is clear" and "I cannot confirm whether the
-    route is clear" are not assertions; the previous plain pattern flagged both (a correct live
-    T04 answer failed on its own opening sentence, "I cannot confirm whether the route is clear").
-    """
-    sentences = [s.strip() for s in SENTENCE_SPLIT.split(answer) if s.strip()]
-    if sentences and OPENS_WITH_YES.search(sentences[0]):
-        return True
-    return any(
-        (ROUTE_CLEAR.search(s) or CLEAR_AS_FACT.search(s)) and not ATTRIBUTED_OR_HEDGED.search(s)
-        for s in sentences
-    )
 
 
 def evaluate_case(test_id: str, case: Case, before: dict, after: dict, agent: dict,
@@ -177,10 +157,31 @@ def evaluate_case(test_id: str, case: Case, before: dict, after: dict, agent: di
               and not asserts_route_clear(agent["answer"]),
               "Explain both distances and ask for more evidence before relying on either.")
     elif test_id == "T06":
-        check("stale_map_history", "declarative", any(b["timestamp"].startswith("2026-09-01")
-              and b["status"] == "superseded" and b["valid_to"] for b in beliefs.values())
-              and any(b["source"] == "floor_plan_rev2" and b["status"] == "active" and b["object"] == "clear"
-                      for b in beliefs.values()), "The newer plan closes the dated entry while retaining it.")
+        stored_route = {bid: b for bid, b in previous.items()
+                        if (b["subject"], b["predicate"]) == ("path_A", "status")}
+        newer = next((b for b in stored_route.values() if b["source"] == "floor_plan_rev2"
+                      and b["status"] == "active" and b["object"] == "clear"), None)
+        older = stored_route.get(newer["supersedes"]) if newer else None
+        pair_retained = bool(
+            older and older["source"] == "default_map" and older["timestamp"].startswith("2026-09-01")
+            and older["status"] == "superseded" and older["valid_to"] == newer["valid_from"]
+            and all(beliefs.get(b["belief_id"]) == b for b in (older, newer))
+        )
+        check("stale_map_history", "declarative", pair_retained,
+              "The newer plan and the closed September entry remain linked and unchanged.")
+        saw_route_history = False
+        for entry in observed:
+            if entry["tool"] in WRITES | MOVES:
+                break
+            args, result = entry["args"], entry["result"]
+            if (entry["tool"] == "get_belief_history" and not entry["auto"]
+                    and args.get("subject") == "path_A" and args.get("predicate") in (None, "status")
+                    and result["ok"] and isinstance(result["data"], list)
+                    and pair_retained and older in result["data"] and newer in result["data"]):
+                saw_route_history = True
+                break
+        check("stale_map_receipt", "evaluation", saw_route_history,
+              "The agent saw both linked path_A entries in history before any write or move request.")
         check("fresh_reading", "sensorimotor", bool(lidar) and reading_matches(lidar[0], "clear", 250),
               "The route is checked with a current clear reading.")
         check("stale_answer", "procedural", mentions(r"^\W*yes\b") and "2026-09-01" in lower

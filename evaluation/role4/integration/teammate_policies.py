@@ -49,10 +49,16 @@ def evaluate_teammate(record):
     errors = [c["result"]["error"]["code"] for c in calls if not c["result"]["ok"]]
     if control in ("invalid_arguments", "malformed_arguments", "provenance_guard", "invented_downgrade"):
         check("invalid_request_rejected", "INVALID_ARGUMENT" in errors, "Actual procedural validation/guard response")
+        check("agent_completed_after_rejection", record["agent"]["error"] is None and record["agent"]["answer"],
+              "The rejected request does not block completion after valid evidence arrives.")
         if control in ("provenance_guard", "invented_downgrade"):
             check("no_unsupported_memory_change", before == after, "Refused writes must not change canonical state")
     elif control in ("malformed_envelope", "missing_tool"):
         check("boundary_failure_reported", "INTERNAL" in errors, "No fake fallback or contract relaxation")
+        error = record["agent"]["error"] or {}
+        check("agent_stops_without_sensor_evidence", error.get("code") == "STEP_LIMIT"
+              and "read_lidar" in error["message"] and "get_belief_history" not in error["message"],
+              "The missing or malformed sensor leaves evidence incomplete after history was consulted.")
     elif control in ("step_limit", "llm_error"):
         expected = "STEP_LIMIT" if control == "step_limit" else "INTERNAL"
         check("agent_error_reported", (record["agent"]["error"] or {}).get("code") == expected,
@@ -61,21 +67,35 @@ def evaluate_teammate(record):
         check("contradictory_update_refused", "INVALID_ARGUMENT" in errors and before == after,
               "The procedural guard rejects a write whose value contradicts the observed reading.")
     elif control == "movement_attempt":
+        from procedural.recheck import RECHECK_PHRASE
+
         check("no_movement_on_blocked_evidence", record["state_before"]["environment"]["robot"] ==
               record["state_after"]["environment"]["robot"],
               "Actual movement is distinct from a request and from rejected dispatch")
-        check("automatic_recheck_cancelled_movement", any(
+        move = next((
+            c for c in calls if
             c["tool"] == "move_forward" and not c["result"]["ok"]
             and c["result"]["error"]["code"] == "CONFLICT"
+            and (c.get("guard") or {}).get("recheck", {}).get("passed") is False
             and any(r.get("auto") and r["tool"] == "read_lidar"
-                    for r in (c.get("guard") or {}).get("recheck", {}).get("reads", [])) for c in calls),
+                    for r in c["guard"]["recheck"]["reads"])), None)
+        check("automatic_recheck_cancelled_movement", move is not None,
             "An automatic LiDAR receipt precedes rejection of the motion request.")
+        reading_cm = move["guard"]["recheck"].get("reading_cm") if move else None
+        answer = record["agent"]["answer"].casefold()
+        check("scripted_answer_reports_cancellation", record["agent"]["error"] is None
+              and record["agent"]["answer_source"] == "llm"
+              and reading_cm is not None and f"front lidar now reads {reading_cm} cm" in answer
+              and RECHECK_PHRASE in answer and "cancelled" in answer and "robot did not move" in answer,
+              "The actual agent delivered the scripted cancellation with the recheck reading and movement outcome.")
     elif control == "confidence_override":
         check("confidence_from_sensor", any(c.get("guard", {}).get("overridden") for c in calls),
               "Prem's guard replaces scripted confidence with returned sensor confidence")
     elif control == "downgrade":
         check("history_retained", len(after) == len(before) + 1 and any(b["status"] == "superseded" for b in after),
               "Real downgrade appends a lower-confidence successor")
+        check("agent_completed_after_downgrade", record["agent"]["error"] is None and record["agent"]["answer"],
+              "The agent completed after recording the lower-confidence successor.")
     elif control == "premature_answer":
         check("premature_answer_refused", record["agent"]["evidence_nudges"] == 1 and record["agent"]["error"] is None,
               "Checklist refusal occurred before real lookups and final scripted text")
@@ -100,6 +120,16 @@ def evaluate_teammate(record):
                 downgraded_id = lowered[0]["belief_id"] if len(lowered) == 1 else None
                 write_order = [c["tool"] for c in calls if c["tool"] in ("downgrade_belief", "update_belief")
                                and c["result"]["ok"]]
+                before_writes = []
+                for call in calls:
+                    if call["tool"] in ("downgrade_belief", "update_belief"):
+                        break
+                    before_writes.append(call)
+                check("initial_route_history_consulted", any(
+                    c["tool"] == "get_belief_history" and c["args"].get("subject") == old["subject"]
+                    and c["args"].get("predicate") in (None, old["predicate"]) and c["result"]["ok"]
+                    and old in c["result"]["data"] for c in before_writes),
+                    "The matching route history returned the initial map before either write.")
                 check("demo_map_downgrade", old["source"] == "default_map" and old["confidence"] == 1.0
                       and write_order == ["downgrade_belief", "update_belief"]
                       and bool(downgraded_id) and lowered[0]["confidence"] == DOWNGRADE_FACTOR

@@ -174,9 +174,11 @@ def missing_evidence(
         for entry in tool_log
         if entry["tool"] == "query_belief"
     }
-    route_query = any(s.startswith("path_") for s in queried)
+    route_subjects = {subject for subject in queried if subject.startswith("path_")}
+    route_query = bool(route_subjects)
     object_query = any(s.startswith("box_") for s in queried)
     attempted = set()
+    route_history = set()
     for entry in tool_log:
         name = entry["tool"]
         front = (
@@ -187,6 +189,17 @@ def missing_evidence(
         ).startswith("path_")
         if evidence_attempted(entry) and (front or not route_query) and about_route:
             attempted.add(name)
+        if name == "get_belief_history":
+            args = entry["args"]
+            subject = args.get("subject")
+            result = entry["result"]
+            if (
+                isinstance(subject, str)
+                and subject in route_subjects
+                and args.get("predicate") in (None, "status")
+                and (result["ok"] or result["error"]["code"] == "NOT_FOUND")
+            ):
+                route_history.add(subject)
         guard = entry.get("guard", {}).get("recheck", {})
         if guard.get("direction") == "front":
             attempted.update(
@@ -194,6 +207,7 @@ def missing_evidence(
                 for item in guard.get("reads", ())
                 if evidence_attempted(item)
             )
+    route_history_missing = False
     if required == DEFAULT_REQUIRED_EVIDENCE:
         relevant = tuple(
             (name,) for name in DISTANCE_TOOLS if route_query and name in registered
@@ -202,9 +216,12 @@ def missing_evidence(
             # A superseded (stale) belief is invisible to query_belief, which returns only
             # current beliefs. History is the only way to see that an older entry was replaced
             # (T06, live 0/3: the model never saw the 2026-09-01 map and never called it stale).
-            relevant += (("get_belief_history",),)
+            route_history_missing = not route_subjects <= route_history
         if object_query and "read_camera" in registered:
             relevant += (("read_camera",),)
         if relevant:
             required = (("query_belief",), *relevant)
-    return [describe_requirement(g) for g in required if not attempted.intersection(g)]
+    missing = [describe_requirement(g) for g in required if not attempted.intersection(g)]
+    if route_history_missing:
+        missing.append("get_belief_history")
+    return missing

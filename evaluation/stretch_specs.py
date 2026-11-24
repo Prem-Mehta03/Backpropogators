@@ -127,8 +127,19 @@ def _answer(case: str, receipts: list[dict]) -> str:
         return (f"The sensors disagree: LiDAR {distance} cm and ultrasonic {other['value']} cm. "
                 "Please provide more evidence before moving." + written)
     if case == "T06":
-        old = min(observed["get_belief_history"], key=lambda b: b["timestamp"])
-        return (f"Yes. The {old['timestamp'][:10]} entry is stale. The newer floor_plan_rev2 and "
+        history = {
+            b["belief_id"]: b for b in observed.get("get_belief_history", [])
+            if (b["subject"], b["predicate"]) == ("path_A", "status")
+        }
+        for plan in history.values():
+            old = history.get(plan["supersedes"])
+            if (plan["status"] == "active" and plan["object"] == lidar.get("status") == "clear"
+                    and plan["source"] and old and old["status"] == "superseded"
+                    and old["valid_to"] == plan["valid_from"]):
+                break
+        else:
+            return "I cannot confirm the route from the available map history and LiDAR evidence."
+        return (f"Yes. The {old['timestamp'][:10]} entry is stale. The newer {plan['source']} and "
                 f"the LiDAR reading of {distance} cm both support a clear route.")
     if case == "T07":
         return "There is no usable evidence for box_99. Its color is unknown."
