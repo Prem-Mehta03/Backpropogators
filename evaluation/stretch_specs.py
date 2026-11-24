@@ -53,21 +53,22 @@ class ScriptedModel:
         path = {"subject": "path_A", "predicate": "status"}
         subject = "box_99" if case == "T07" else "box_01" if case in {"T03", "B_APPROACH"} else "path_A"
         query = ("query_belief", {"subject": subject})
+        history = ("get_belief_history", path)  # a route question needs the history (T06)
         lidar = ("read_lidar", {"direction": "front"})
         camera = ("read_camera", {"target": subject})
         operations = {
-            "T01": [query, lidar, "downgrade", "sensor_update"],
-            "T02": [query, lidar, "downgrade", "sensor_update"],
+            "T01": [query, history, lidar, "downgrade", "sensor_update"],
+            "T02": [query, history, lidar, "downgrade", "sensor_update"],
             "T03": [query, camera, "sensor_update"],
-            "T04": [query, lidar, "sensor_update"],
-            "T05": [query, lidar, ("read_ultrasonic", {}), "lidar_update", "sensor_update"],
-            "T06": [query, ("get_belief_history", path), lidar],
+            "T04": [query, history, lidar, "sensor_update"],
+            "T05": [query, history, lidar, ("read_ultrasonic", {}), "lidar_update", "sensor_update"],
+            "T06": [query, history, lidar],
             "T07": [query, camera],
-            "T08": [query, lidar, ("update_belief", {**path, "object": "clear", "source": "user",
+            "T08": [query, history, lidar, ("update_belief", {**path, "object": "clear", "source": "user",
                       "confidence": 0.9, "perspective": "user", "reason": "User statement in this question."}),
                     ("move_forward", {"distance_cm": 50})],
-            "T09": [query, lidar],
-            "T10": [query, lidar, ("move_forward", {"distance_cm": 100})],
+            "T09": [query, history, lidar],
+            "T10": [query, history, lidar, ("move_forward", {"distance_cm": 100})],
             "B_APPROACH": [query, camera, ("move_forward", {"distance_cm": 200}), camera],
         }[case]
         receipts = [json.loads(message["content"]) for message in messages if message["role"] == "tool"]
