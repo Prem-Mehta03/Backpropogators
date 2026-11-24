@@ -9,8 +9,10 @@ from __future__ import annotations
 
 from typing import Any
 
+import pytest
+
 from procedural.agent import run_agent
-from procedural.checklist import missing_evidence
+from procedural.checklist import DEFAULT_REQUIRED_EVIDENCE, missing_evidence
 from scripts.tool_wiring import build_memory, build_tool_registry
 from tests.procedural.scripted_llm import ScriptedLLM, call, say
 
@@ -74,7 +76,25 @@ def test_a_route_answer_is_refused_until_the_history_was_read() -> None:
     assert "stale" in out.answer and "2026-09-01" in out.answer
 
 
-def test_history_of_another_subject_does_not_satisfy_a_route_question() -> None:
+@pytest.mark.parametrize(
+    ("args", "result"),
+    [
+        ({"subject": "box_01"}, {"ok": True, "data": []}),
+        ({"subject": "path_B", "predicate": "status"}, {"ok": True, "data": []}),
+        ({"subject": "path_A", "predicate": "color"}, {"ok": True, "data": []}),
+        (
+            {"subject": ["path_A"]},
+            {"ok": False, "error": {"code": "INVALID_ARGUMENT"}},
+        ),
+        (
+            {"subject": "path_A", "predicate": "status"},
+            {"ok": False, "error": {"code": "STORAGE_ERROR"}},
+        ),
+    ],
+)
+def test_unrelated_or_failed_history_does_not_satisfy_a_route_question(
+    args: dict[str, Any], result: dict[str, Any],
+) -> None:
     log = [
         {
             "tool": "query_belief",
@@ -84,22 +104,26 @@ def test_history_of_another_subject_does_not_satisfy_a_route_question() -> None:
         {"tool": "read_lidar", "args": {}, "result": {"ok": True, "data": {}}},
         {
             "tool": "get_belief_history",
-            "args": {"subject": "box_01"},
-            "result": {"ok": True, "data": []},
+            "args": args,
+            "result": result,
         },
     ]
     registered = ("query_belief", "get_belief_history", "read_lidar")
     assert missing_evidence(log, (("query_belief",), ("read_lidar",)), registered) == []
-    from procedural.checklist import DEFAULT_REQUIRED_EVIDENCE
-
     assert missing_evidence(log, DEFAULT_REQUIRED_EVIDENCE, registered) == [
         "get_belief_history"
     ]
+    log.append(
+        {
+            "tool": "get_belief_history",
+            "args": {"subject": "path_A", "predicate": "status"},
+            "result": {"ok": True, "data": []},
+        }
+    )
+    assert missing_evidence(log, DEFAULT_REQUIRED_EVIDENCE, registered) == []
 
 
 def test_other_questions_and_registries_without_history_are_unaffected() -> None:
-    from procedural.checklist import DEFAULT_REQUIRED_EVIDENCE
-
     box = [
         {
             "tool": "query_belief",

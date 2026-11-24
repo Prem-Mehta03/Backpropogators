@@ -20,7 +20,11 @@ def test_fresh_canonical_cases_keep_pending_answer_semantics(tmp_path, scenario)
     assert record["labels"]["human_semantic_review"] == "pending"
     assert record["labels"]["model_execution_mode"] == "scripted_llm"
     assert not any("tests.procedural.fakes" in source for source in record["tool_sources"].values())
+    tools = [c["tool"] for c in record["agent"]["tool_calls"]]
+    if scenario in ("S02", "S08"):
+        assert tools.index("get_belief_history") < tools.index("update_belief")
     if scenario == "S03":
+        assert tools.index("update_belief") < tools.index("get_belief_history")
         assert record["state_before"]["environment"]["lighting"]["name"] == "yellow"
         assert {b["source"] for b in record["state_after"]["memory"]["nodes"]} >= {"user", "bot_02", "camera_front"}
     if scenario == "S07":
@@ -34,6 +38,15 @@ def test_fresh_canonical_cases_keep_pending_answer_semantics(tmp_path, scenario)
 def test_real_layers_exercise_fault_guards_without_hiding_results(tmp_path, control):
     record = run_teammate_case("S07" if control == "unavailable_evidence" else "S01", tmp_path / control, control)
     assert record["evaluation"]["passed"] and record["expectation_met"]
+    if control in ("invalid_arguments", "malformed_arguments", "provenance_guard", "invented_downgrade", "downgrade"):
+        assert record["agent"]["error"] is None and record["agent"]["answer"]
+    if control in ("malformed_envelope", "missing_tool"):
+        error = record["agent"]["error"]
+        assert error["code"] == "STEP_LIMIT" and "read_lidar" in error["message"]
+        assert "get_belief_history" not in error["message"]
+        history, = [c for c in record["agent"]["tool_calls"] if c["tool"] == "get_belief_history"]
+        assert history["args"] == {"subject": "path_A", "predicate": "status"}
+        assert history["result"]["ok"]
     if control == "malformed_envelope":
         assert any(not e.payload["canonical_envelope_valid"] for e in read_events(tmp_path / control / "trace.jsonl") if e.event_type == "teammate_boundary_return")
     if control == "provenance_guard":
@@ -61,6 +74,10 @@ def test_recheck_cancels_a_move_toward_a_blocked_path(tmp_path):
     assert "recheck before action" in movement["agent_result"]["error"]["message"]
     assert movement["guard"]["recheck"]["passed"] is False
     assert record["state_before"]["environment"]["robot"] == record["state_after"]["environment"]["robot"]
+    assert record["agent"]["error"] is None and record["agent"]["answer_source"] == "llm"
+    recheck = movement["guard"]["recheck"]
+    assert f"front LiDAR now reads {recheck['reading_cm']} cm" in record["agent"]["answer"]
+    assert "The robot did not move." in record["agent"]["answer"]
 
 
 def test_canonical_mapping_preserves_validity_and_rejects_reference_fields(tmp_path):
@@ -81,10 +98,12 @@ def test_s01_matches_the_demo_seed_and_two_write_chain(tmp_path):
     old, = record["state_before"]["memory"]["nodes"]
     assert (old["object"], old["source"], old["confidence"]) == ("clear", "default_map", 1.0)
     calls = record["agent"]["tool_calls"]
-    assert [c["tool"] for c in calls[:4]] == [
-        "query_belief", "read_lidar", "downgrade_belief", "update_belief"
+    assert [c["tool"] for c in calls[:5]] == [
+        "query_belief", "get_belief_history", "read_lidar", "downgrade_belief", "update_belief"
     ]
-    assert calls[1]["result"]["data"]["value"] == 12
+    assert calls[1]["args"] == {"subject": "path_A", "predicate": "status"}
+    assert calls[1]["result"]["data"] == [old]
+    assert calls[2]["result"]["data"]["value"] == 12
     initial, lowered, active = record["state_after"]["memory"]["nodes"]
     assert initial["belief_id"] == old["belief_id"] == lowered["supersedes"]
     assert initial["valid_to"] == lowered["valid_from"]
