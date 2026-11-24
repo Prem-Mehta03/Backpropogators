@@ -10,4 +10,4 @@ STALE_AFTER_S = 7 * 24 * 3600
 BLOCKED_AT_CM = 30
 RECHECK_MARGIN_CM = 30
 MAX_CLAIM_REFUSALS = 3
-MAX_MODEL_CALLS = 10
+MAX_MODEL_CALLS = 12  # was 10; live T05 needed at least 11 calls to write its own answer
