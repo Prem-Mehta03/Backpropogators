@@ -90,7 +90,9 @@ def next_step(
     Raises LLMClientError (from the backend) if the API fails.
     """
     state.model_calls += 1
-    return llm.chat(state.messages, TOOL_SCHEMAS if tool_schemas is None else tool_schemas)
+    return llm.chat(
+        state.messages, TOOL_SCHEMAS if tool_schemas is None else tool_schemas
+    )
 
 
 # Called after every tool call, including calls the guard refused and the LiDAR read the
@@ -307,8 +309,13 @@ def run_agent(
     calls; the message names any missing evidence), INTERNAL (the LLM API failed). Tool-level
     errors are not run errors: the model sees them and may recover.
     """
-    if evidence_capability is not None and required_evidence != DEFAULT_REQUIRED_EVIDENCE:
-        raise ValueError("evidence_capability is an alternative to a custom evidence checklist")
+    if (
+        evidence_capability is not None
+        and required_evidence != DEFAULT_REQUIRED_EVIDENCE
+    ):
+        raise ValueError(
+            "evidence_capability is an alternative to a custom evidence checklist"
+        )
     prompt = (
         system_prompt
         if system_prompt is not None
@@ -316,15 +323,26 @@ def run_agent(
     )
     state = new_agent_state(question, prompt)
     notify = make_notifier(on_step)
-    tools = registry if evidence_capability is None else {
-        name: fn for name, fn in registry.items() if name in ("query_belief", evidence_capability.tool)
-    }
+    tools = (
+        registry
+        if evidence_capability is None
+        else {
+            name: fn
+            for name, fn in registry.items()
+            if name in ("query_belief", evidence_capability.tool)
+        }
+    )
     tool_schemas = registered_tool_schemas(tools)
 
     def evidence() -> tuple[list[str], str | None]:
         if evidence_capability is not None:
-            return capability_evidence(state.tool_log, evidence_capability, tuple(registry))
-        return missing_evidence(state.tool_log, required_evidence, tuple(registry)), None
+            return capability_evidence(
+                state.tool_log, evidence_capability, tuple(registry)
+            )
+        return (
+            missing_evidence(state.tool_log, required_evidence, tuple(registry)),
+            None,
+        )
 
     while state.model_calls < max_steps:
         try:
@@ -335,10 +353,14 @@ def run_agent(
         if reply.tool_calls:
             state.add_assistant_turn(reply.content, reply.tool_calls)
             for call in reply.tool_calls:
-                if evidence_capability is not None and not evidence_capability.permits(call.name, call.arguments):
+                if evidence_capability is not None and not evidence_capability.permits(
+                    call.name, call.arguments
+                ):
                     reason = "Tool request is outside the read-only evidence scope"
                     outcome = ToolOutcome(
-                        error_result(call.name, "INVALID_ARGUMENT", reason), call.arguments, {"refused": reason}
+                        error_result(call.name, "INVALID_ARGUMENT", reason),
+                        call.arguments,
+                        {"refused": reason},
                     )
                 else:
                     outcome = execute_tool_call(
@@ -377,10 +399,14 @@ def run_agent(
                 continue
             if abstention is not None:
                 if text == ABSTENTION_SIGNAL:
-                    return build_response(state, abstention, answer_source=ANSWER_FROM_FALLBACK)
+                    return build_response(
+                        state, abstention, answer_source=ANSWER_FROM_FALLBACK
+                    )
                 state.evidence_nudges += 1
                 state.add_user_note(build_capability_abstention_note())
-                logger.warning("Answer refused: a scoped sensor could not verify the property")
+                logger.warning(
+                    "Answer refused: a scoped sensor could not verify the property"
+                )
                 continue
             unbacked = unbacked_write_claims(text, state.tool_log, require_written_ids)
             if unbacked:

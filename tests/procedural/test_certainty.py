@@ -71,8 +71,16 @@ def test_a_cautious_start_without_conflict_or_recheck_wording_is_refused() -> No
 
 
 def test_solid_evidence_is_not_second_guessed() -> None:
-    assert overclaimed_certainty("No, the route is blocked: the LiDAR read 12 cm.", STRONG) == []
-    assert overclaimed_certainty("Yes, the route is clear.", [reading("lidar_front", 250, "clear", 0.98)]) == []
+    assert (
+        overclaimed_certainty("No, the route is blocked: the LiDAR read 12 cm.", STRONG)
+        == []
+    )
+    assert (
+        overclaimed_certainty(
+            "Yes, the route is clear.", [reading("lidar_front", 250, "clear", 0.98)]
+        )
+        == []
+    )
 
 
 def test_a_sentence_attributed_to_the_map_is_not_a_claim_by_the_agent() -> None:
@@ -91,16 +99,29 @@ def test_the_claim_check_reports_it_so_the_agent_refuses_the_answer() -> None:
 # ---- the whole loop, with the answers Asvin saw live (T04: LiDAR 12 cm blocked, confidence 0.4)
 def _belief() -> dict:
     return {
-        "schema_version": "1.1", "belief_id": "b_000001", "subject": "path_A",
-        "predicate": "status", "object": "clear", "source": "default_map", "confidence": 1.0,
-        "timestamp": "2026-10-03T09:15:00Z", "perspective": "historical", "status": "active",
-        "valid_from": "2026-10-03T09:15:00Z", "valid_to": None, "supersedes": None,
+        "schema_version": "1.1",
+        "belief_id": "b_000001",
+        "subject": "path_A",
+        "predicate": "status",
+        "object": "clear",
+        "source": "default_map",
+        "confidence": 1.0,
+        "timestamp": "2026-10-03T09:15:00Z",
+        "perspective": "historical",
+        "status": "active",
+        "valid_from": "2026-10-03T09:15:00Z",
+        "valid_to": None,
+        "supersedes": None,
     }
 
 
 def _envelope(tool: str, data: object) -> dict:
     return {
-        "schema_version": "1.1", "tool": tool, "ok": True, "data": data, "error": None,
+        "schema_version": "1.1",
+        "tool": tool,
+        "ok": True,
+        "data": data,
+        "error": None,
         "timestamp": "2026-10-03T09:16:00Z",
     }
 
@@ -117,7 +138,11 @@ def _run(answers: list[str]):
     from procedural.agent import run_agent
     from tests.procedural.scripted_llm import ScriptedLLM, call, say
 
-    steps = [call("query_belief", {"subject": "path_A"}), call("read_lidar", {}), *[say(a) for a in answers]]
+    steps = [
+        call("query_belief", {"subject": "path_A"}),
+        call("read_lidar", {}),
+        *[say(a) for a in answers],
+    ]
     return run_agent("Is your route clear?", ScriptedLLM(steps), _t04_registry())
 
 
@@ -132,11 +157,15 @@ def test_the_live_t04_answer_is_refused_then_a_cautious_one_is_accepted() -> Non
     assert "cannot confirm" in out.answer
 
 
-def test_a_model_that_keeps_saying_yes_gets_the_summary_that_states_the_weakness() -> None:
+def test_a_model_that_keeps_saying_yes_gets_the_summary_that_states_the_weakness() -> (
+    None
+):
     out = _run(["Yes, the route is clear."] * 4)
     assert out.finished and out.answer_source == "fallback_summary"
     assert overclaimed_certainty(out.answer, _t04_log(out)) == []
-    assert "weak or conflicting" in out.answer and "read the sensors again" in out.answer
+    assert (
+        "weak or conflicting" in out.answer and "read the sensors again" in out.answer
+    )
     assert "No disagreement" not in out.answer
 
 

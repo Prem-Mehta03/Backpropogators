@@ -19,6 +19,7 @@ def run_agent(*args: Any, **kwargs: Any) -> Any:
     kwargs.setdefault("required_evidence", ())
     return _run_agent(*args, **kwargs)
 
+
 SCENARIO_A = (
     Path(__file__).parents[2] / "sensorimotor" / "scenarios" / "scenario_a.json"
 )

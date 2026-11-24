@@ -82,31 +82,38 @@ def test_a_blocked_ultrasonic_read_cancels_clear_lidar_and_notifies_both() -> No
     events = []
     out = run_agent(
         "Move forward 20 cm",
-        ScriptedLLM([
-            call("move_forward", {"distance_cm": 20}, "move"),
-            say(
-                "The move was cancelled and the robot did not move. The LiDAR and the "
-                "ultrasonic sensor disagree, so I need more evidence before moving."
-            ),
-        ]),
+        ScriptedLLM(
+            [
+                call("move_forward", {"distance_cm": 20}, "move"),
+                say(
+                    "The move was cancelled and the robot did not move. The LiDAR and the "
+                    "ultrasonic sensor disagree, so I need more evidence before moving."
+                ),
+            ]
+        ),
         registry,
         required_evidence=(),
         on_step=lambda *event: events.append(event),
     )
     assert [(name, auto) for _, name, _, _, auto in events] == [
-        ("read_lidar", True), ("read_ultrasonic", True), ("move_forward", False),
+        ("read_lidar", True),
+        ("read_ultrasonic", True),
+        ("move_forward", False),
     ]
     (move,) = out.tool_calls
     assert move["result"]["error"]["code"] == "CONFLICT"
     assert "ultrasonic" in move["result"]["error"]["message"]
     assert [read["result"] for read in move["guard"]["recheck"]["reads"]] == [
-        events[0][3], events[1][3],
+        events[0][3],
+        events[1][3],
     ]
 
 
 def test_blocked_status_cancels_even_if_the_reported_distance_is_large() -> None:
     check = recheck_before_action(
-        "move_forward", {"distance_cm": 20}, fake_registry(lidar_envelope(250, "blocked"))
+        "move_forward",
+        {"distance_cm": 20},
+        fake_registry(lidar_envelope(250, "blocked")),
     )
     assert check is not None and check.cancel is not None
 
@@ -115,7 +122,12 @@ def test_malformed_move_is_rejected_before_any_recheck() -> None:
     events: list[str] = []
     out = run_agent(
         "Move forward",
-        ScriptedLLM([call("move_forward", {"distance_cm": 20, "unknown": True}), say("Refused.")]),
+        ScriptedLLM(
+            [
+                call("move_forward", {"distance_cm": 20, "unknown": True}),
+                say("Refused."),
+            ]
+        ),
         fake_registry(lidar_envelope(250), events),
         required_evidence=(),
     )
@@ -376,7 +388,9 @@ def test_cancelled_moves_are_found_by_the_recheck_phrase_only() -> None:
 def test_a_cancelled_move_cannot_be_reported_as_movement() -> None:
     cancelled = entry("move_forward", ok=False, code="CONFLICT")
     cancelled["result"]["error"]["message"] = "Move cancelled: recheck before action."
-    problems = undisclosed_actions("The move was cancelled. I moved anyway.", [cancelled])
+    problems = undisclosed_actions(
+        "The move was cancelled. I moved anyway.", [cancelled]
+    )
     assert problems and "no move tool succeeded" in problems[0]
 
 
@@ -417,7 +431,9 @@ def test_a_rear_lidar_read_does_not_look_like_a_sensor_disagreement() -> None:
 def test_fallback_summary_lists_a_move_that_ran() -> None:
     log = [entry("move_forward", data={"sensor": "position"})]
     log[0]["args"] = {"distance_cm": 5}
-    assert "move_forward requested 5 cm. Action result:" in build_fallback_summary("q", log)
+    assert "move_forward requested 5 cm. Action result:" in build_fallback_summary(
+        "q", log
+    )
 
 
 @pytest.mark.parametrize(
@@ -438,7 +454,9 @@ def test_an_unqualified_claim_that_the_robot_moved_is_still_caught() -> None:
     assert undisclosed_actions("I moved forward 100 cm.", [])
 
 
-def _ultrasonic_registry(value: float, status: str = "clear", lidar_cm: float = 250) -> dict:
+def _ultrasonic_registry(
+    value: float, status: str = "clear", lidar_cm: float = 250
+) -> dict:
     registry = fake_registry(lidar_envelope(lidar_cm))
     registry["read_ultrasonic"] = lambda: {
         **lidar_envelope(value, status, "ultrasonic_front"),
@@ -448,17 +466,23 @@ def _ultrasonic_registry(value: float, status: str = "clear", lidar_cm: float = 
 
 
 def test_a_clear_ultrasonic_at_its_range_does_not_cancel_a_long_move() -> None:
-    check = recheck_before_action("move_forward", {"distance_cm": 190}, _ultrasonic_registry(200))
+    check = recheck_before_action(
+        "move_forward", {"distance_cm": 190}, _ultrasonic_registry(200)
+    )
     assert check is not None and check.cancel is None
 
 
 def test_the_lidar_still_has_to_clear_the_whole_long_move() -> None:
-    check = recheck_before_action("move_forward", {"distance_cm": 190}, _ultrasonic_registry(200, lidar_cm=210))
+    check = recheck_before_action(
+        "move_forward", {"distance_cm": 190}, _ultrasonic_registry(200, lidar_cm=210)
+    )
     assert check is not None and check.cancel is not None
     assert "LiDAR" in check.cancel
 
 
 def test_an_ultrasonic_reading_short_of_its_range_still_cancels() -> None:
-    check = recheck_before_action("move_forward", {"distance_cm": 190}, _ultrasonic_registry(150))
+    check = recheck_before_action(
+        "move_forward", {"distance_cm": 190}, _ultrasonic_registry(150)
+    )
     assert check is not None and check.cancel is not None
     assert "ultrasonic" in check.cancel

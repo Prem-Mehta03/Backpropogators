@@ -55,14 +55,18 @@ class EvidenceCapability:
 
 
 def capability_evidence(
-    tool_log: list[dict[str, Any]], capability: EvidenceCapability, registered: Sequence[str]
+    tool_log: list[dict[str, Any]],
+    capability: EvidenceCapability,
+    registered: Sequence[str],
 ) -> tuple[list[str], str | None]:
     """Report scoped evidence still needed, or furnish a value-free abstention when justified."""
     beliefs = []
     queried = False
     for entry in tool_log:
         args, result = entry["args"], entry["result"]
-        if entry["tool"] != "query_belief" or not capability.permits(entry["tool"], args):
+        if entry["tool"] != "query_belief" or not capability.permits(
+            entry["tool"], args
+        ):
             continue
         if not result["ok"]:
             queried |= result["error"]["code"] == "NOT_FOUND"
@@ -74,13 +78,20 @@ def capability_evidence(
                 continue
             if any(
                 b.subject != capability.subject
-                or (args.get("predicate") is not None and b.predicate != capability.predicate)
+                or (
+                    args.get("predicate") is not None
+                    and b.predicate != capability.predicate
+                )
                 for b in matches
             ):
                 continue
             queried = True
-            beliefs.extend(b for b in matches
-                           if (b.subject, b.predicate) == (capability.subject, capability.predicate))
+            beliefs.extend(
+                b
+                for b in matches
+                if (b.subject, b.predicate)
+                == (capability.subject, capability.predicate)
+            )
     if not queried:
         return [f"query_belief for {capability.subject}/{capability.predicate}"], None
 
@@ -89,11 +100,16 @@ def capability_evidence(
     else:
         unavailable = False
         for entry in tool_log:
-            if entry["tool"] != capability.tool or not capability.permits(entry["tool"], entry["args"]):
+            if entry["tool"] != capability.tool or not capability.permits(
+                entry["tool"], entry["args"]
+            ):
                 continue
             result = entry["result"]
             if not result["ok"]:
-                unavailable |= result["error"]["code"] in ("NOT_FOUND", "SENSOR_UNAVAILABLE")
+                unavailable |= result["error"]["code"] in (
+                    "NOT_FOUND",
+                    "SENSOR_UNAVAILABLE",
+                )
                 continue
             try:
                 reading = SensorReading.model_validate(result["data"])
@@ -106,8 +122,17 @@ def capability_evidence(
             return [capability.tool], None
         explanation = "The matching sensor returned no usable evidence."
 
-    if any(entry["tool"] in {"update_belief", "downgrade_belief", "move_forward", "move_backward", "turn"}
-           for entry in tool_log):
+    if any(
+        entry["tool"]
+        in {
+            "update_belief",
+            "downgrade_belief",
+            "move_forward",
+            "move_backward",
+            "turn",
+        }
+        for entry in tool_log
+    ):
         # A short abstention must not conceal a write or action, including a rejected request.
         return [f"{capability.tool} evidence after a write or action request"], None
     if any(b.source is None for b in beliefs):
@@ -146,15 +171,17 @@ def missing_evidence(
     """
     queried = {
         str(entry["args"].get("subject", ""))
-        for entry in tool_log if entry["tool"] == "query_belief"
+        for entry in tool_log
+        if entry["tool"] == "query_belief"
     }
     route_query = any(s.startswith("path_") for s in queried)
     object_query = any(s.startswith("box_") for s in queried)
     attempted = set()
     for entry in tool_log:
         name = entry["tool"]
-        front = (name != "read_lidar"
-                 or entry["args"].get("direction", "front") == "front")
+        front = (
+            name != "read_lidar" or entry["args"].get("direction", "front") == "front"
+        )
         about_route = name != "get_belief_history" or str(
             entry["args"].get("subject", "")
         ).startswith("path_")
@@ -163,10 +190,14 @@ def missing_evidence(
         guard = entry.get("guard", {}).get("recheck", {})
         if guard.get("direction") == "front":
             attempted.update(
-                item["tool"] for item in guard.get("reads", ()) if evidence_attempted(item)
+                item["tool"]
+                for item in guard.get("reads", ())
+                if evidence_attempted(item)
             )
     if required == DEFAULT_REQUIRED_EVIDENCE:
-        relevant = tuple((name,) for name in DISTANCE_TOOLS if route_query and name in registered)
+        relevant = tuple(
+            (name,) for name in DISTANCE_TOOLS if route_query and name in registered
+        )
         if route_query and "get_belief_history" in registered:
             # A superseded (stale) belief is invisible to query_belief, which returns only
             # current beliefs. History is the only way to see that an older entry was replaced

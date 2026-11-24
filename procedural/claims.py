@@ -251,7 +251,9 @@ def undisclosed_actions(answer: str, tool_log: list[dict[str, Any]]) -> list[str
     if any(_asserts_move(s) for s in sentences) and not any(
         _succeeded(tool_log, tool) for tool in MOVE_TOOLS
     ):
-        problems.append("say that the robot did not move because no move tool succeeded")
+        problems.append(
+            "say that the robot did not move because no move tool succeeded"
+        )
     for tool in failed_writes(tool_log):
         said = any(
             WRITE_TOPIC[tool].search(s) and FAILURE_SAID.search(s) for s in sentences

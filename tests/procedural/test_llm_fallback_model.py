@@ -128,8 +128,12 @@ def test_used_up_tool_call_retries_switch_to_the_fallback() -> None:
 def test_temperature_zero_can_be_pinned_across_retries_and_model_switch() -> None:
     api = _api(TOOL_FAIL, TOOL_FAIL, _ok())
     client = LLMClient(
-        model=MAIN, fallback_model=BACKUP, client=api,
-        temperature=0.0, retry_temperature=0.0, tool_call_retries=1,
+        model=MAIN,
+        fallback_model=BACKUP,
+        client=api,
+        temperature=0.0,
+        retry_temperature=0.0,
+        tool_call_retries=1,
     )
     assert client.chat(MESSAGES).content == "pong"
     assert api.calls == [MAIN, MAIN, BACKUP]

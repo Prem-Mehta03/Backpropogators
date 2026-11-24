@@ -138,23 +138,34 @@ class _ToolFail(Exception):
         )
 
 
-def _client_failing_with(generated: str, retries: int = 2) -> tuple[LLMClient, list[Any]]:
+def _client_failing_with(
+    generated: str, retries: int = 2
+) -> tuple[LLMClient, list[Any]]:
     seen: list[Any] = []
 
     def create(**kwargs: Any) -> Any:
         seen.append(kwargs["temperature"])
         raise _ToolFail(generated)
 
-    api = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
-    client = LLMClient(client=api, temperature=0.0, retry_temperature=0.0, tool_call_retries=retries)
+    api = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=create))
+    )
+    client = LLMClient(
+        client=api, temperature=0.0, retry_temperature=0.0, tool_call_retries=retries
+    )
     return client, seen
 
 
 def test_malformed_no_argument_call_is_rebuilt_not_retried() -> None:
-    client, seen = _client_failing_with('{"name": "read_ultrasonic", "arguments": {""}"}')
+    client, seen = _client_failing_with(
+        '{"name": "read_ultrasonic", "arguments": {""}"}'
+    )
     reply = client.chat([{"role": "user", "content": "go"}], [ULTRASONIC, LIDAR])
     assert [c.name for c in reply.tool_calls] == ["read_ultrasonic"]
-    assert reply.tool_calls[0].arguments == {} and reply.tool_calls[0].arguments_error is None
+    assert (
+        reply.tool_calls[0].arguments == {}
+        and reply.tool_calls[0].arguments_error is None
+    )
     assert len(seen) == 1  # no pointless identical retries at temperature 0
 
 

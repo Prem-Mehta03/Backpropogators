@@ -12,8 +12,8 @@ from collections import defaultdict
 from typing import Any
 
 from contracts.sensor_evidence import reading_claim
-from procedural.claims import MOVE_TOOLS, effective_statuses, failed_writes
 from procedural.certainty import weak_or_disputed_reason
+from procedural.claims import MOVE_TOOLS, effective_statuses, failed_writes
 from procedural.update_guard import sensor_readings
 
 MEMORY_READ_TOOLS = (
@@ -135,15 +135,19 @@ def _actions(tool_log: list[dict[str, Any]]) -> list[str]:
         distance = entry["args"].get("distance_cm")
         result = entry["result"]
         if result["ok"]:
-            lines.append(f"- {entry['tool']} requested {distance} cm. Action result: {_reading_value(result['data'])}.")
+            lines.append(
+                f"- {entry['tool']} requested {distance} cm. Action result: {_reading_value(result['data'])}."
+            )
         elif entry.get("guard", {}).get("recheck", {}).get("passed") is False:
             lines.append(
                 f"- {entry['tool']} {distance} cm: cancelled, the robot did not move "
                 f"({result['error']['message']})"
             )
         else:
-            lines.append(f"- {entry['tool']} requested {distance} cm. The tool reported an error: "
-                         f"{result['error']['message']}")
+            lines.append(
+                f"- {entry['tool']} requested {distance} cm. The tool reported an error: "
+                f"{result['error']['message']}"
+            )
     return lines
 
 
@@ -165,18 +169,25 @@ def build_fallback_summary(question: str, tool_log: list[dict[str, Any]]) -> str
     if writes:
         lines += writes
         if failed_writes(tool_log):
-            lines.append("Memory was only partly updated. The results above show which write succeeded and which failed.")
+            lines.append(
+                "Memory was only partly updated. The results above show which write succeeded and which failed."
+            )
     else:
         lines.append("- none: I made no memory writes in this run.")
     actions = _actions(tool_log)
     if actions:
         lines += ["", "Moves in this run:"] + actions
-    usable_readings = [reading for reading in readings.values() if reading_claim(reading) is not None]
+    usable_readings = [
+        reading for reading in readings.values() if reading_claim(reading) is not None
+    ]
     if not beliefs and not usable_readings:
         lines += ["", "Evidence is missing: memory and the sensors returned nothing."]
     else:
         if not beliefs:
-            lines += ["", "No stored belief was returned. This summary uses the observations that were available."]
+            lines += [
+                "",
+                "No stored belief was returned. This summary uses the observations that were available.",
+            ]
         if not usable_readings:
             lines += ["", "No usable sensor reading verified the stored evidence."]
         conflicts = _disagreements(beliefs, readings)
@@ -188,10 +199,15 @@ def build_fallback_summary(question: str, tool_log: list[dict[str, Any]]) -> str
     if weak is not None:
         lines += [
             "",
-            f"The evidence is weak or conflicting: {weak}. I cannot confirm the state of the "
-            "route. Please read the sensors again to get more evidence.",
+            (
+                f"The evidence is weak or conflicting: {weak}. I cannot confirm the state of "
+                "the route. Please read the sensors again to get more evidence."
+            ),
         ]
     if any(b["source"] is None for b in beliefs):
-        lines += ["", "At least one stored source is unknown. That claim cannot verify the world on its own."]
+        lines += [
+            "",
+            "At least one stored source is unknown. That claim cannot verify the world on its own.",
+        ]
     lines += ["", CLOSING]
     return "\n".join(lines)

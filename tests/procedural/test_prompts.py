@@ -96,7 +96,9 @@ from procedural.prompts import PROMPT_VERSION, SITUATIONS
 
 
 def test_prompt_version_is_v6_and_the_prompt_includes_the_situations() -> None:
-    assert PROMPT_VERSION.startswith("v6")  # v6.N: bumped whenever the prompt text changes
+    assert PROMPT_VERSION.startswith(
+        "v6"
+    )  # v6.N: bumped whenever the prompt text changes
     assert SITUATIONS in SYSTEM_PROMPT
     assert SYSTEM_PROMPT.index(EVIDENCE_POLICY) < SYSTEM_PROMPT.index(SITUATIONS)
     assert SYSTEM_PROMPT.index(SITUATIONS) < SYSTEM_PROMPT.index(ANSWER_FORMAT)

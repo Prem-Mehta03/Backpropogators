@@ -362,7 +362,11 @@ def call_tool(
     fn = registry.get(name)
     if fn is None:
         if name == "read_ultrasonic":
-            return error_result(name, "INVALID_ARGUMENT", "Ultrasonic sensor is not registered for this scenario")
+            return error_result(
+                name,
+                "INVALID_ARGUMENT",
+                "Ultrasonic sensor is not registered for this scenario",
+            )
         return error_result(name, "INTERNAL", f"Tool {name} is not connected")
     try:
         result = fn(**clean)
@@ -379,15 +383,30 @@ def call_tool(
             "INTERNAL",
             f"Envelope names tool {envelope['tool']!r}, expected {name!r}",
         )
-    if name in {"read_lidar", "read_ultrasonic", "read_camera", "get_position",
-                "move_forward", "move_backward", "turn"} and envelope["ok"]:
+    if (
+        name
+        in {
+            "read_lidar",
+            "read_ultrasonic",
+            "read_camera",
+            "get_position",
+            "move_forward",
+            "move_backward",
+            "turn",
+        }
+        and envelope["ok"]
+    ):
         try:
             reading = SensorReading.model_validate(envelope["data"])
             if name == "read_ultrasonic" and (
-                reading.sensor != "ultrasonic_front" or reading.unit != "cm"
-                or not isinstance(reading.value, (int, float)) or reading.value < 0
+                reading.sensor != "ultrasonic_front"
+                or reading.unit != "cm"
+                or not isinstance(reading.value, (int, float))
+                or reading.value < 0
             ):
                 raise ValueError("expected an ultrasonic_front distance in cm")
         except ValueError as exc:
-            return error_result(name, "INTERNAL", f"Invalid sensor reading from {name}: {exc}")
+            return error_result(
+                name, "INTERNAL", f"Invalid sensor reading from {name}: {exc}"
+            )
     return envelope

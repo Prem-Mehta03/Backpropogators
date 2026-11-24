@@ -123,7 +123,9 @@ def _no_argument_tools(tools: list[dict[str, Any]] | None) -> set[str]:
     return names
 
 
-def repair_no_argument_call(exc: Exception, tools: list[dict[str, Any]] | None) -> Any | None:
+def repair_no_argument_call(
+    exc: Exception, tools: list[dict[str, Any]] | None
+) -> Any | None:
     """Rebuild the one call a provider rejected as malformed when it needs no arguments.
 
     Groq answers HTTP 400 tool_use_failed when the model writes a tool call such as
@@ -143,7 +145,8 @@ def repair_no_argument_call(exc: Exception, tools: list[dict[str, Any]] | None) 
     if leftover:
         return None
     call = SimpleNamespace(
-        id="repaired_call", function=SimpleNamespace(name=named.group(1), arguments="{}")
+        id="repaired_call",
+        function=SimpleNamespace(name=named.group(1), arguments="{}"),
     )
     message = SimpleNamespace(content=None, tool_calls=[call])
     return SimpleNamespace(
@@ -312,7 +315,9 @@ class LLMClient:
                     )
                     kwargs = {
                         **kwargs,
-                        "temperature": max(kwargs["temperature"], self.retry_temperature),
+                        "temperature": max(
+                            kwargs["temperature"], self.retry_temperature
+                        ),
                     }
                     continue
                 if is_rate_limit_error(exc) or is_tool_call_generation_error(exc):
