@@ -87,7 +87,7 @@ def resolve_priority(
         if (
             confidence >= LIVE_SENSOR_MIN
             and existing.perspective == "historical"
-            and evidence_time > existing_time
+            and evidence_time >= existing_time
             and evidence_time >= existing_start
         ):
             return PriorityDecision(
@@ -96,7 +96,7 @@ def resolve_priority(
                 confidence,
             )
     if perspective == existing.perspective:
-        if evidence_time > existing_time and evidence_time >= existing_start:
+        if evidence_time >= existing_time and evidence_time >= existing_start:
             return PriorityDecision(
                 "replace",
                 "newer evidence from the same perspective takes priority",
