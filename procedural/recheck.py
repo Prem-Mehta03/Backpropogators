@@ -11,12 +11,6 @@ from contracts.models import SensorReading
 from contracts.policy import RECHECK_MARGIN_CM
 from procedural.tools import ToolFn, call_tool
 
-# The front ultrasonic sensor cannot see beyond its range (200 cm, handoff D2): on a clear path it
-# reports that range. A reading at its range therefore means "nothing within range", and is
-# compared with the range, not with a longer move distance (live: with the ultrasonic enabled,
-# every move of 171 cm or more was cancelled although the path was clear). The LiDAR, which
-# reaches 400 cm, still has to clear the whole distance plus the margin.
-ULTRASONIC_RANGE_CM = 200
 MOVE_DIRECTIONS = {"move_forward": "front", "move_backward": "back"}
 RECHECK_PHRASE = "recheck before action"
 
@@ -114,13 +108,10 @@ def recheck_before_action(
             failures.append(
                 f"The {label} returned an unusable reading (status {reading.status})."
             )
-        elif reading.status == "blocked" or value < (
-            need if is_lidar else min(need, ULTRASONIC_RANGE_CM)
-        ):
-            required = need if is_lidar else min(need, ULTRASONIC_RANGE_CM)
+        elif reading.status == "blocked" or value < need:
             failures.append(
                 f"The {label} now reads {value} cm (status {reading.status}). "
-                f"Clearance must be at least {required} cm including the {RECHECK_MARGIN_CM} cm margin."
+                f"Clearance must be at least {need} cm including the {RECHECK_MARGIN_CM} cm margin."
             )
     details["passed"] = not failures
     if not failures:

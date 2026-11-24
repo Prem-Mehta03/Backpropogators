@@ -465,24 +465,46 @@ def _ultrasonic_registry(
     return registry
 
 
-def test_a_clear_ultrasonic_at_its_range_does_not_cancel_a_long_move() -> None:
+def test_a_clear_ultrasonic_at_its_range_cannot_vouch_for_a_longer_move() -> None:
+    """It sees 200 cm and no further, so a longer move than range minus margin is not verified.
+
+    An earlier version let a reading at the range pass; Role 4 showed that lets a move run into
+    an obstacle just beyond the range that the LiDAR cannot see (glass).
+    """
     check = recheck_before_action(
         "move_forward", {"distance_cm": 190}, _ultrasonic_registry(200)
+    )
+    assert check is not None and check.cancel is not None
+    assert "ultrasonic" in check.cancel and "220" in check.cancel
+
+
+def test_a_move_within_the_ultrasonic_range_still_passes_when_both_sensors_are_clear() -> (
+    None
+):
+    check = recheck_before_action(
+        "move_forward", {"distance_cm": 100}, _ultrasonic_registry(200)
     )
     assert check is not None and check.cancel is None
 
 
-def test_the_lidar_still_has_to_clear_the_whole_long_move() -> None:
-    check = recheck_before_action(
-        "move_forward", {"distance_cm": 190}, _ultrasonic_registry(200, lidar_cm=210)
-    )
-    assert check is not None and check.cancel is not None
-    assert "LiDAR" in check.cancel
+def test_glass_just_beyond_the_ultrasonic_range_cannot_be_driven_into() -> None:
+    """Role 4's repro: glass at 215-218 cm, LiDAR sees through it (400 cm), ultrasonic reads 200."""
+    import json
+    from pathlib import Path
 
+    from sensorimotor import create_sensorimotor
 
-def test_an_ultrasonic_reading_short_of_its_range_still_cancels() -> None:
-    check = recheck_before_action(
-        "move_forward", {"distance_cm": 190}, _ultrasonic_registry(150)
+    path = (
+        Path(__file__).parents[2]
+        / "sensorimotor/scenarios/scenario_t05_sensor_disagreement.json"
     )
+    config = json.loads(path.read_text(encoding="utf-8"))
+    config["obstacles"][0].update(x_min=215, x_max=218)
+    config["sensors"]["lidar"][0]["max_range_cm"] = 400
+    tools = create_sensorimotor(config).tool_registry()
+    check = recheck_before_action("move_forward", {"distance_cm": 230}, tools)
     assert check is not None and check.cancel is not None
-    assert "ultrasonic" in check.cancel
+    assert [r["result"]["data"]["value"] for r in check.details["reads"]] == [400, 200]
+    assert (
+        tools["get_position"]()["data"]["value"]["x"] == 0
+    )  # the move was never dispatched
