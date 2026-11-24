@@ -13,6 +13,7 @@ import re
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 from typing import Any, Protocol
 
 logger = logging.getLogger(__name__)
@@ -104,6 +105,50 @@ def rate_limit_wait_seconds(exc: Exception, attempt: int) -> float:
         seconds = float(match.group(1)) / (1000.0 if match.group(2) == "ms" else 1.0)
         return min(seconds + 0.5, MAX_RATE_LIMIT_WAIT_S)
     return min(5.0 * (attempt + 1), MAX_RATE_LIMIT_WAIT_S)
+
+
+# ---- repair of a malformed call to a tool that takes no arguments (T05 live failure)
+FAILED_NAME = re.compile(r'"name"\s*:\s*"([A-Za-z_][A-Za-z0-9_]*)"')
+FAILED_ARGUMENTS = re.compile(r'"arguments"\s*:(.*)', re.DOTALL)
+
+
+def _no_argument_tools(tools: list[dict[str, Any]] | None) -> set[str]:
+    """Names of the offered tools whose schema has no parameters, such as read_ultrasonic."""
+    names: set[str] = set()
+    for tool in tools or []:
+        function = tool.get("function", {})
+        if not function.get("parameters", {}).get("properties"):
+            names.add(function.get("name", ""))
+    names.discard("")
+    return names
+
+
+def repair_no_argument_call(exc: Exception, tools: list[dict[str, Any]] | None) -> Any | None:
+    """Rebuild the one call a provider rejected as malformed when it needs no arguments.
+
+    Groq answers HTTP 400 tool_use_failed when the model writes a tool call such as
+    {"name": "read_ultrasonic", "arguments": {""}}: the right tool, garbage in place of an empty
+    argument object. Retrying at temperature 0 repeats the same text, so the call is rebuilt
+    instead. It is only rebuilt when the named tool is offered, takes no arguments, and the
+    rejected text carries no argument key or value at all (nothing is guessed). Returns a
+    raw-response-shaped object for LLMClient.chat to parse, or None when the call cannot be
+    repaired.
+    """
+    text = str(exc)
+    named = FAILED_NAME.search(text)
+    if named is None or named.group(1) not in _no_argument_tools(tools):
+        return None
+    given = FAILED_ARGUMENTS.search(text[named.end() :])
+    leftover = re.sub(r"""[{}"'\s:,]""", "", given.group(1)) if given else ""
+    if leftover:
+        return None
+    call = SimpleNamespace(
+        id="repaired_call", function=SimpleNamespace(name=named.group(1), arguments="{}")
+    )
+    message = SimpleNamespace(content=None, tool_calls=[call])
+    return SimpleNamespace(
+        choices=[SimpleNamespace(message=message, finish_reason="tool_calls")]
+    )
 
 
 class LLMClient:
@@ -246,6 +291,14 @@ class LLMClient:
                     self._sleep(wait)
                     rate_attempts += 1
                     continue
+                if is_tool_call_generation_error(exc):
+                    repaired = repair_no_argument_call(exc, kwargs.get("tools"))
+                    if repaired is not None:
+                        logger.warning(
+                            "Repaired a malformed call to %s (no arguments needed)",
+                            repaired.choices[0].message.tool_calls[0].function.name,
+                        )
+                        return repaired
                 if (
                     is_tool_call_generation_error(exc)
                     and tool_attempts < self.tool_call_retries
