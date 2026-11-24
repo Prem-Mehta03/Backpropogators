@@ -154,6 +154,52 @@ def repair_no_argument_call(
     )
 
 
+ANY_NAME = re.compile(r'"name"\s*:\s*"([^"]+)"')
+
+
+def _offered_names(tools: list[dict[str, Any]] | None) -> set[str]:
+    return {t.get("function", {}).get("name", "") for t in tools or []} - {""}
+
+
+def repair_channel_suffix_call(
+    exc: Exception, tools: list[dict[str, Any]] | None
+) -> Any | None:
+    """Rebuild a call whose tool name carries a leaked channel marker (T05 live failure).
+
+    gpt-oss sometimes writes its chat-format marker into the tool name, for example
+    "get_belief_history<|channel|>commentary". Groq then answers 400 tool_use_failed ("attempted
+    to call tool ... which was not in request.tools"), and a retry at temperature 0 repeats it.
+    When the part before the marker is an offered tool and the rejected text holds a valid JSON
+    argument object, the call is rebuilt with exactly those arguments. Nothing is invented: the
+    arguments are the model's own, and the tool still goes through normal argument validation.
+    Returns a raw-response-shaped object, or None when the call cannot be repaired.
+    """
+    text = str(exc)
+    named = ANY_NAME.search(text)
+    if named is None or "<|" not in named.group(1):
+        return None
+    base = named.group(1).split("<|", 1)[0].strip()
+    if base not in _offered_names(tools):
+        return None
+    given = FAILED_ARGUMENTS.search(text[named.end() :])
+    if given is None:
+        return None
+    try:
+        arguments, _ = json.JSONDecoder().raw_decode(given.group(1).lstrip())
+    except ValueError:
+        return None
+    if not isinstance(arguments, dict):
+        return None
+    call = SimpleNamespace(
+        id="repaired_call",
+        function=SimpleNamespace(name=base, arguments=json.dumps(arguments)),
+    )
+    message = SimpleNamespace(content=None, tool_calls=[call])
+    return SimpleNamespace(
+        choices=[SimpleNamespace(message=message, finish_reason="tool_calls")]
+    )
+
+
 class LLMClient:
     """Chat client for an OpenAI-compatible endpoint.
 
@@ -295,10 +341,12 @@ class LLMClient:
                     rate_attempts += 1
                     continue
                 if is_tool_call_generation_error(exc):
-                    repaired = repair_no_argument_call(exc, kwargs.get("tools"))
+                    repaired = repair_no_argument_call(
+                        exc, kwargs.get("tools")
+                    ) or repair_channel_suffix_call(exc, kwargs.get("tools"))
                     if repaired is not None:
                         logger.warning(
-                            "Repaired a malformed call to %s (no arguments needed)",
+                            "Repaired a malformed tool call to %s",
                             repaired.choices[0].message.tool_calls[0].function.name,
                         )
                         return repaired

@@ -183,3 +183,47 @@ def test_other_malformed_calls_are_not_rebuilt(generated: str) -> None:
     with pytest.raises(LLMClientError):
         client.chat([{"role": "user", "content": "go"}], [ULTRASONIC, LIDAR])
     assert len(seen) == 3  # first attempt plus the two normal retries
+
+
+# ---- repair of a tool name with a leaked channel marker (live T05, 2 of 3 runs)
+HISTORY = {
+    "type": "function",
+    "function": {
+        "name": "get_belief_history",
+        "description": "History.",
+        "parameters": {
+            "type": "object",
+            "properties": {"subject": {"type": "string"}},
+            "required": ["subject"],
+        },
+    },
+}
+LEAKED = '{"name": "get_belief_history<|channel|>commentary", "arguments": {"subject": "path_A"}}'
+
+
+def test_a_tool_name_with_a_leaked_channel_marker_is_rebuilt_with_the_models_arguments() -> (
+    None
+):
+    client, seen = _client_failing_with(LEAKED)
+    reply = client.chat([{"role": "user", "content": "go"}], [HISTORY, LIDAR])
+    (call,) = reply.tool_calls
+    assert call.name == "get_belief_history"
+    assert call.arguments == {"subject": "path_A"} and call.arguments_error is None
+    assert len(seen) == 1
+
+
+@pytest.mark.parametrize(
+    "generated",
+    [
+        '{"name": "move_forward<|channel|>commentary", "arguments": {"distance_cm": 5}}',  # not offered
+        '{"name": "get_belief_history<|channel|>commentary", "arguments": {"subject": }}',  # bad JSON
+        '{"name": "get_belief_history<|channel|>commentary", "arguments": [1, 2]}',  # not an object
+    ],
+)
+def test_a_channel_marker_call_that_cannot_be_trusted_is_not_rebuilt(
+    generated: str,
+) -> None:
+    client, seen = _client_failing_with(generated)
+    with pytest.raises(LLMClientError):
+        client.chat([{"role": "user", "content": "go"}], [HISTORY, LIDAR])
+    assert len(seen) == 3
