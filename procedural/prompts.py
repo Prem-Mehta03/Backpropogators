@@ -15,9 +15,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-PROMPT_VERSION = (
-    "v6.2"  # recorded in every run log so a result can be tied to its prompt
-)
+# Recorded in every run log so a result can be tied to its prompt (see test_prompt_version.py).
+PROMPT_VERSION = "v6.3"
 
 ABSTENTION_SIGNAL = "I cannot verify this with the available evidence."
 
