@@ -13,6 +13,18 @@ MOVES = {"move_forward", "move_backward"}
 WRITES = {"update_belief", "downgrade_belief"}
 
 
+# Wording the T04 and T05 specs accept. Hyphen look-alikes (U+2011 etc.) are read as plain hyphens,
+# because the model writes "re-check" that way; "additional" and "further" evidence mean "more".
+ASKS_RECHECK = r"re-?check|check again|another reading"
+ASKS_MORE_EVIDENCE = r"(?:more|additional|further) evidence|another read|re-?check"
+_HYPHENS = re.compile("[" + chr(0x2010) + "-" + chr(0x2015) + chr(0x2212) + "]")
+
+
+def plain_lower(text: str) -> str:
+    """Lower-case answer text with hyphen look-alikes replaced by '-'."""
+    return _HYPHENS.sub("-", text).lower()
+
+
 ROUTE_CLEAR = re.compile(r"the route is (?:definitely )?clear\b", re.IGNORECASE)
 
 
@@ -76,7 +88,7 @@ def evaluate_case(test_id: str, case: Case, before: dict, after: dict, agent: di
     moved = before["environment"]["robot"] != after["environment"]["robot"]
     check("pose_change_expected", "procedural", moved == (test_id == "B_APPROACH"),
           "Only the box approach demo should move the simulated robot.")
-    lower = agent["answer"].lower()
+    lower = plain_lower(agent["answer"])
 
     def mentions(pattern: str) -> bool:
         return re.search(pattern, lower, re.DOTALL) is not None
@@ -146,7 +158,7 @@ def evaluate_case(test_id: str, case: Case, before: dict, after: dict, agent: di
               and all(b["status"] == "disputed" for bid, b in beliefs.items() if bid not in previous)
               and not successes("downgrade_belief"), "Weak evidence cannot replace the strong map or authorize a downgrade.")
         check("uncertainty_answer", "procedural", "0.4" in lower and mentions(r"conflict|disagree")
-              and mentions(r"weak|low confidence") and mentions(r"recheck|check again|another reading")
+              and mentions(r"weak|low confidence") and mentions(ASKS_RECHECK)
               and not asserts_route_clear(agent["answer"]),
               "Report the disagreement, weakness and need to recheck without asserting a clear route.")
     elif test_id == "T05":
@@ -161,7 +173,7 @@ def evaluate_case(test_id: str, case: Case, before: dict, after: dict, agent: di
               "Keep the map, add disputed evidence, and make neither a downgrade nor a move request.")
         check("conflict_answer", "procedural",
               mentions(r"lidar[^.!?\n]*\b250(?:\.0)?\s*cm") and mentions(r"ultrasonic[^.!?\n]*\b15(?:\.0)?\s*cm")
-              and mentions(r"disagree|conflict") and mentions(r"more evidence|another read|recheck")
+              and mentions(r"disagree|conflict") and mentions(ASKS_MORE_EVIDENCE)
               and not asserts_route_clear(agent["answer"]),
               "Explain both distances and ask for more evidence before relying on either.")
     elif test_id == "T06":
