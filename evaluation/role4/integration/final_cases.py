@@ -104,7 +104,7 @@ def _plan(
 
     if control == "stale_action":
         return [query, history, lidar, signal_and_continue,
-                "The first reading was clear, but the recheck cancelled the move. I did not move."]
+                "The first reading was clear, but the recheck found an obstacle and cancelled the move. I did not move."]
     return [query, history, lidar, signal_and_continue, _scripted_update,
             "The path was clear at first. The refreshed LiDAR reading is blocked, so I will stay put."]
 

@@ -26,11 +26,13 @@ from procedural.checklist import (
     DEFAULT_REQUIRED_EVIDENCE,
     EvidenceCapability,
     capability_evidence,
+    evidence_attempted,
     missing_evidence,
 )
 from procedural.claims import unbacked_write_claims
 from procedural.fallback_summary import build_fallback_summary
 from procedural.llm_client import LLMBackend, LLMClientError, LLMResponse, ToolCall
+from procedural.obligations import obligation_problems
 from procedural.prompts import (
     ABSTENTION_SIGNAL,
     MISSING_REPLY_NOTE,
@@ -50,7 +52,7 @@ from procedural.tools import (
     registered_tool_schemas,
     validate_arguments,
 )
-from procedural.update_guard import check_memory_call
+from procedural.update_guard import SENSOR_READ_TOOLS, check_memory_call
 
 logger = logging.getLogger(__name__)
 
@@ -166,6 +168,19 @@ def execute_tool_call(
             f"Malformed arguments: {call.arguments_error}",
         )
         return ToolOutcome(envelope, call.arguments)
+    if call.name in SENSOR_READ_TOOLS and not any(
+        entry["tool"] == "query_belief" and evidence_attempted(entry)
+        for entry in tool_log
+    ):
+        reason = (
+            "Look in memory first: call query_belief for the subject, then read the sensors. "
+            "This call was not run."
+        )
+        return ToolOutcome(
+            error_result(call.name, "INVALID_ARGUMENT", reason),
+            call.arguments,
+            {"refused": reason},
+        )
     spec = SPECS_BY_NAME.get(call.name)
     if spec is not None:
         try:
@@ -409,6 +424,7 @@ def run_agent(
                 )
                 continue
             unbacked = unbacked_write_claims(text, state.tool_log, require_written_ids)
+            unbacked += obligation_problems(question, text, state.tool_log)
             if unbacked:
                 state.claim_refusals.append(
                     {

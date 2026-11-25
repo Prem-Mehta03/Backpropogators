@@ -16,7 +16,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 
 # Recorded in every run log so a result can be tied to its prompt (see test_prompt_version.py).
-PROMPT_VERSION = "v6.3"
+PROMPT_VERSION = "v6.4"
 
 ABSTENTION_SIGNAL = "I cannot verify this with the available evidence."
 
@@ -98,8 +98,8 @@ A. Stale belief. A belief with status superseded (get_belief_history lists them)
    well before another belief about the same thing, is outdated. Say it is stale or outdated
    (use one of those words) with its date and source. Rely on the newest active belief and
    check it against the live reading.
-B. Missing source. If a belief's source is null, say its source is unknown and its certainty
-   was lowered. Say you did not rely on it alone: base the answer on the live reading.
+B. Missing source. If a belief's source is null, write "its source is unknown", say its
+   confidence was lowered (capped at 0.5) and that you did not rely on it alone.
 C. Disputed or conflicting evidence. If a belief is marked disputed, or two sensors disagree,
    give each side with its value, source and confidence. Say the state is disputed, do not
    call either side the fact, keep prior beliefs separate, and ask for more evidence, such as a
@@ -110,11 +110,13 @@ D. Weak reading. A live reading with confidence below 0.6 cannot overrule a stor
    belief as the record, and suggest a recheck. Do not state either side as fact: begin "I cannot
    confirm the state of the route", then say the evidence conflicts, the reading is weak
    and needs a recheck. The system refuses an answer that says "Yes" or leaves these words out.
-E. Moves. Before you request a move, look at your latest reading: if it says blocked or shows
-   less room than the distance asked, do not request the move; say why. If the system cancels
-   a move, say what you had seen before, what the recheck found, and that the robot did not
-   move. If the person says the way is clear but your sensor says otherwise, say their
-   statement contradicts your reading, give the reading, and do not move.
+E. Moves. When asked to move, read your sensor. If it shows room for the distance, request
+   the move (the system rechecks first and cancels it if the path changed); if not, do not
+   request it and say why. If a move is cancelled, say that at first the route looked clear,
+   that the recheck found an obstacle (give both readings) and that the robot did not move.
+   Write "did not move" whenever it did not. If the person says the way is clear but your
+   sensor says otherwise, say it contradicts your reading and do not move. After reading your
+   sensor, record what the person said with update_belief (perspective user, source user).
 F. Three views. When asked what the person thinks, what you register and what stored history
    says, give three lines and pick no winner: "Person: <value> (source, confidence)", "Stored
    record: <value> (source, perspective, confidence)", "My live reading: <value> (sensor,

@@ -63,9 +63,15 @@ def test_route_question_uses_memory_then_sensor_then_answers() -> None:
 
 
 def test_model_sees_each_tool_result_with_the_matching_call_id() -> None:
-    llm = ScriptedLLM([call("read_lidar", {}, "abc"), say("12 cm")])
+    llm = ScriptedLLM(
+        [
+            call("query_belief", {"subject": "path_A"}, "q0"),
+            call("read_lidar", {}, "abc"),
+            say("12 cm"),
+        ]
+    )
     run_agent("lidar?", llm, REGISTRY)
-    (msg,) = _tool_messages(llm, 1)
+    msg = _tool_messages(llm, 2)[-1]
     assert msg["tool_call_id"] == "abc" and json.loads(msg["content"])["ok"] is True
 
 
@@ -121,11 +127,22 @@ def test_malformed_arguments_are_reported_to_the_model_which_can_retry() -> None
     bad = LLMResponse(
         None, [ToolCall("c1", "read_lidar", {}, "Expecting property name")]
     )
-    llm = ScriptedLLM([bad, call("read_lidar", {}, "c2"), say("12 cm")])
+    llm = ScriptedLLM(
+        [
+            call("query_belief", {"subject": "path_A"}, "q0"),
+            bad,
+            call("read_lidar", {}, "c2"),
+            say("12 cm"),
+        ]
+    )
     out = run_agent(QUESTION, llm, REGISTRY)
-    first = json.loads(_tool_messages(llm, 1)[0]["content"])
+    first = json.loads(_tool_messages(llm, 2)[-1]["content"])
     assert first["ok"] is False and "Malformed" in first["error"]["message"]
-    assert [c["result"]["ok"] for c in out.tool_calls] == [False, True] and out.finished
+    assert [c["result"]["ok"] for c in out.tool_calls] == [
+        True,
+        False,
+        True,
+    ] and out.finished
 
 
 def test_unknown_tool_and_bad_arguments_come_back_as_invalid_argument() -> None:

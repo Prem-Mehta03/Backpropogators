@@ -86,7 +86,7 @@ def test_a_blocked_ultrasonic_read_cancels_clear_lidar_and_notifies_both() -> No
             [
                 call("move_forward", {"distance_cm": 20}, "move"),
                 say(
-                    "The move was cancelled and the robot did not move. The LiDAR and the "
+                    "At first the route looked clear, but the recheck found an obstacle (the ultrasonic reads 15 cm). The move was cancelled and the robot did not move. The LiDAR and the "
                     "ultrasonic sensor disagree, so a recheck is needed before moving."
                 ),
             ]
@@ -237,7 +237,11 @@ def test_blocked_path_move_is_cancelled_and_the_robot_stays_put() -> None:
     registry, world = _real()
     before = world.env.pose
     out = run_agent(
-        QUESTION, _script("The move was cancelled; the robot did not move."), registry
+        QUESTION,
+        _script(
+            "At first the route looked clear; the recheck found an obstacle, so the move was cancelled and the robot did not move."
+        ),
+        registry,
     )
     move = out.tool_calls[3]
     assert move["tool"] == "move_forward" and move["result"]["ok"] is False
@@ -250,7 +254,13 @@ def test_blocked_path_move_is_cancelled_and_the_robot_stays_put() -> None:
 
 def test_the_log_stays_one_entry_per_model_request() -> None:
     registry, _ = _real()
-    out = run_agent(QUESTION, _script("The move was cancelled."), registry)
+    out = run_agent(
+        QUESTION,
+        _script(
+            "At first the route looked clear; the recheck found an obstacle, so the move was cancelled and the robot did not move."
+        ),
+        registry,
+    )
     assert [c["tool"] for c in out.tool_calls] == [
         "query_belief",
         "get_belief_history",
@@ -282,7 +292,9 @@ def test_the_model_cannot_skip_the_recheck_by_asking_again() -> None:
             call("read_lidar", {}, "c2"),
             call("move_forward", {"distance_cm": 20}, "c3"),
             call("move_forward", {"distance_cm": 5}, "c4"),
-            say("Both moves were cancelled; the robot did not move."),
+            say(
+                "At first the route looked clear; the recheck found an obstacle. Both moves were cancelled and the robot did not move."
+            ),
         ]
     )
     out = run_agent(QUESTION, llm, registry)
@@ -300,7 +312,7 @@ def test_an_answer_that_hides_a_cancelled_move_is_refused_then_accepted() -> Non
             call("move_forward", {"distance_cm": 20}, "c3"),
             say("Route checked. The LiDAR reads 12 cm."),
             say(
-                "The LiDAR reads 12 cm, so the move was cancelled and the robot did not move."
+                "At first the route looked clear, but the recheck found an obstacle at 12 cm, so the move was cancelled and the robot did not move."
             ),
         ]
     )

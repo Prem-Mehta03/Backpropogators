@@ -34,7 +34,8 @@ def _world(clear: bool = False):
 
 
 def _script(
-    *tools: tuple[str, dict], answer: str = "The move was cancelled."
+    *tools: tuple[str, dict],
+    answer: str = "At first the route looked clear; the recheck found an obstacle, so the move was cancelled and the robot did not move.",
 ) -> ScriptedLLM:
     replies = [call(name, args, f"c{i}") for i, (name, args) in enumerate(tools, 1)]
     return ScriptedLLM([*replies, say(answer)])
@@ -155,7 +156,8 @@ def _recorded(clear: bool = False, *tools: tuple[str, dict]):
     run_agent(
         QUESTION,
         _script(
-            *(tools or READ), answer="The move was cancelled; the robot did not move."
+            *(tools or READ),
+            answer="At first the route looked clear; the recheck found an obstacle, so the move was cancelled and the robot did not move.",
         ),
         registry,
         on_step=recorder.on_step,
