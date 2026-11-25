@@ -11,7 +11,6 @@ from contracts.validators import timestamp_value
 
 from .belief_graph import BeliefMemory
 
-
 SCENARIO_TEST_IDS = {
     "scenario_a": "T01",
     "scenario_map_blocked": "T02",

@@ -12,7 +12,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from .version import SchemaVersion
 
 Perspective = Literal["user", "agent_sensor", "historical", "third_party"]
-SchemaVersion = Literal["1.0", "1.1"]
 BeliefStatus = Literal["active", "superseded", "disputed"]
 SensorStatus = Literal["clear", "blocked", "unknown", "error"]
 ErrorCode = Literal[

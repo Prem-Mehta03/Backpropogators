@@ -15,7 +15,6 @@ from contracts.policy import (
 )
 from contracts.validators import timestamp_value
 
-
 EVIDENCE_PERSPECTIVES = frozenset({"agent_sensor", "historical"})
 
 
