@@ -86,7 +86,7 @@ def seed_demo_world(memory: Any) -> None:
     seed_bot_02_record(memory, "box_01", "color", "blue", 0.8, DEMO_TS)
 
 
-def build_memory(seed: bool = True) -> Any | None:
+def build_memory(seed: bool = True, clock: Any = None) -> Any | None:
     """Create Vyom's BeliefMemory (in-memory SQLite) and optionally seed it.
 
     Returns None if declarative/belief_graph.py does not exist yet.
@@ -94,7 +94,9 @@ def build_memory(seed: bool = True) -> Any | None:
     module = _import_or_none(MEMORY_MODULE)
     if module is None:
         return None
-    memory = module.BeliefMemory()
+    memory = (
+        module.BeliefMemory(clock=clock) if clock is not None else module.BeliefMemory()
+    )
     if seed:
         seed_demo_world(memory)
     return memory

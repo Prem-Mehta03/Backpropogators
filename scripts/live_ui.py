@@ -216,7 +216,19 @@ class LiveSession:
             )
 
             sensorimotor = build_sensorimotor(scenario)
-            memory = build_memory(seed=True)
+            demo_world = scenario in ("scenario_a", "scenario_b")
+            # The memory clock is the simulator clock, as in evaluation/runner.py: a belief stored
+            # with the PC clock would be newer than every simulated reading and could turn a live
+            # update into a dispute (T02).
+            memory = build_memory(
+                seed=demo_world,
+                clock=sensorimotor.env.now_iso if sensorimotor is not None else None,
+            )
+            if memory is not None and not demo_world:
+                from declarative.seed import SCENARIO_TEST_IDS, seed_for
+
+                if scenario in SCENARIO_TEST_IDS:  # the same starting beliefs the T01-T10 tests use
+                    seed_for(scenario, memory)
             self.memory, self.world = memory, sensorimotor
             built = build_tool_registry(
                 use_real=True,
@@ -595,6 +607,34 @@ REPLAY_RUNS = {
 # ---- HTTP server --------------------------------------------------------------------------
 
 SESSION: LiveSession | None = None
+REPLAY_PATH: Path | None = None
+RUNS_DIR: Path = ROOT / "evaluation" / "logs" / "final" / "verified_20261123"
+# Recorded tests the replay page can switch between (id -> label). The id is the run folder prefix.
+RUN_LABELS = {
+    "T01": "T01 - Scenario A: map says clear, LiDAR blocked",
+    "T02": "T02 - map says blocked, LiDAR clear",
+    "T03": "T03 - Scenario B: three perspectives",
+    "T04": "T04 - weak LiDAR reading (0.4)",
+    "T05": "T05 - LiDAR vs ultrasonic (glass)",
+    "T06": "T06 - stale map entry",
+    "T07": "T07 - no data (box_99)",
+    "T08": "T08 - false user claim",
+    "T09": "T09 - missing provenance",
+    "T10": "T10 - world changes before a move",
+    "B_APPROACH": "Box approach - the robot drives to the box",
+}
+
+
+def list_runs() -> list[dict[str, str]]:
+    """One recorded run per test id found in RUNS_DIR (the first repeat), in test order."""
+    found: dict[str, Path] = {}
+    for path in sorted(RUNS_DIR.glob("*/agent_run_*.json")):
+        found.setdefault(path.parent.name.split("__")[0], path)
+    return [
+        {"id": run_id, "label": RUN_LABELS.get(run_id, run_id), "file": str(found[run_id])}
+        for run_id in RUN_LABELS
+        if run_id in found
+    ]
 # SQLite connections belong to the thread that created them, so the memory layer, the sensors and
 # every agent run all live on this one worker thread. HTTP handler threads only queue jobs.
 WORKER = ThreadPoolExecutor(max_workers=1, thread_name_prefix="agent-worker")
@@ -628,6 +668,19 @@ class Handler(BaseHTTPRequestHandler):
                     "scenario": SESSION.scenario,
                     "replay": SESSION.replay,
                     "has_recording": SESSION.replay_trace is not None,
+                    "scenarios": list(SCENARIOS),
+                    "runs": [{"id": r["id"], "label": r["label"]} for r in list_runs()]
+                    if SESSION.replay_trace is not None
+                    else [],
+                    "run_id": next(
+                        (
+                            r["id"]
+                            for r in list_runs()
+                            if REPLAY_PATH is not None
+                            and Path(r["file"]).resolve() == REPLAY_PATH.resolve()
+                        ),
+                        None,
+                    ),
                     "frame": SESSION.initial_frame,
                     "error": SESSION.error,
                     "run": SESSION.run_no,
@@ -635,10 +688,20 @@ class Handler(BaseHTTPRequestHandler):
                 }
             )
         elif url.path == "/api/replay":
+            wanted = (query.get("run") or [None])[0]
             if SESSION.replay_trace is None:
                 self._json({"error": "no saved trace loaded"}, 404)
-            else:
+            elif wanted is None:
                 self._json(SESSION.replay_trace)
+            else:
+                match = next((r for r in list_runs() if r["id"] == wanted), None)
+                if match is None:
+                    self._json({"error": "unknown recorded run"}, 404)
+                else:
+                    try:
+                        self._json(load_trace(Path(match["file"])))
+                    except (OSError, ValueError) as exc:
+                        self._json({"error": f"could not read the run: {exc}"}, 500)
         elif url.path == "/api/reset":
             scenario = (query.get("scenario") or [SESSION.scenario])[0]
             if SESSION.replay_trace is not None:
@@ -755,7 +818,7 @@ def load_trace(path: Path) -> dict[str, Any]:
 
 
 def main() -> None:
-    global SESSION
+    global SESSION, REPLAY_PATH, RUNS_DIR
     parser = argparse.ArgumentParser(
         description="Live demo UI for the I, Agent procedural layer"
     )
@@ -765,7 +828,12 @@ def main() -> None:
         "--replay", type=Path, nargs="?", const=Path("."),
         help="play a saved trace with frames, or omit the path for legacy playback",
     )
+    parser.add_argument(
+        "--runs-dir", type=Path, default=RUNS_DIR,
+        help="folder of recorded runs the replay page can switch between (agent_run_*.json inside run folders)",
+    )
     args = parser.parse_args()
+    RUNS_DIR = args.runs_dir
     replay_trace = None
     scenario = args.scenario
     if args.replay is not None and args.replay != Path("."):
@@ -773,6 +841,7 @@ def main() -> None:
             replay_trace = load_trace(args.replay)
         except (OSError, ValueError) as exc:
             parser.error(f"could not read replay: {exc}")
+        REPLAY_PATH = args.replay
         scenario = replay_trace.get("scenario") or replay_trace["frames"][0]["world"].get("scenario") or scenario
     SESSION = WORKER.submit(LiveSession, scenario, args.replay is not None, replay_trace).result()
     server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
