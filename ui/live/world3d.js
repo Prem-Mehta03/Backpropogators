@@ -128,6 +128,12 @@
       this.azimuth = -2.5;
       this.elevation = 0.55;
       this.distance = 6.2;
+      // Movement analysis uses recorded frames only, so it works without WebGL (the badge still updates).
+      this.frames = [];
+      this.recorded = false;
+      this.index = 0;
+      this.movement = null;
+      this.onMovement = null;
       try {
         this.renderer = new THREE.WebGLRenderer({canvas, antialias: true});
       } catch {
@@ -200,11 +206,6 @@
       for (const part of [body, deck, puck, ...wheels, lens]) { part.castShadow = true; part.receiveShadow = true; }
       this.robot.add(body, deck, puck, this.scanner, head, lens, arrow, this.pulse, ...wheels);
       // Movement history: poses are taken from recorded frames only; nothing is computed here.
-      this.frames = [];
-      this.recorded = false;
-      this.index = 0;
-      this.movement = null;
-      this.onMovement = null;
       this.trail = new THREE.Group();
       this.scene.add(this.trail);
       this.from = new THREE.Vector3();
@@ -260,6 +261,7 @@
 
     setScenery(on) {
       this.sceneryOn = Boolean(on);
+      if (!this.renderer) return;
       this.sceneryKey = "";
       this.applyEnvironment();
       if (this.frame && this.renderer) {
@@ -420,7 +422,7 @@
       this.index = this.locate(frame);
       this.movement = this.analyse(this.index);
       this.updateHUD();
-      this.drawTrail(this.index);
+      if (this.renderer) this.drawTrail(this.index);
       if (this.onMovement) this.onMovement(this.movement);
       if (!this.renderer || !frame) return;
       const {world, tool} = frame;

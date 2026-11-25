@@ -600,7 +600,8 @@ function queuePlayback() {
 }
 
 async function loadRun(id) {
-  const response = await fetch("/api/replay?run=" + encodeURIComponent(id));
+  // An empty id is the recording the server was started with ("(custom recording)").
+  const response = await fetch(id ? "/api/replay?run=" + encodeURIComponent(id) : "/api/replay");
   if (!response.ok) { addMsg("agent err", "Could not load that recorded run."); return; }
   const data = await response.json();
   stopPlayback();
@@ -691,7 +692,7 @@ function boot() {
         picker.innerHTML = st.runs.map((r) => `<option value="${esc(r.id)}">${esc(r.label)}</option>`).join("");
         if (st.run_id) picker.value = st.run_id; else picker.insertAdjacentHTML("afterbegin", '<option value="" selected>(custom recording)</option>');
         picker.hidden = false;
-        picker.addEventListener("change", (e) => { if (e.target.value) loadRun(e.target.value); });
+        picker.addEventListener("change", (e) => loadRun(e.target.value));
       }
       const response = await fetch("/api/replay");
       if (!response.ok) throw new Error("The recording cannot be loaded.");

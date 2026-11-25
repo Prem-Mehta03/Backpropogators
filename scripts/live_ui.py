@@ -217,7 +217,13 @@ class LiveSession:
 
             sensorimotor = build_sensorimotor(scenario)
             demo_world = scenario in ("scenario_a", "scenario_b")
-            memory = build_memory(seed=demo_world)
+            # The memory clock is the simulator clock, as in evaluation/runner.py: a belief stored
+            # with the PC clock would be newer than every simulated reading and could turn a live
+            # update into a dispute (T02).
+            memory = build_memory(
+                seed=demo_world,
+                clock=sensorimotor.env.now_iso if sensorimotor is not None else None,
+            )
             if memory is not None and not demo_world:
                 from declarative.seed import SCENARIO_TEST_IDS, seed_for
 
