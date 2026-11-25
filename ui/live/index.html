@@ -105,6 +105,8 @@ form.ask button:disabled { opacity: .45; cursor: default; }
 @media (prefers-reduced-motion: reduce) { .move-badge i { animation: none !important; } }
 #scrub { flex: 1; min-width: 60px; }
 #frame-count { color: var(--muted); white-space: nowrap; font-family: var(--mono); font-size: 11px; }
+.scenery { margin-left: auto; margin-right: 10px; color: var(--muted); font-size: 12px; cursor: pointer; white-space: nowrap; }
+.scenery input { vertical-align: -2px; margin-right: 4px; }
 #camera-view, #play-speed { background: var(--panel2); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 5px; }
 .ev.current { border-color: var(--sensor); background: var(--panel2); }
 .it.changed { border-left: 2px solid var(--sensor); padding-left: 5px; }
@@ -187,6 +189,7 @@ form.ask button:disabled { opacity: .45; cursor: default; }
 
     <section class="panel world-panel">
       <header><h2>Simulated world</h2>
+        <label class="scenery" title="Grass, hedge and trees are decoration only: they are not part of the simulation"><input type="checkbox" id="scenery" checked> Scenery</label>
         <select aria-label="Camera view" id="camera-view">
           <option value="orbit" selected>Orbit</option><option value="follow">Follow</option><option value="top">Top-down</option>
         </select>
@@ -644,6 +647,7 @@ function loadReplay(data) {
 }
 
 $("camera-view").addEventListener("change", event => worldViewer.setMode(event.target.value));
+$("scenery").addEventListener("change", event => worldViewer.setScenery(event.target.checked));
 $("play").addEventListener("click", () => {
   if (playTimer !== null) { stopPlayback(); return; }
   if (recording.frames.length < 2) return;

@@ -11,6 +11,48 @@
     yellow: 0xefd578, white: 0xdde4ef, black: 0x242933};
   const headings = {front: 0, left: 90, back: 180, right: 270};
 
+  /* Decorative scenery only: none of it exists in the simulator. It sits beyond every sensor's reach. */
+  function blades(base, dark, light, strokes, length) {
+    const size = 256, canvas = document.createElement("canvas");
+    canvas.width = canvas.height = size;
+    const g = canvas.getContext("2d");
+    g.fillStyle = base;
+    g.fillRect(0, 0, size, size);
+    let seed = 11;
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    for (let i = 0; i < strokes; i++) {
+      g.strokeStyle = rnd() < 0.5 ? dark : light;
+      g.globalAlpha = 0.3 + rnd() * 0.45;
+      const x = rnd() * size, y = rnd() * size;
+      g.beginPath();
+      g.moveTo(x, y);
+      g.lineTo(x + (rnd() - 0.5) * 5, y - 2 - rnd() * length);
+      g.stroke();
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.encoding = THREE.sRGBEncoding;
+    texture.anisotropy = 4;
+    return texture;
+  }
+
+  function skyBackdrop() {
+    const canvas = document.createElement("canvas");
+    canvas.width = 4;
+    canvas.height = 256;
+    const g = canvas.getContext("2d");
+    const gradient = g.createLinearGradient(0, 0, 0, 256);
+    gradient.addColorStop(0, "#3f7bc0");
+    gradient.addColorStop(0.5, "#8fbbe3");
+    gradient.addColorStop(0.78, "#d5e6f1");
+    gradient.addColorStop(1, "#e7eddc");
+    g.fillStyle = gradient;
+    g.fillRect(0, 0, 4, 256);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.encoding = THREE.sRGBEncoding;
+    return texture;
+  }
+
   function clear(group) {
     for (const child of [...group.children]) {
       child.traverse(item => {
@@ -84,8 +126,8 @@
       this.frame = null;
       this.mode = "orbit";
       this.azimuth = -2.5;
-      this.elevation = 0.92;
-      this.distance = 4.7;
+      this.elevation = 0.55;
+      this.distance = 6.2;
       try {
         this.renderer = new THREE.WebGLRenderer({canvas, antialias: true});
       } catch {
@@ -101,8 +143,11 @@
       this.renderer.shadowMap.enabled = true;
       this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       this.scene = new THREE.Scene();
-      this.scene.background = new THREE.Color(0x0e1522); // the clear colour is not sRGB-encoded in r128
-      this.scene.fog = new THREE.Fog(c(0x0e1522), 7, 22);
+      this.sceneryOn = true;
+      this.skyTexture = skyBackdrop();
+      this.textureBase = {};
+      this.scenery = new THREE.Group();
+      this.sceneryKey = "";
       this.camera = new THREE.PerspectiveCamera(46, 1, 0.03, 120);
       this.light = new THREE.HemisphereLight(c(0xdfe9ff), c(0x2a3446), 0.8);
       this.scene.add(this.light);
@@ -112,7 +157,8 @@
       this.key.shadow.mapSize.set(2048, 2048);
       this.key.shadow.bias = -0.0004;
       this.key.shadow.radius = 3;
-      this.scene.add(this.key, this.key.target);
+      this.scene.add(this.key, this.key.target, this.scenery);
+      this.applyEnvironment();
       const fill = new THREE.DirectionalLight(c(0x8fb4ff), 0.3);
       fill.position.set(-3, 2, -2);
       this.scene.add(fill);
@@ -203,6 +249,94 @@
       this.mode = mode;
     }
 
+    applyEnvironment() {
+      const on = this.sceneryOn;
+      this.scene.background = on ? this.skyTexture : new THREE.Color(0x0e1522); // the clear colour is not sRGB-encoded in r128
+      this.scene.fog = on ? new THREE.Fog(c(0xd6e6ef), 13, 46) : new THREE.Fog(c(0x0e1522), 7, 22);
+      this.light.intensity = on ? 0.9 : 0.8;
+      this.light.groundColor.copy(on ? c(0x4c7a3c) : c(0x2a3446));
+      this.key.intensity = on ? 1.15 : 1.25;
+    }
+
+    setScenery(on) {
+      this.sceneryOn = Boolean(on);
+      this.sceneryKey = "";
+      this.applyEnvironment();
+      if (this.frame && this.renderer) {
+        this.drawWorld(this.frame.world, null);
+        this.drawReading(this.frame.world, this.frame.tool);
+      }
+    }
+
+    texture(name, repeatX, repeatY) {
+      if (!this.textureBase[name]) {
+        this.textureBase[name] = {
+          lawn: () => blades("#4d8a3d", "#366f2a", "#7fba5d", 2600, 7),
+          meadow: () => blades("#3e7233", "#2c5a24", "#5d9a45", 2600, 7),
+          hedge: () => blades("#27501f", "#173a14", "#437a30", 3400, 5),
+        }[name]();
+      }
+      const texture = this.textureBase[name].clone();
+      texture.needsUpdate = true;
+      texture.repeat.set(repeatX, repeatY);
+      return texture;
+    }
+
+    /* Grass beyond the arena, a hedge ring and trees. The hedge stands 6 m outside the arena, farther than
+       the LiDAR (4 m) or any other sensor reaches, so no reading could contradict it. */
+    buildScenery(bounds) {
+      const key = this.sceneryOn + JSON.stringify(bounds);
+      if (key === this.sceneryKey) return;
+      this.sceneryKey = key;
+      clear(this.scenery);
+      if (!this.sceneryOn) return;
+      const margin = 6;
+      const x0 = cm(bounds.x_min) - margin, x1 = cm(bounds.x_max) + margin;
+      const y0 = cm(bounds.y_min) - margin, y1 = cm(bounds.y_max) + margin;
+      const centreX = (x0 + x1) / 2, centreZ = -(y0 + y1) / 2;
+      const width = x1 - x0, depth = y1 - y0;
+      const meadow = new THREE.Mesh(new THREE.PlaneGeometry(width + 44, depth + 44),
+        new THREE.MeshStandardMaterial({map: this.texture("meadow", (width + 44) / 2, (depth + 44) / 2), roughness: 1}));
+      meadow.rotation.x = -Math.PI / 2;
+      meadow.position.set(centreX, -0.045, centreZ);
+      meadow.receiveShadow = true;
+      this.scenery.add(meadow);
+      const hedge = (length, alongX) => {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(alongX ? length : 0.7, 1.3, alongX ? 0.7 : length),
+          new THREE.MeshStandardMaterial({map: this.texture("hedge", length / 1.2, 1), roughness: 0.95}));
+        mesh.position.y = 0.65;
+        return mesh;
+      };
+      for (const [alongX, length, px, pz] of [[true, width, centreX, -y0], [true, width, centreX, -y1],
+        [false, depth, x0, centreZ], [false, depth, x1, centreZ]]) {
+        const piece = hedge(length, alongX);
+        piece.position.x = px;
+        piece.position.z = pz;
+        this.scenery.add(piece);
+      }
+      const trunk = new THREE.MeshStandardMaterial({color: c(0x6b4a2f), roughness: 1});
+      const leaves = [c(0x2f6a2a), c(0x3b7d33), c(0x28591f)].map(color => new THREE.MeshStandardMaterial({color, roughness: 0.9}));
+      const perimeter = 2 * (width + depth);
+      for (let i = 0; i < 30; i++) {
+        const along = (i + 0.5 * Math.sin(i * 12.9898)) / 30 * perimeter;
+        const outside = 2.2 + 3.2 * Math.abs(Math.sin(i * 78.233));
+        let x, z;
+        if (along < width) { x = x0 + along; z = -y0 + outside; }
+        else if (along < width + depth) { x = x1 + outside; z = -y0 - (along - width); }
+        else if (along < 2 * width + depth) { x = x1 - (along - width - depth); z = -y1 - outside; }
+        else { x = x0 - outside; z = -y1 + (along - 2 * width - depth); }
+        const height = 1.7 + 1.4 * Math.abs(Math.sin(i * 4.1414));
+        const tree = new THREE.Group();
+        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, height * 0.45, 10), trunk);
+        stem.position.y = height * 0.225;
+        const crown = new THREE.Mesh(new THREE.ConeGeometry(0.85 + 0.2 * (i % 3), height, 14), leaves[i % 3]);
+        crown.position.y = height * 0.45 + height * 0.5;
+        tree.add(stem, crown);
+        tree.position.set(x, 0, z);
+        this.scenery.add(tree);
+      }
+    }
+
     setRecording(frames) {
       this.frames = frames || [];
       this.recorded = Boolean(frames);
@@ -264,14 +398,19 @@
       if (!poses.length) return;
       const start = poses[0];
       const ring = new THREE.Mesh(new THREE.RingGeometry(0.17, 0.2, 40),
-        new THREE.MeshBasicMaterial({color: c(0xaab7cf), transparent: true, opacity: 0.55, side: THREE.DoubleSide}));
+        new THREE.MeshBasicMaterial({color: c(0xffffff), transparent: true, opacity: 0.7, side: THREE.DoubleSide}));
       ring.rotation.x = -Math.PI / 2;
       ring.position.copy(point(start.x, start.y, 0.012));
       this.trail.add(ring);
       const path = poses.filter((p, k) => k === 0 || p.x !== poses[k - 1].x || p.y !== poses[k - 1].y);
-      if (path.length > 1) {
-        this.trail.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(path.map(p => point(p.x, p.y, 0.03))),
-          new THREE.LineBasicMaterial({color: c(0x7ee0c6)})));
+      // A flat ribbon per segment: a 1 px line is invisible on grass.
+      const ribbon = new THREE.MeshBasicMaterial({color: c(0xfff1a3)});
+      for (let k = 1; k < path.length; k++) {
+        const a = point(path[k - 1].x, path[k - 1].y), b = point(path[k].x, path[k].y);
+        const segment = new THREE.Mesh(new THREE.BoxGeometry(a.distanceTo(b), 0.012, 0.055), ribbon);
+        segment.position.set((a.x + b.x) / 2, 0.02, (a.z + b.z) / 2);
+        segment.rotation.y = Math.atan2(-(b.z - a.z), b.x - a.x);
+        this.trail.add(segment);
       }
     }
 
@@ -327,15 +466,18 @@
       const upperX = Math.ceil(bounds.x_max / 50) * 50;
       const lowerY = Math.floor(bounds.y_min / 50) * 50;
       const upperY = Math.ceil(bounds.y_max / 50) * 50;
-      const floor = box(cm(upperX - lowerX + 200), 0.05, cm(upperY - lowerY + 200), 0x2a374b);
+      const lawn = this.sceneryOn;
+      const floor = box(cm(upperX - lowerX + 200), 0.05, cm(upperY - lowerY + 200), lawn ? 0xffffff : 0x2a374b);
       floor.material.roughness = 0.94;
+      if (lawn) floor.material.map = this.texture("lawn", cm(upperX - lowerX + 200) / 2, cm(upperY - lowerY + 200) / 2);
+      this.buildScenery(bounds);
       floor.castShadow = false;
       floor.position.copy(point((upperX + lowerX) / 2, (upperY + lowerY) / 2, -0.028));
       this.world.add(floor);
       const border = [point(lowerX, lowerY, 0.004), point(upperX, lowerY, 0.004), point(upperX, upperY, 0.004),
         point(lowerX, upperY, 0.004), point(lowerX, lowerY, 0.004)];
       this.world.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(border),
-        new THREE.LineBasicMaterial({color: c(0x7f95b8)})));
+        new THREE.LineBasicMaterial({color: c(lawn ? 0xffffff : 0x7f95b8)})));
       const centre = point((upperX + lowerX) / 2, (upperY + lowerY) / 2);
       const span = cm(Math.max(upperX - lowerX, upperY - lowerY)) / 2 + 1.5;
       this.key.position.set(centre.x + 2, 5, centre.z + 3);
@@ -346,9 +488,9 @@
       for (let x = lowerX; x <= upperX; x += 50) grid.push(point(x, lowerY, 0.002), point(x, upperY, 0.002));
       for (let y = lowerY; y <= upperY; y += 50) grid.push(point(lowerX, y, 0.002), point(upperX, y, 0.002));
       this.world.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(grid),
-        new THREE.LineBasicMaterial({color: c(0x46566e), transparent: true, opacity: 0.65})));
+        new THREE.LineBasicMaterial({color: c(lawn ? 0xf2fbe6 : 0x46566e), transparent: true, opacity: lawn ? 0.32 : 0.65})));
       const warm = world.lighting.color === "yellow";
-      this.light.color.copy(c(warm ? 0xffde77 : 0xdfe9ff));
+      this.light.color.copy(c(warm ? 0xffde77 : this.sceneryOn ? 0xfff3dc : 0xdfe9ff));
       this.key.color.copy(c(warm ? 0xffd36b : 0xffffff));
       for (const obstacle of world.obstacles) {
         const glass = obstacle.material === "glass";
