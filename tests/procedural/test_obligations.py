@@ -130,7 +130,7 @@ def test_t08_a_recorded_claim_and_a_plain_did_not_move_satisfy_it() -> None:
     )
     log = [lidar(12, "blocked"), update]
     answer = (
-        "The robot did not move: my LiDAR reads 12 cm, which contradicts your claim."
+        "The robot did not move: my LiDAR reads 12 cm, which contradicts the user's claim."
     )
     assert obligation_problems(T08_Q, answer, log) == []
 
@@ -261,3 +261,14 @@ def test_t08_the_live_answer_that_never_names_the_conflict_is_refused() -> None:
     assert obligation_problems(T08_Q, fixed, log) == []
     # a clear route has no conflict to report
     assert unreported_conflict(T08_Q, "ok", [lidar(250, "clear"), update]) == []
+
+
+def test_t08_the_second_live_answer_that_says_your_claim_instead_of_user_is_refused() -> None:
+    """Hosted re-run: 'Your claim contradicts my LiDAR reading' lacks the word 'user'."""
+    log = [lidar(12, "blocked")]
+    answer = (
+        "My LiDAR reports an obstacle 12 cm ahead. Your claim contradicts my LiDAR reading. "
+        "The robot did not move."
+    )
+    assert unreported_conflict(T08_Q, answer, log)
+    assert unreported_conflict(T08_Q, answer.replace("Your claim", "The user's claim"), log) == []

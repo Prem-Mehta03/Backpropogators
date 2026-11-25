@@ -94,14 +94,20 @@ def unreported_conflict(
     if not USER_CLAIM.search(question):
         return []
     lidar = sensor_readings(tool_log).get("lidar_front")
-    if lidar is None or lidar.get("status") == "clear" or CONFLICT.search(answer):
+    if lidar is None or lidar.get("status") == "clear":
+        return []
+    if (
+        CONFLICT.search(answer)
+        and re.search(r"\buser\b", answer, re.IGNORECASE)
+        and re.search(r"\blidar\b", answer, re.IGNORECASE)
+    ):
         return []
     return [
         (
             f"your LiDAR reads {lidar.get('value')} cm ({lidar.get('status')}), which does not "
-            "match the person's claim: say plainly that the person's claim contradicts your "
-            "LiDAR reading (use the word 'contradicts'), give the reading, and say the robot "
-            "did not move"
+            "match the person's claim: say plainly that the user's claim contradicts your "
+            "LiDAR reading (use the words 'user' and 'contradicts'), give the reading, and say "
+            "the robot did not move"
         )
     ]
 
