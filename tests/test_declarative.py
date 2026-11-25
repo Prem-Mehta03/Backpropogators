@@ -382,15 +382,16 @@ def test_missing_provenance_events_cover_seed_add_and_update() -> None:
         memory.close()
 
 
-def test_equal_timestamp_is_not_generally_newer_evidence() -> None:
-    """Permit the explicit downgrade chain while retaining strict chronology elsewhere."""
+def test_equal_timestamp_live_evidence_can_supersede_historical() -> None:
+    """Allow a same-second live update to complete the downgrade/update chain."""
     memory = BeliefMemory(clock=lambda: UTC_2)
     try:
         memory.add_belief("path_A", "status", "clear", "map", 1.0, "historical", UTC_2)
         same_tick = data(memory.update_belief(
             "path_A", "status", "blocked", "lidar_front", 0.98, "agent_sensor", "same timestamp", UTC_2,
         ))
-        assert same_tick["status"] == "disputed" and same_tick["supersedes"] is None
+        assert same_tick["status"] == "active"
+        assert same_tick["supersedes"] is not None
     finally:
         memory.close()
 
