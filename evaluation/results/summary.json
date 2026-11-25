@@ -34,12 +34,22 @@
         ]
       },
       "live": {
-        "runs": 0,
-        "passes": 0,
+        "runs": 1,
+        "passes": 1,
         "fallback_count": 0,
-        "models": [],
+        "models": [
+          "openai/gpt-oss-20b"
+        ],
         "failing_layers": {},
-        "receipts": []
+        "receipts": [
+          {
+            "run_id": "20261124T215228476204Z-01",
+            "result": "PASS",
+            "model": "openai/gpt-oss-20b",
+            "answer_source": "llm",
+            "failing_layers": []
+          }
+        ]
       }
     },
     "T02": {
@@ -76,12 +86,22 @@
         ]
       },
       "live": {
-        "runs": 0,
-        "passes": 0,
+        "runs": 1,
+        "passes": 1,
         "fallback_count": 0,
-        "models": [],
+        "models": [
+          "openai/gpt-oss-20b"
+        ],
         "failing_layers": {},
-        "receipts": []
+        "receipts": [
+          {
+            "run_id": "20261125T150521168388Z-01",
+            "result": "PASS",
+            "model": "openai/gpt-oss-20b",
+            "answer_source": "llm",
+            "failing_layers": []
+          }
+        ]
       }
     },
     "T03": {
@@ -118,12 +138,22 @@
         ]
       },
       "live": {
-        "runs": 0,
-        "passes": 0,
+        "runs": 1,
+        "passes": 1,
         "fallback_count": 0,
-        "models": [],
+        "models": [
+          "openai/gpt-oss-20b"
+        ],
         "failing_layers": {},
-        "receipts": []
+        "receipts": [
+          {
+            "run_id": "20261125T151439025545Z-01",
+            "result": "PASS",
+            "model": "openai/gpt-oss-20b",
+            "answer_source": "llm",
+            "failing_layers": []
+          }
+        ]
       }
     },
     "T04": {
@@ -160,12 +190,22 @@
         ]
       },
       "live": {
-        "runs": 0,
-        "passes": 0,
+        "runs": 1,
+        "passes": 1,
         "fallback_count": 0,
-        "models": [],
+        "models": [
+          "openai/gpt-oss-20b"
+        ],
         "failing_layers": {},
-        "receipts": []
+        "receipts": [
+          {
+            "run_id": "20261124T211711995666Z-01",
+            "result": "PASS",
+            "model": "openai/gpt-oss-20b",
+            "answer_source": "llm",
+            "failing_layers": []
+          }
+        ]
       }
     },
     "T05": {
@@ -202,12 +242,22 @@
         ]
       },
       "live": {
-        "runs": 0,
-        "passes": 0,
+        "runs": 1,
+        "passes": 1,
         "fallback_count": 0,
-        "models": [],
+        "models": [
+          "openai/gpt-oss-20b"
+        ],
         "failing_layers": {},
-        "receipts": []
+        "receipts": [
+          {
+            "run_id": "20261124T220959834680Z-01",
+            "result": "PASS",
+            "model": "openai/gpt-oss-20b",
+            "answer_source": "llm",
+            "failing_layers": []
+          }
+        ]
       }
     },
     "T06": {
@@ -244,12 +294,22 @@
         ]
       },
       "live": {
-        "runs": 0,
-        "passes": 0,
+        "runs": 1,
+        "passes": 1,
         "fallback_count": 0,
-        "models": [],
+        "models": [
+          "openai/gpt-oss-20b"
+        ],
         "failing_layers": {},
-        "receipts": []
+        "receipts": [
+          {
+            "run_id": "20261124T212601667163Z-01",
+            "result": "PASS",
+            "model": "openai/gpt-oss-20b",
+            "answer_source": "llm",
+            "failing_layers": []
+          }
+        ]
       }
     },
     "T07": {
@@ -286,12 +346,22 @@
         ]
       },
       "live": {
-        "runs": 0,
-        "passes": 0,
+        "runs": 1,
+        "passes": 1,
         "fallback_count": 0,
-        "models": [],
+        "models": [
+          "openai/gpt-oss-20b"
+        ],
         "failing_layers": {},
-        "receipts": []
+        "receipts": [
+          {
+            "run_id": "20261125T151611269244Z-01",
+            "result": "PASS",
+            "model": "openai/gpt-oss-20b",
+            "answer_source": "llm",
+            "failing_layers": []
+          }
+        ]
       }
     },
     "T08": {
@@ -328,12 +398,22 @@
         ]
       },
       "live": {
-        "runs": 0,
-        "passes": 0,
+        "runs": 1,
+        "passes": 1,
         "fallback_count": 0,
-        "models": [],
+        "models": [
+          "openai/gpt-oss-20b"
+        ],
         "failing_layers": {},
-        "receipts": []
+        "receipts": [
+          {
+            "run_id": "20261125T161934005224Z-01",
+            "result": "PASS",
+            "model": "openai/gpt-oss-20b",
+            "answer_source": "llm",
+            "failing_layers": []
+          }
+        ]
       }
     },
     "T09": {
@@ -370,12 +450,22 @@
         ]
       },
       "live": {
-        "runs": 0,
-        "passes": 0,
+        "runs": 1,
+        "passes": 1,
         "fallback_count": 0,
-        "models": [],
+        "models": [
+          "openai/gpt-oss-20b"
+        ],
         "failing_layers": {},
-        "receipts": []
+        "receipts": [
+          {
+            "run_id": "20261125T155207749788Z-01",
+            "result": "PASS",
+            "model": "openai/gpt-oss-20b",
+            "answer_source": "llm",
+            "failing_layers": []
+          }
+        ]
       }
     },
     "T10": {
@@ -412,12 +502,22 @@
         ]
       },
       "live": {
-        "runs": 0,
-        "passes": 0,
+        "runs": 1,
+        "passes": 1,
         "fallback_count": 0,
-        "models": [],
+        "models": [
+          "openai/gpt-oss-20b"
+        ],
         "failing_layers": {},
-        "receipts": []
+        "receipts": [
+          {
+            "run_id": "20261125T161140881074Z-01",
+            "result": "PASS",
+            "model": "openai/gpt-oss-20b",
+            "answer_source": "llm",
+            "failing_layers": []
+          }
+        ]
       }
     }
   },
@@ -432,10 +532,12 @@
       "failing_layers": {}
     },
     "live": {
-      "runs": 0,
-      "passes": 0,
+      "runs": 10,
+      "passes": 10,
       "fallback_count": 0,
-      "models": [],
+      "models": [
+        "openai/gpt-oss-20b"
+      ],
       "failing_layers": {}
     }
   },

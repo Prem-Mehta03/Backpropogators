@@ -15,6 +15,7 @@ from procedural.prompts import PROMPT_VERSION, SYSTEM_PROMPT
 # version -> sha256 of SYSTEM_PROMPT. Add a line when you change the prompt; never edit an old one.
 PROMPT_HASHES = {
     "v6.3": "2b8e78b3a9b918c15cbc3820cb63e47ee1553ca8200e13d91ab92f4beec97b04",
+    "v6.4": "7cbfe56f5560359e554fa494baf41e7d7554face2ba5917c154966fb543cee94",
 }
 
 

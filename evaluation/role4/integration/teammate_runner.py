@@ -221,7 +221,8 @@ def _plan(scenario, control, old_id):
         if receipt and not receipt["ok"] and receipt["error"]["code"] == "CONFLICT":
             message = receipt["error"]["message"]
             if RECHECK_PHRASE in message:
-                return message.removesuffix(" Report the readings and that the move was cancelled.")
+                return (message.removesuffix(" Report the readings and that the move was cancelled.")
+                        + " At first the route looked clear; the recheck found an obstacle.")
         raise LLMClientError("Script did not receive an automatic movement cancellation")
 
     if control == "step_limit":
