@@ -82,7 +82,7 @@
       this.hud = hud;
       this.fallback = fallback;
       this.frame = null;
-      this.mode = "follow";
+      this.mode = "orbit";
       this.azimuth = -2.5;
       this.elevation = 0.92;
       this.distance = 4.7;
@@ -228,7 +228,7 @@
         travelled += Math.hypot(b.x - a.x, b.y - a.y);
       }
       const tool = frame.tool;
-      const total = `${Math.round(travelled)} cm travelled in total`;
+      const total = `${Math.round(travelled)} cm travelled this run`;
       if (i === 0 || !tool) {
         return {state: "idle", text: `STATIONARY: initial pose, ${total}`, travelled};
       }
