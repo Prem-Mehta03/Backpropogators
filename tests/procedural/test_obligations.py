@@ -13,6 +13,7 @@ from declarative.seed import seed_for
 from procedural.agent import run_agent
 from procedural.obligations import (
     obligation_problems,
+    unreported_conflict,
     requested_distance,
     unrecorded_user_claim,
     unrequested_move,
@@ -240,3 +241,23 @@ def test_a_sensor_read_before_any_memory_lookup_is_refused_not_run() -> None:
         "get_belief_history",
     ]
     assert out.finished
+
+
+def test_t08_the_live_answer_that_never_names_the_conflict_is_refused() -> None:
+    """Hosted run of 25 Nov 21:25: recorded the claim, said 'did not move', never said conflict."""
+    update = entry(
+        "update_belief",
+        {"belief_id": "b_000001"},
+        {"perspective": "user", "source": "user", "subject": "path_A", "object": "clear"},
+    )
+    log = [lidar(12, "blocked"), update]
+    answer = (
+        "The robot did not move because my LiDAR sensor reports the path ahead is blocked "
+        "at 12 cm. I recorded the user's claim as a new belief."
+    )
+    problems = obligation_problems(T08_Q, answer, log)
+    assert any("contradicts" in p for p in problems)
+    fixed = answer + " The user's claim contradicts my LiDAR reading."
+    assert obligation_problems(T08_Q, fixed, log) == []
+    # a clear route has no conflict to report
+    assert unreported_conflict(T08_Q, "ok", [lidar(250, "clear"), update]) == []

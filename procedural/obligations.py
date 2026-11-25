@@ -45,6 +45,7 @@ SOURCE_UNKNOWN = re.compile(
 CERTAINTY = re.compile(r"certaint|confidence|not rely", re.IGNORECASE)
 SEEN_AT_FIRST = re.compile(r"initial|at first|first read", re.IGNORECASE)
 OBSTACLE = re.compile(r"obstacle|cart", re.IGNORECASE)
+CONFLICT = re.compile(r"contradict|conflict|disagree", re.IGNORECASE)
 
 
 def _plain(text: str) -> str:
@@ -82,6 +83,25 @@ def unrecorded_user_claim(question: str, tool_log: list[dict[str, Any]]) -> list
             "the person stated a claim, but you have not recorded it: call update_belief with "
             "perspective user and source user (it stays their claim, never a verified fact), "
             "after you have read your own sensor, then say whether your reading contradicts it"
+        )
+    ]
+
+
+def unreported_conflict(
+    question: str, answer: str, tool_log: list[dict[str, Any]]
+) -> list[str]:
+    """The person says the way is clear and the LiDAR says otherwise: name the conflict (T08)."""
+    if not USER_CLAIM.search(question):
+        return []
+    lidar = sensor_readings(tool_log).get("lidar_front")
+    if lidar is None or lidar.get("status") == "clear" or CONFLICT.search(answer):
+        return []
+    return [
+        (
+            f"your LiDAR reads {lidar.get('value')} cm ({lidar.get('status')}), which does not "
+            "match the person's claim: say plainly that the person's claim contradicts your "
+            "LiDAR reading (use the word 'contradicts'), give the reading, and say the robot "
+            "did not move"
         )
     ]
 
@@ -186,6 +206,7 @@ def obligation_problems(
     """All obligations an answer to this question has not met, in a fixed order."""
     return [
         *unrecorded_user_claim(question, tool_log),
+        *unreported_conflict(question, answer, tool_log),
         *unrequested_move(question, tool_log),
         *unreported_no_move(question, answer, tool_log),
         *unreported_cancelled_move(answer, tool_log),
