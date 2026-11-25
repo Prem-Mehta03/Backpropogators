@@ -4,7 +4,7 @@ The declarative layer stores beliefs as strict, versioned records. Each belief c
 
 Beliefs retain their perspective: `user`, `agent_sensor`, `historical`, or `third_party`. User and third-party claims remain attributed side by side and do not dispute another perspective. Newer evidence from the same perspective supersedes its predecessor, closing the predecessor's `valid_to` at the successor timestamp. Current queries return newest evidence first; history queries retain the full timeline.
 
-Evidence thresholds live in `contracts/policy.py` so layers can share one source of truth. A sensor reading below 0.5 cannot replace a belief at or above 0.8. Live sensor evidence at or above 0.6 can replace an older conflicting historical belief. Conflicting live distance sensors produce a disputed record. Same-second timestamps are ordered deterministically by belief ID, allowing the later allocated update to supersede its predecessor.
+Evidence thresholds live in `contracts/policy.py` so layers can share one source of truth. A sensor reading below 0.5 cannot replace a belief at or above 0.8. Live sensor evidence at or above 0.6 can replace an older conflicting historical belief. Conflicting live distance sensors produce a disputed record. The resolver compares timestamps with `>=`, subject to the stored validity-window bounds; it does not use belief IDs to break timestamp ties.
 
 Beliefs with no source are capped at 0.5 confidence on every memory write path and emit a `missing_provenance` event through the configured evaluation callback. They remain stored for auditability, but their missing source is explicit. Superseded records remain available; updates do not erase evidence.
 
