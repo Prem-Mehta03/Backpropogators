@@ -1,0 +1,163 @@
+{
+  "commit": "64fc1855fd92cd9be8feea1666e8393da6084eac",
+  "requested_cases": [
+    "T02",
+    "T08",
+    "T09",
+    "T10",
+    "T03",
+    "T07",
+    "B_APPROACH"
+  ],
+  "model_requested": "openai/gpt-oss-20b",
+  "execution": "live",
+  "environment": "simulated",
+  "requested_repeats": 1,
+  "provider_interruptions_excluded_from_counts": true,
+  "totals": {
+    "attempts": 7,
+    "scored": 7,
+    "passes": 3,
+    "fails": 4,
+    "interrupted": 0,
+    "incomplete": 0,
+    "model_written_passes": 3,
+    "fallback_summary_passes": 0
+  },
+  "pending_scored_cases": [],
+  "attempts": [
+    {
+      "test_id": "B_APPROACH",
+      "run_id": "20261125T151750568938Z-01",
+      "folder": "B_APPROACH__20261125T151750568938Z-01",
+      "status": "FAIL",
+      "scored": true,
+      "recorded_verdict": "FAIL",
+      "model": "openai/gpt-oss-20b",
+      "prompt_version": "v6.3",
+      "model_switched_from": null,
+      "answer_source": "llm",
+      "failed_checks": [
+        "ordered_tools",
+        "object_detected_after_move"
+      ],
+      "failure_layers": [
+        "procedural",
+        "sensorimotor"
+      ]
+    },
+    {
+      "test_id": "T02",
+      "run_id": "20261125T150521168388Z-01",
+      "folder": "T02__20261125T150521168388Z-01",
+      "status": "PASS",
+      "scored": true,
+      "recorded_verdict": "PASS",
+      "model": "openai/gpt-oss-20b",
+      "prompt_version": "v6.3",
+      "model_switched_from": null,
+      "answer_source": "llm",
+      "failed_checks": [],
+      "failure_layers": []
+    },
+    {
+      "test_id": "T03",
+      "run_id": "20261125T151439025545Z-01",
+      "folder": "T03__20261125T151439025545Z-01",
+      "status": "PASS",
+      "scored": true,
+      "recorded_verdict": "PASS",
+      "model": "openai/gpt-oss-20b",
+      "prompt_version": "v6.3",
+      "model_switched_from": null,
+      "answer_source": "llm",
+      "failed_checks": [],
+      "failure_layers": []
+    },
+    {
+      "test_id": "T07",
+      "run_id": "20261125T151611269244Z-01",
+      "folder": "T07__20261125T151611269244Z-01",
+      "status": "PASS",
+      "scored": true,
+      "recorded_verdict": "PASS",
+      "model": "openai/gpt-oss-20b",
+      "prompt_version": "v6.3",
+      "model_switched_from": null,
+      "answer_source": "llm",
+      "failed_checks": [],
+      "failure_layers": []
+    },
+    {
+      "test_id": "T08",
+      "run_id": "20261125T150827364431Z-01",
+      "folder": "T08__20261125T150827364431Z-01",
+      "status": "FAIL",
+      "scored": true,
+      "recorded_verdict": "FAIL",
+      "model": "openai/gpt-oss-20b",
+      "prompt_version": "v6.3",
+      "model_switched_from": null,
+      "answer_source": "llm",
+      "failed_checks": [
+        "ordered_tools",
+        "user_claim_only",
+        "false_user_answer"
+      ],
+      "failure_layers": [
+        "declarative",
+        "procedural"
+      ]
+    },
+    {
+      "test_id": "T09",
+      "run_id": "20261125T151019210651Z-01",
+      "folder": "T09__20261125T151019210651Z-01",
+      "status": "FAIL",
+      "scored": true,
+      "recorded_verdict": "FAIL",
+      "model": "openai/gpt-oss-20b",
+      "prompt_version": "v6.3",
+      "model_switched_from": null,
+      "answer_source": "llm",
+      "failed_checks": [
+        "provenance_answer"
+      ],
+      "failure_layers": [
+        "procedural"
+      ]
+    },
+    {
+      "test_id": "T10",
+      "run_id": "20261125T151159177492Z-01",
+      "folder": "T10__20261125T151159177492Z-01",
+      "status": "FAIL",
+      "scored": true,
+      "recorded_verdict": "FAIL",
+      "model": "openai/gpt-oss-20b",
+      "prompt_version": "v6.3",
+      "model_switched_from": null,
+      "answer_source": "llm",
+      "failed_checks": [
+        "ordered_tools",
+        "automatic_recheck_observed",
+        "move_answer"
+      ],
+      "failure_layers": [
+        "procedural"
+      ]
+    }
+  ],
+  "repository_t_series_metrics": {
+    "runs": 6,
+    "passes": 3,
+    "fallback_count": 0,
+    "models": [
+      "openai/gpt-oss-20b"
+    ],
+    "failing_layers": {
+      "declarative": 1,
+      "procedural": 3
+    }
+  }
+}
