@@ -58,7 +58,7 @@ def _run(
     return session, beliefs
 
 
-def test_t02_in_the_live_ui_supersedes_the_blocked_map(
+def test_t02_in_the_ui_supersedes_the_blocked_map(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Any
 ) -> None:
     session, beliefs = _run(monkeypatch, tmp_path, "scenario_map_blocked", "T02")
